@@ -172,7 +172,7 @@ export default function HomeScreen() {
           <Text style={styles.headerTitle}>Arunachala</Text>
           <Text style={styles.headerSubtitle}>Girivalam Guide</Text>
           <Text style={styles.headerDesc}>
-            Your sacred companion for the 14 km path around the holy hill of Tiruvannamalai
+            An all-in-one companion providing navigation, local guidance, and support to make your spiritual journey simple, safe, and meaningful.
           </Text>
         </View>
 
