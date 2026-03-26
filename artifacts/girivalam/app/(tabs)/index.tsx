@@ -84,7 +84,7 @@ const FEATURES: Feature[] = [
   },
 ];
 
-function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
+function FeatureCard({ feature }: { feature: Feature }) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -104,6 +104,54 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
       friction: 20,
     }).start();
   };
+
+  if (feature.id === "route-map") {
+    return (
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Pressable
+          onPress={() => router.push("/(tabs)/route-map")}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          accessibilityRole="button"
+          accessibilityLabel="Girivalam Route"
+        >
+          <LinearGradient
+            colors={[feature.gradientStart, feature.gradientEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bigCard}
+          >
+            <View style={styles.bigCardTop}>
+              <View style={styles.bigCardIcon}>
+                <Ionicons name="map" size={40} color={Colors.white} />
+              </View>
+              <View style={styles.bigCardTitleWrap}>
+                <Text style={styles.bigCardTitle}>Girivalam Route</Text>
+                <Text style={styles.bigCardSubtitle}>Sacred circumambulation path</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.7)" />
+            </View>
+            <View style={styles.bigCardStats}>
+              <View style={styles.bigStatItem}>
+                <Text style={styles.bigStatValue}>14 km</Text>
+                <Text style={styles.bigStatLabel}>Total Distance</Text>
+              </View>
+              <View style={styles.bigStatDivider} />
+              <View style={styles.bigStatItem}>
+                <Text style={styles.bigStatValue}>8</Text>
+                <Text style={styles.bigStatLabel}>Sacred Lingams</Text>
+              </View>
+              <View style={styles.bigStatDivider} />
+              <View style={styles.bigStatItem}>
+                <Text style={styles.bigStatValue}>~4 hrs</Text>
+                <Text style={styles.bigStatLabel}>Walk Time</Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View style={[{ transform: [{ scale }] }]}>
@@ -172,23 +220,6 @@ export default function HomeScreen() {
           <Text style={styles.headerDesc}>
             An all-in-one companion providing navigation, local guidance, and support to make your spiritual journey simple, safe, and meaningful.
           </Text>
-        </View>
-
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>14 km</Text>
-            <Text style={styles.statLabel}>Circumambulation</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>8</Text>
-            <Text style={styles.statLabel}>Lingams</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>~4 hrs</Text>
-            <Text style={styles.statLabel}>Walk Time</Text>
-          </View>
         </View>
       </LinearGradient>
 
@@ -305,6 +336,67 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 12,
     marginLeft: 4,
+  },
+  bigCard: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 12,
+    gap: 18,
+  },
+  bigCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  bigCardIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bigCardTitleWrap: {
+    flex: 1,
+  },
+  bigCardTitle: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+    marginBottom: 3,
+  },
+  bigCardSubtitle: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.78)",
+  },
+  bigCardStats: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+  },
+  bigStatItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  bigStatValue: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+  },
+  bigStatLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.75)",
+    marginTop: 3,
+    textAlign: "center",
+  },
+  bigStatDivider: {
+    width: 1,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    marginVertical: 4,
   },
   card: {
     flexDirection: "row",
