@@ -169,8 +169,7 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="fire" size={16} color={Colors.amberLight} />
             <Text style={styles.headerBadgeText}>Pournami & Daily Girivalam</Text>
           </View>
-          <Text style={styles.headerTitle}>Arunachala</Text>
-          <Text style={styles.headerSubtitle}>Girivalam Guide</Text>
+          <Text style={styles.headerTitle}>Girivalam Guide</Text>
           <Text style={styles.headerDesc}>
             An all-in-one companion providing navigation, local guidance, and support to make your spiritual journey simple, safe, and meaningful.
           </Text>
