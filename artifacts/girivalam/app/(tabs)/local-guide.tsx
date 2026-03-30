@@ -15,11 +15,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 
 type Category = "temples" | "food" | "stay";
+type SubType = "temple" | "ashram" | "theertham" | "food" | "stay";
 
 interface Place {
   id: string;
   name: string;
   category: Category;
+  subType?: SubType;
   description: string;
   distance: string;
   mapsUrl: string;
@@ -32,6 +34,7 @@ const PLACES: Place[] = [
     id: "t1",
     name: "Arunachaleswarar Temple",
     category: "temples",
+    subType: "temple",
     description: "The main temple dedicated to Lord Shiva, one of the largest in South India with 4 majestic gopurams. A must-visit before or after Girivalam.",
     distance: "Main landmark",
     mapsUrl: "https://maps.google.com/?q=Arunachaleswarar+Temple+Tiruvannamalai",
@@ -39,20 +42,11 @@ const PLACES: Place[] = [
     openHours: "5:30 AM – 10:00 PM",
   },
   {
-    id: "t2",
-    name: "Sri Ramanasramam",
-    category: "temples",
-    description: "Ashram of Ramana Maharshi at the foot of Arunachala. Open to all visitors. Meditation hall, shrine, and bookshop available.",
-    distance: "2 km from main temple",
-    mapsUrl: "https://maps.google.com/?q=Sri+Ramanasramam+Tiruvannamalai",
-    tags: ["Ashram", "Ramana"],
-    openHours: "6:00 AM – 8:00 PM",
-  },
-  {
     id: "t3",
-    name: "Adi Annamalai Temple",
+    name: "Adi Annamalaiyar Temple",
     category: "temples",
-    description: "Ancient Shiva temple on the Girivalam path, considered older than the main temple. Peaceful atmosphere with few tourists.",
+    subType: "temple",
+    description: "Older than the main Arunachaleswarar Temple. A very powerful Shiva temple on the Girivalam path with a deeply sacred atmosphere.",
     distance: "On Girivalam path",
     mapsUrl: "https://maps.google.com/?q=Adi+Annamalai+Temple+Tiruvannamalai",
     tags: ["Ancient", "Route"],
@@ -62,10 +56,102 @@ const PLACES: Place[] = [
     id: "t4",
     name: "Pachaiamman Temple",
     category: "temples",
-    description: "Goddess temple dedicated to Pachaiamman (green goddess), an important stop on the Girivalam route.",
+    subType: "temple",
+    description: "Dedicated to Goddess Parvati. An important temple for protection and health — a significant stop on the Girivalam path.",
     distance: "On Girivalam path",
     mapsUrl: "https://maps.google.com/?q=Pachaiamman+Temple+Tiruvannamalai",
-    tags: ["Goddess", "Route"],
+    tags: ["Goddess Parvati", "Health"],
+  },
+  {
+    id: "t5",
+    name: "Durga Amman Temple",
+    category: "temples",
+    subType: "temple",
+    description: "Temple of Goddess Durga — worshipped for strength and the removal of all obstacles. A spiritually charged stop on the path.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Durga+Amman+Temple+Tiruvannamalai",
+    tags: ["Goddess Durga", "Strength"],
+  },
+  {
+    id: "a1",
+    name: "Sri Ramana Ashram",
+    category: "temples",
+    subType: "ashram",
+    description: "The sacred ashram of Bhagavan Ramana Maharshi at the foot of Arunachala. Open to all. Meditation hall, shrine, and library available.",
+    distance: "2 km from main temple",
+    mapsUrl: "https://maps.google.com/?q=Sri+Ramanasramam+Tiruvannamalai",
+    tags: ["Ramana Maharshi", "Meditation"],
+    openHours: "6:00 AM – 8:00 PM",
+  },
+  {
+    id: "a2",
+    name: "Seshadri Swamigal Ashram",
+    category: "temples",
+    subType: "ashram",
+    description: "Dedicated to the great saint Seshadri Swamigal, a contemporary of Ramana Maharshi. A place of deep spiritual energy and devotion.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=Seshadri+Swamigal+Ashram+Tiruvannamalai",
+    tags: ["Saint", "Spiritual"],
+  },
+  {
+    id: "a3",
+    name: "Skandashram",
+    category: "temples",
+    subType: "ashram",
+    description: "Located on the slopes of Arunachala hill, this ashram was where Ramana Maharshi lived for many years. Offers a breathtaking view of Tiruvannamalai.",
+    distance: "On the hill",
+    mapsUrl: "https://maps.google.com/?q=Skandashram+Arunachala+Tiruvannamalai",
+    tags: ["Ramana", "Hill", "Views"],
+  },
+  {
+    id: "a4",
+    name: "Virupaksha Cave",
+    category: "temples",
+    subType: "ashram",
+    description: "A natural cave on Arunachala hill where Ramana Maharshi meditated for over 17 years. Deeply connected with his early spiritual life.",
+    distance: "On the hill",
+    mapsUrl: "https://maps.google.com/?q=Virupaksha+Cave+Arunachala+Tiruvannamalai",
+    tags: ["Cave", "Ramana", "Meditation"],
+  },
+  {
+    id: "th1",
+    name: "Siva Ganga Theertham",
+    category: "temples",
+    subType: "theertham",
+    description: "The most sacred tank inside the main Arunachaleswarar Temple complex. Pilgrims take a holy dip here before entering the temple.",
+    distance: "Inside main temple",
+    mapsUrl: "https://maps.google.com/?q=Sivaganga+Tank+Tiruvannamalai",
+    tags: ["Holy Water", "Sacred Tank"],
+  },
+  {
+    id: "th2",
+    name: "Brahma Theertham",
+    category: "temples",
+    subType: "theertham",
+    description: "Sacred water body associated with Lord Brahma on the Girivalam path. Bathing here is believed to cleanse sins and bring liberation.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Brahma+Theertham+Tiruvannamalai",
+    tags: ["Holy Water", "Liberation"],
+  },
+  {
+    id: "th3",
+    name: "Agastya Theertham",
+    category: "temples",
+    subType: "theertham",
+    description: "Named after the sage Agastya, this sacred tank carries the blessings of the ancient rishis. An important stop on the Girivalam path.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Agastya+Theertham+Tiruvannamalai",
+    tags: ["Sage Agastya", "Holy Water"],
+  },
+  {
+    id: "th4",
+    name: "Ayyankulam",
+    category: "temples",
+    subType: "theertham",
+    description: "A sacred pond on the Girivalam route dedicated to Lord Ayyanar. Pilgrims offer prayers here for protection and safe journeys.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Ayyankulam+Tiruvannamalai",
+    tags: ["Sacred Pond", "Protection"],
   },
   {
     id: "f1",
@@ -201,6 +287,12 @@ function PlaceCard({ place }: { place: Place }) {
   );
 }
 
+const TEMPLE_SECTIONS: { subType: SubType; label: string; emoji: string; desc: string }[] = [
+  { subType: "temple", label: "Important Temples", emoji: "🛕", desc: "Sacred temples around Arunachala and on the Girivalam path" },
+  { subType: "ashram", label: "Ashrams & Spiritual Places", emoji: "🧘", desc: "Deeply connected with saints and meditation practices" },
+  { subType: "theertham", label: "Sacred Theerthams", emoji: "💧", desc: "Holy water bodies on the Girivalam path" },
+];
+
 export default function LocalGuideScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
@@ -247,16 +339,37 @@ export default function LocalGuideScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionInfo}>
-          {active === "temples"
-            ? "Sacred temples and spiritual sites along and near the Girivalam path"
-            : active === "food"
-              ? "Vegetarian restaurants and food options for pilgrims"
-              : "Accommodation options for pilgrims visiting Tiruvannamalai"}
-        </Text>
-        {filtered.map((place) => (
-          <PlaceCard key={place.id} place={place} />
-        ))}
+        {active === "temples" ? (
+          TEMPLE_SECTIONS.map((section) => {
+            const items = filtered.filter((p) => p.subType === section.subType);
+            if (items.length === 0) return null;
+            return (
+              <View key={section.subType}>
+                <View style={styles.subSectionHeader}>
+                  <Text style={styles.subSectionEmoji}>{section.emoji}</Text>
+                  <View style={styles.subSectionTitles}>
+                    <Text style={styles.subSectionLabel}>{section.label}</Text>
+                    <Text style={styles.subSectionDesc}>{section.desc}</Text>
+                  </View>
+                </View>
+                {items.map((place) => (
+                  <PlaceCard key={place.id} place={place} />
+                ))}
+              </View>
+            );
+          })
+        ) : (
+          <>
+            <Text style={styles.sectionInfo}>
+              {active === "food"
+                ? "Vegetarian restaurants and food options for pilgrims"
+                : "Accommodation options for pilgrims visiting Tiruvannamalai"}
+            </Text>
+            {filtered.map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+          </>
+        )}
 
         <Pressable
           style={styles.moreBtn}
@@ -409,5 +522,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_500Medium",
     color: Colors.saffron,
+  },
+  subSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.creamDark,
+  },
+  subSectionEmoji: {
+    fontSize: 24,
+  },
+  subSectionTitles: {
+    flex: 1,
+  },
+  subSectionLabel: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: Colors.brown,
+  },
+  subSectionDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    lineHeight: 17,
+    marginTop: 2,
   },
 });

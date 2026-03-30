@@ -39,6 +39,18 @@ const LINGAMS: Lingam[] = [
   { number: 8, name: "Isanya Lingam", direction: "North-East", description: "Last major shrine before completing the circle", distance: "13 km" },
 ];
 
+interface SpecialLingam {
+  emoji: string;
+  name: string;
+  description: string;
+}
+
+const SPECIAL_LINGAMS: SpecialLingam[] = [
+  { emoji: "☀️", name: "Surya Lingam", description: "Sacred shrine of the Sun — worshipping here bestows health, vitality, and divine light" },
+  { emoji: "🌙", name: "Chandra Lingam", description: "Sacred shrine of the Moon — brings peace of mind, emotional balance, and inner calm" },
+  { emoji: "🛕", name: "Sunai Lingam", description: "A revered Lingam on the Girivalam path, deeply connected to the ancient traditions of Arunachala" },
+];
+
 const TIP_ITEMS = [
   { icon: "time-outline" as const, text: "Best time: Early morning (4–7 AM) or after sunset (6–10 PM)" },
   { icon: "footsteps-outline" as const, text: "Walk barefoot on the path for full spiritual benefit" },
@@ -116,6 +128,23 @@ export default function RouteMapScreen() {
             </View>
             <Text style={styles.lingamDirection}>{lingam.direction}</Text>
             <Text style={styles.lingamDesc}>{lingam.description}</Text>
+          </View>
+        </View>
+      ))}
+
+      <Text style={styles.sectionTitle}>Other Sacred Lingams</Text>
+      <Text style={styles.sectionDesc}>
+        Additional sacred Lingams on the Girivalam path
+      </Text>
+
+      {SPECIAL_LINGAMS.map((sl) => (
+        <View key={sl.name} style={styles.specialLingamRow}>
+          <View style={styles.specialLingamEmoji}>
+            <Text style={styles.specialLingamEmojiText}>{sl.emoji}</Text>
+          </View>
+          <View style={styles.lingamContent}>
+            <Text style={styles.lingamName}>{sl.name}</Text>
+            <Text style={styles.lingamDesc}>{sl.description}</Text>
           </View>
         </View>
       ))}
@@ -302,5 +331,30 @@ const styles = StyleSheet.create({
     color: Colors.text,
     lineHeight: 20,
     paddingTop: 7,
+  },
+  specialLingamRow: {
+    flexDirection: "row",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  specialLingamEmoji: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.overlayLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  specialLingamEmojiText: {
+    fontSize: 20,
   },
 });
