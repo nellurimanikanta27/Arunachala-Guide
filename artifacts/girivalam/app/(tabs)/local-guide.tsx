@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 
 type Category = "temples" | "food" | "stay";
-type SubType = "temple" | "ashram" | "theertham" | "food" | "stay";
+type SubType = "temple" | "lingam" | "ashram" | "theertham" | "food" | "stay";
 
 interface Place {
   id: string;
@@ -71,6 +71,36 @@ const PLACES: Place[] = [
     distance: "On Girivalam path",
     mapsUrl: "https://maps.google.com/?q=Durga+Amman+Temple+Tiruvannamalai",
     tags: ["Goddess Durga", "Strength"],
+  },
+  {
+    id: "l1",
+    name: "Surya Lingam ☀️",
+    category: "temples",
+    subType: "lingam",
+    description: "Sacred Lingam of the Sun God. Worshipping here is believed to bestow health, vitality, strength, and divine radiance upon the devotee.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Surya+Lingam+Tiruvannamalai+Girivalam",
+    tags: ["Sun", "Health", "Vitality"],
+  },
+  {
+    id: "l2",
+    name: "Chandra Lingam 🌙",
+    category: "temples",
+    subType: "lingam",
+    description: "Sacred Lingam of the Moon. Worshipping here brings peace of mind, emotional balance, and inner calm to the devotee.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Chandra+Lingam+Tiruvannamalai+Girivalam",
+    tags: ["Moon", "Peace", "Balance"],
+  },
+  {
+    id: "l3",
+    name: "Sunai Lingam",
+    category: "temples",
+    subType: "lingam",
+    description: "A revered Lingam on the Girivalam path, deeply connected with the ancient spiritual traditions of Arunachala. An important stop for devoted pilgrims.",
+    distance: "On Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=Sunai+Lingam+Tiruvannamalai",
+    tags: ["Sacred", "Ancient"],
   },
   {
     id: "a1",
@@ -289,6 +319,7 @@ function PlaceCard({ place }: { place: Place }) {
 
 const TEMPLE_SECTIONS: { subType: SubType; label: string; emoji: string; desc: string }[] = [
   { subType: "temple", label: "Important Temples", emoji: "🛕", desc: "Sacred temples around Arunachala and on the Girivalam path" },
+  { subType: "lingam", label: "Sacred Lingams", emoji: "🔱", desc: "Surya, Chandra and other sacred Lingams on the Girivalam path" },
   { subType: "ashram", label: "Ashrams & Spiritual Places", emoji: "🧘", desc: "Deeply connected with saints and meditation practices" },
   { subType: "theertham", label: "Sacred Theerthams", emoji: "💧", desc: "Holy water bodies on the Girivalam path" },
 ];
