@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 
 type Category = "temples" | "food" | "stay";
-type SubType = "temple" | "lingam" | "ashram" | "theertham" | "food" | "stay";
+type SubType = "temple" | "lingam" | "ashram" | "theertham" | "food" | "popular" | "budget" | "cafe" | "stay";
 
 interface Place {
   id: string;
@@ -27,6 +27,7 @@ interface Place {
   mapsUrl: string;
   tags: string[];
   openHours?: string;
+  rating?: number;
 }
 
 const PLACES: Place[] = [
@@ -218,42 +219,111 @@ const PLACES: Place[] = [
   },
   {
     id: "f1",
-    name: "Sri Annapoorna Hotel",
+    name: "Adyar Ananda Bhavan (A2B)",
     category: "food",
-    description: "Popular vegetarian South Indian restaurant serving traditional meals on banana leaf. Excellent sambar and rasam. Very affordable.",
-    distance: "Near bus stand",
-    mapsUrl: "https://maps.google.com/?q=restaurants+near+Tiruvannamalai+temple",
-    tags: ["Vegetarian", "South Indian", "Budget"],
-    openHours: "7:00 AM – 9:00 PM",
+    subType: "popular",
+    description: "One of the most popular vegetarian chains in South India. Highly reviewed in Tiruvannamalai. Reliable, clean, and great for idli, dosa, meals and sweets.",
+    distance: "Near temple area",
+    mapsUrl: "https://maps.google.com/?q=Adyar+Ananda+Bhavan+Tiruvannamalai",
+    tags: ["Vegetarian", "South Indian", "Sweets"],
+    rating: 3.8,
   },
   {
     id: "f2",
-    name: "Ramana Café",
+    name: "Hotel Ananda Ramana",
     category: "food",
-    description: "Charming cafe near Ramanasramam popular with international pilgrims. Serves healthy meals, fresh juices and herbal teas.",
-    distance: "Near Ramanasramam",
-    mapsUrl: "https://maps.google.com/?q=Ramana+Cafe+Tiruvannamalai",
-    tags: ["Café", "International", "Healthy"],
-    openHours: "8:00 AM – 7:00 PM",
+    subType: "popular",
+    description: "Pure vegetarian restaurant with a proper meals system. Very convenient location near the temple. Known for clean, wholesome food loved by pilgrims.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=Hotel+Ananda+Ramana+Tiruvannamalai",
+    tags: ["Pure Veg", "Meals", "Convenient"],
+    rating: 4.1,
   },
   {
     id: "f3",
-    name: "Sparsa Restaurant",
+    name: "Rudraksh Restaurant",
     category: "food",
-    description: "Rooftop restaurant at Sparsa Resort offering South Indian and North Indian cuisine with good views and clean surroundings.",
-    distance: "Outer circumambulation road",
-    mapsUrl: "https://maps.google.com/?q=Sparsa+Resort+Tiruvannamalai",
-    tags: ["Multi-cuisine", "Rooftop"],
-    openHours: "7:00 AM – 10:00 PM",
+    subType: "popular",
+    description: "Popular among pilgrims near the Rajagopuram (main entrance). Serves a good thali with both North and South Indian options. A solid choice close to the starting point.",
+    distance: "Near Rajagopuram",
+    mapsUrl: "https://maps.google.com/?q=Rudraksh+Restaurant+Tiruvannamalai",
+    tags: ["Thali", "North+South", "Near Temple"],
   },
   {
     id: "f4",
+    name: "Hotel Kanna",
+    category: "food",
+    subType: "budget",
+    description: "A very common local restaurant known for affordable and filling vegetarian meals. A go-to spot for pilgrims looking for an authentic and budget-friendly bite.",
+    distance: "Town area",
+    mapsUrl: "https://maps.google.com/?q=Hotel+Kanna+Tiruvannamalai",
+    tags: ["Budget", "Local", "Filling"],
+    rating: 3.9,
+  },
+  {
+    id: "f5",
+    name: "Aakash Inn Restaurant",
+    category: "food",
+    subType: "budget",
+    description: "Simple home-style vegetarian food in a relaxed setting. Good for families. Comfortable and no-fuss dining that feels welcoming after a long walk.",
+    distance: "Town area",
+    mapsUrl: "https://maps.google.com/?q=Aakash+Inn+Tiruvannamalai",
+    tags: ["Home-Style", "Family", "Simple"],
+    rating: 3.8,
+  },
+  {
+    id: "f6",
+    name: "Auro Usha Restaurant",
+    category: "food",
+    subType: "budget",
+    description: "North Indian vegetarian restaurant near the ashram area. Clean, decent service and good veg meals. A nice change of pace for pilgrims craving North Indian food.",
+    distance: "Near ashram area",
+    mapsUrl: "https://maps.google.com/?q=Auro+Usha+Restaurant+Tiruvannamalai",
+    tags: ["North Indian", "Veg", "Clean"],
+    rating: 4.0,
+  },
+  {
+    id: "f7",
+    name: "The Dreaming Tree",
+    category: "food",
+    subType: "cafe",
+    description: "One of the most famous cafes in Tiruvannamalai. Peaceful, relaxed vibe perfect for unwinding after the walk. Serves both Indian and European food.",
+    distance: "Near ashram area",
+    mapsUrl: "https://maps.google.com/?q=The+Dreaming+Tree+Tiruvannamalai",
+    tags: ["Continental", "Peaceful", "Indian+European"],
+    rating: 4.3,
+  },
+  {
+    id: "f8",
+    name: "The Inner Child",
+    category: "food",
+    subType: "cafe",
+    description: "Trendy, highly-rated cafe known for burgers and healthy food. One of the most talked-about spots among visitors. Great for a relaxed meal or snack.",
+    distance: "Town area",
+    mapsUrl: "https://maps.google.com/?q=The+Inner+Child+Tiruvannamalai",
+    tags: ["Healthy", "Trendy", "Highly Rated"],
+    rating: 4.7,
+  },
+  {
+    id: "f9",
+    name: "Shanti Cafe",
+    category: "food",
+    subType: "cafe",
+    description: "A calm cafe with a spiritual atmosphere, very popular with international visitors and pilgrims. Perfect for a quiet cup of tea and light food after Girivalam.",
+    distance: "Near ashram area",
+    mapsUrl: "https://maps.google.com/?q=Shanti+Cafe+Tiruvannamalai",
+    tags: ["Café", "Calm", "International"],
+    rating: 4.4,
+  },
+  {
+    id: "f10",
     name: "Pilgrim Refreshment Stalls",
     category: "food",
-    description: "Numerous small stalls along the Girivalam path sell coconut water, sugarcane juice, fruits, and light snacks. Great for hydration during the walk.",
-    distance: "Along the path",
+    subType: "budget",
+    description: "Small stalls all along the Girivalam path selling coconut water, sugarcane juice, fruits, and light snacks. Essential for staying hydrated during the 14 km walk.",
+    distance: "Along the Girivalam path",
     mapsUrl: "https://maps.google.com/?q=Tiruvannamalai+girivalam+route",
-    tags: ["Snacks", "Hydration", "Walk"],
+    tags: ["Snacks", "Coconut Water", "On the Route"],
   },
   {
     id: "s1",
@@ -305,6 +375,25 @@ function openMaps(url: string) {
   );
 }
 
+function StarRating({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.25 && rating - full < 0.75;
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    if (i <= full) stars.push("star");
+    else if (i === full + 1 && half) stars.push("star-half");
+    else stars.push("star-outline");
+  }
+  return (
+    <View style={styles.ratingRow}>
+      {stars.map((icon, i) => (
+        <Ionicons key={i} name={icon as any} size={13} color="#F59E0B" />
+      ))}
+      <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+    </View>
+  );
+}
+
 function PlaceCard({ place }: { place: Place }) {
   const categoryColor =
     place.category === "temples"
@@ -318,6 +407,7 @@ function PlaceCard({ place }: { place: Place }) {
       <View style={styles.placeHeader}>
         <View style={styles.placeInfo}>
           <Text style={styles.placeName}>{place.name}</Text>
+          {place.rating && <StarRating rating={place.rating} />}
           {place.openHours && (
             <Text style={styles.placeHours}>
               <Ionicons name="time-outline" size={11} color={Colors.textLight} />
@@ -341,8 +431,8 @@ function PlaceCard({ place }: { place: Place }) {
           <Text style={[styles.distanceText, { color: categoryColor }]}>{place.distance}</Text>
         </View>
         {place.tags.map((tag) => (
-          <View key={tag} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
+          <View key={tag} style={[styles.tag, tag === "🙏 Free" && styles.tagFree]}>
+            <Text style={[styles.tagText, tag === "🙏 Free" && styles.tagFreeText]}>{tag}</Text>
           </View>
         ))}
       </View>
@@ -434,14 +524,37 @@ export default function LocalGuideScreen() {
             {filtered.filter(p => p.tags.includes("🙏 Free")).map((place) => (
               <PlaceCard key={place.id} place={place} />
             ))}
+
             <View style={styles.subSectionHeader}>
-              <Text style={styles.subSectionEmoji}>🍽️</Text>
+              <Text style={styles.subSectionEmoji}>🍛</Text>
               <View style={styles.subSectionTitles}>
-                <Text style={styles.subSectionLabel}>Restaurants & Cafes</Text>
-                <Text style={styles.subSectionDesc}>Vegetarian food options for pilgrims near the Girivalam route</Text>
+                <Text style={styles.subSectionLabel}>Famous Veg & South Indian</Text>
+                <Text style={styles.subSectionDesc}>Most popular restaurants — highly reviewed by pilgrims</Text>
               </View>
             </View>
-            {filtered.filter(p => !p.tags.includes("🙏 Free")).map((place) => (
+            {filtered.filter(p => p.subType === "popular").map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionEmoji}>🍱</Text>
+              <View style={styles.subSectionTitles}>
+                <Text style={styles.subSectionLabel}>Budget & Local Food</Text>
+                <Text style={styles.subSectionDesc}>Affordable, authentic, and filling meals for pilgrims</Text>
+              </View>
+            </View>
+            {filtered.filter(p => p.subType === "budget").map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionEmoji}>☕</Text>
+              <View style={styles.subSectionTitles}>
+                <Text style={styles.subSectionLabel}>Cafes & Chill Spots</Text>
+                <Text style={styles.subSectionDesc}>Popular with tourists — peaceful atmosphere to relax after Girivalam</Text>
+              </View>
+            </View>
+            {filtered.filter(p => p.subType === "cafe").map((place) => (
               <PlaceCard key={place.id} place={place} />
             ))}
           </>
@@ -591,6 +704,28 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textMid,
+  },
+  tagFree: {
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+  },
+  tagFreeText: {
+    color: "#92400E",
+    fontFamily: "Inter_600SemiBold",
+  },
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginTop: 3,
+    marginBottom: 2,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "#92400E",
+    marginLeft: 4,
   },
   moreBtn: {
     flexDirection: "row",
