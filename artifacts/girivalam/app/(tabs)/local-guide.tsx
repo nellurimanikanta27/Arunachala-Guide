@@ -184,6 +184,39 @@ const PLACES: Place[] = [
     tags: ["Sacred Pond", "Protection"],
   },
   {
+    id: "free1",
+    name: "Arunachaleswarar Temple — Annadanam",
+    category: "food",
+    subType: "food",
+    description: "The main temple provides free sacred meals (Annadanam) to all pilgrims throughout the day. No registration needed — simply join the queue. A blessed way to nourish yourself during Girivalam.",
+    distance: "Main temple complex",
+    mapsUrl: "https://maps.google.com/?q=Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["🙏 Free", "Annadanam", "All Day"],
+    openHours: "Full Day",
+  },
+  {
+    id: "free2",
+    name: "Sri Ramana Ashram — Free Meals",
+    category: "food",
+    subType: "food",
+    description: "Sri Ramanasramam offers free vegetarian meals to all visitors as part of their seva. Simple, pure, and served with devotion. Open to pilgrims of all backgrounds.",
+    distance: "2 km from main temple",
+    mapsUrl: "https://maps.google.com/?q=Sri+Ramanasramam+Tiruvannamalai",
+    tags: ["🙏 Free", "Annadanam", "Ashram"],
+    openHours: "9:00 AM – 10:00 AM",
+  },
+  {
+    id: "free3",
+    name: "Seshadri Swamigal Ashram — Free Meals",
+    category: "food",
+    subType: "food",
+    description: "The Seshadri Swamigal Ashram offers free meals to pilgrims from noon onwards as a sacred offering. A peaceful place to rest, eat, and be blessed.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=Seshadri+Swamigal+Ashram+Tiruvannamalai",
+    tags: ["🙏 Free", "Annadanam", "Ashram"],
+    openHours: "12:00 PM onwards",
+  },
+  {
     id: "f1",
     name: "Sri Annapoorna Hotel",
     category: "food",
@@ -389,12 +422,33 @@ export default function LocalGuideScreen() {
               </View>
             );
           })
+        ) : active === "food" ? (
+          <>
+            <View style={styles.annadanamBanner}>
+              <Text style={styles.annadanamBannerEmoji}>🙏</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.annadanamBannerTitle}>Free Annadanam (Food Donation)</Text>
+                <Text style={styles.annadanamBannerDesc}>Sacred free meals offered to all pilgrims — no charge, no registration needed</Text>
+              </View>
+            </View>
+            {filtered.filter(p => p.tags.includes("🙏 Free")).map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionEmoji}>🍽️</Text>
+              <View style={styles.subSectionTitles}>
+                <Text style={styles.subSectionLabel}>Restaurants & Cafes</Text>
+                <Text style={styles.subSectionDesc}>Vegetarian food options for pilgrims near the Girivalam route</Text>
+              </View>
+            </View>
+            {filtered.filter(p => !p.tags.includes("🙏 Free")).map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+          </>
         ) : (
           <>
             <Text style={styles.sectionInfo}>
-              {active === "food"
-                ? "Vegetarian restaurants and food options for pilgrims"
-                : "Accommodation options for pilgrims visiting Tiruvannamalai"}
+              Accommodation options for pilgrims visiting Tiruvannamalai
             </Text>
             {filtered.map((place) => (
               <PlaceCard key={place.id} place={place} />
@@ -553,6 +607,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_500Medium",
     color: Colors.saffron,
+  },
+  annadanamBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1.5,
+    borderColor: "#E8620A",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+  },
+  annadanamBannerEmoji: {
+    fontSize: 28,
+  },
+  annadanamBannerTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: Colors.brown,
+    marginBottom: 3,
+  },
+  annadanamBannerDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    lineHeight: 17,
   },
   subSectionHeader: {
     flexDirection: "row",
