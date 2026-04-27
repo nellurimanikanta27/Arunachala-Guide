@@ -12,10 +12,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
-
-const GOOGLE_MAPS_GIRIVALAM =
-  "https://www.google.com/maps/dir/Arunachaleswarar+Temple,+Tiruvannamalai/@12.2330,79.0674,14z";
 
 const GOOGLE_MAPS_NAVIGATION =
   "https://maps.google.com/maps?saddr=My+Location&daddr=Arunachaleswarar+Temple,+Tiruvannamalai&travelmode=walking";
@@ -81,32 +79,40 @@ export default function RouteMapScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.mapCard}>
-        <View style={styles.mapPlaceholder}>
-          <MaterialCommunityIcons name="map-marker-path" size={56} color={Colors.saffronLight} />
-          <Text style={styles.mapTitle}>Girivalam Path</Text>
-          <Text style={styles.mapSubtitle}>
-            14 km sacred circumambulation around{"\n"}Arunachala Hill, Tiruvannamalai
-          </Text>
+        <View style={styles.mapHeader}>
+          <MaterialCommunityIcons name="map-marker-path" size={22} color={Colors.saffron} />
+          <View style={styles.mapHeaderText}>
+            <Text style={styles.mapTitle}>Girivalam Path</Text>
+            <Text style={styles.mapSubtitle}>14 km around Arunachala Hill</Text>
+          </View>
+        </View>
+
+        <GirivalamMap />
+
+        <View style={styles.mapLegend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "#B8410E" }]} />
+            <Text style={styles.legendText}>Main Temple</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: Colors.saffron }]} />
+            <Text style={styles.legendText}>8 Lingams</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDash} />
+            <Text style={styles.legendText}>Walk Path</Text>
+          </View>
         </View>
 
         <View style={styles.mapButtonRow}>
           <Pressable
-            style={[styles.mapBtn, styles.mapBtnPrimary]}
-            onPress={() => openMaps(GOOGLE_MAPS_GIRIVALAM)}
-            accessibilityRole="button"
-            accessibilityLabel="View Route on Google Maps"
-          >
-            <Ionicons name="map" size={20} color={Colors.white} />
-            <Text style={styles.mapBtnText}>View Route</Text>
-          </Pressable>
-          <Pressable
             style={[styles.mapBtn, styles.mapBtnSecondary]}
             onPress={() => openMaps(GOOGLE_MAPS_NAVIGATION)}
             accessibilityRole="button"
-            accessibilityLabel="Start Navigation"
+            accessibilityLabel="Open Walking Navigation"
           >
             <Ionicons name="navigate" size={20} color={Colors.saffron} />
-            <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Navigate</Text>
+            <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Open Navigation</Text>
           </Pressable>
         </View>
       </View>
@@ -181,24 +187,56 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
-  mapPlaceholder: {
-    backgroundColor: Colors.creamDark,
-    height: 180,
+  mapHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  mapHeaderText: {
+    flex: 1,
   },
   mapTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.saffronDark,
   },
   mapSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textLight,
-    textAlign: "center",
-    lineHeight: 19,
+    marginTop: 2,
+  },
+  mapLegend: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendDash: {
+    width: 14,
+    height: 3,
+    backgroundColor: Colors.saffron,
+    borderRadius: 2,
+  },
+  legendText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textLight,
   },
   mapButtonRow: {
     flexDirection: "row",
