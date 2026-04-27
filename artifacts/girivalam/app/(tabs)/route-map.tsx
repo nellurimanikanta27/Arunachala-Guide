@@ -79,6 +79,7 @@ export default function RouteMapScreen() {
   const [userLocation, setUserLocation] = useState<UserLoc | null>(null);
   const [tracking, setTracking] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [showStops, setShowStops] = useState(true);
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
 
@@ -201,7 +202,32 @@ export default function RouteMapScreen() {
           </View>
         </View>
 
-        <GirivalamMap userLocation={userLocation} />
+        <GirivalamMap userLocation={userLocation} showStops={showStops} />
+
+        <View style={styles.stopsToggleRow}>
+          <Pressable
+            style={[styles.stopsChip, showStops && styles.stopsChipActive]}
+            onPress={() => setShowStops((v) => !v)}
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={showStops ? "eye" : "eye-off"}
+              size={14}
+              color={showStops ? Colors.white : Colors.saffron}
+            />
+            <Text
+              style={[
+                styles.stopsChipText,
+                showStops && styles.stopsChipTextActive,
+              ]}
+            >
+              {showStops ? "Hide Stops" : "Show Stops"}
+            </Text>
+          </Pressable>
+          <Text style={styles.stopsHint}>
+            {showStops ? "Showing 16 stops on path" : "Tap to see helpful stops"}
+          </Text>
+        </View>
 
         <View style={styles.mapLegend}>
           <View style={styles.legendItem}>
@@ -223,6 +249,22 @@ export default function RouteMapScreen() {
             </View>
           )}
         </View>
+
+        {showStops && (
+          <View style={styles.iconGuide}>
+            <Text style={styles.iconGuideTitle}>Stop Icons</Text>
+            <View style={styles.iconGuideRow}>
+              <Text style={styles.iconGuideItem}>🕉️ Ashram</Text>
+              <Text style={styles.iconGuideItem}>🛕 Temple</Text>
+              <Text style={styles.iconGuideItem}>🛖 Cave</Text>
+              <Text style={styles.iconGuideItem}>🍛 Free Food</Text>
+              <Text style={styles.iconGuideItem}>💧 Theertham</Text>
+              <Text style={styles.iconGuideItem}>🚻 Rest Stop</Text>
+              <Text style={styles.iconGuideItem}>🏥 Medical</Text>
+              <Text style={styles.iconGuideItem}>🅿️ Parking</Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.mapButtonRow}>
           <Pressable
@@ -389,6 +431,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textLight,
+  },
+  stopsToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  stopsChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.saffron,
+    backgroundColor: Colors.white,
+  },
+  stopsChipActive: {
+    backgroundColor: Colors.saffron,
+  },
+  stopsChipText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.saffron,
+  },
+  stopsChipTextActive: {
+    color: Colors.white,
+  },
+  stopsHint: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+  },
+  iconGuide: {
+    backgroundColor: Colors.cream,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 10,
+  },
+  iconGuideTitle: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: Colors.saffronDark,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  iconGuideRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    rowGap: 6,
+  },
+  iconGuideItem: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
   },
   mapButtonRow: {
     flexDirection: "row",

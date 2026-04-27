@@ -45,6 +45,33 @@ const ROUTE_PATH: [number, number][] = [
   [12.2349, 79.0676],
 ];
 
+interface StopPoint {
+  lat: number;
+  lng: number;
+  emoji: string;
+  title: string;
+  subtitle: string;
+}
+
+const STOP_POINTS: StopPoint[] = [
+  { lat: 12.2238, lng: 79.0682, emoji: "🕉️", title: "Sri Ramana Ashram", subtitle: "Meditation hall · Free food 9–10 AM" },
+  { lat: 12.2247, lng: 79.0689, emoji: "🕉️", title: "Seshadri Swamigal Ashram", subtitle: "Free food 12 PM onwards" },
+  { lat: 12.2289, lng: 79.0712, emoji: "🛖", title: "Skandashram", subtitle: "Sacred cave on the hill" },
+  { lat: 12.2278, lng: 79.0701, emoji: "🛖", title: "Virupaksha Cave", subtitle: "Ramana's meditation cave" },
+  { lat: 12.2290, lng: 79.0782, emoji: "🕉️", title: "Yogi Ramsuratkumar Ashram", subtitle: "South-East side of path" },
+  { lat: 12.2479, lng: 79.0541, emoji: "🛕", title: "Adi Annamalai Temple", subtitle: "Original Arunachaleswarar shrine" },
+  { lat: 12.2348, lng: 79.0668, emoji: "🍛", title: "Annadanam – Main Temple", subtitle: "Free food all day" },
+  { lat: 12.2340, lng: 79.0688, emoji: "💧", title: "Siva Ganga Theertham", subtitle: "Sacred water tank" },
+  { lat: 12.2358, lng: 79.0651, emoji: "💧", title: "Brahma Theertham", subtitle: "Sacred bathing tank" },
+  { lat: 12.2255, lng: 79.0660, emoji: "💧", title: "Agastya Theertham", subtitle: "South side water tank" },
+  { lat: 12.2380, lng: 79.0710, emoji: "💧", title: "Ayyankulam", subtitle: "Large sacred tank" },
+  { lat: 12.2310, lng: 79.0790, emoji: "🚻", title: "Rest Stop – East", subtitle: "Toilets & seating" },
+  { lat: 12.2210, lng: 79.0620, emoji: "🚻", title: "Rest Stop – South", subtitle: "Toilets & water" },
+  { lat: 12.2490, lng: 79.0630, emoji: "🚻", title: "Rest Stop – North", subtitle: "Shade & seating" },
+  { lat: 12.2410, lng: 79.0790, emoji: "🏥", title: "Medical Help (Pournami)", subtitle: "First-aid post on full moon nights" },
+  { lat: 12.2370, lng: 79.0760, emoji: "🅿️", title: "Pilgrim Parking", subtitle: "Near temple east entrance" },
+];
+
 interface UserLocation {
   lat: number;
   lng: number;
@@ -53,6 +80,7 @@ interface UserLocation {
 
 interface GirivalamMapProps {
   userLocation?: UserLocation | null;
+  showStops?: boolean;
 }
 
 function buildMapHtml(): string {
@@ -68,6 +96,7 @@ function buildMapHtml(): string {
       }).addTo(map).bindPopup('<b>${m.title}</b><br/>${m.subtitle}');`
   ).join("\n");
 
+  const stopsJson = JSON.stringify(STOP_POINTS);
   const polylineCoords = JSON.stringify(ROUTE_PATH);
 
   return `<!DOCTYPE html>
@@ -80,6 +109,13 @@ function buildMapHtml(): string {
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #FFF8EE; }
     .leaflet-popup-content { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; color: #2A1810; }
     .leaflet-control-attribution { font-size: 9px; }
+    .stop-pin {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #ffffff; border: 2px solid #E8620A;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; line-height: 1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
     .user-pulse {
       width: 18px; height: 18px; border-radius: 50%;
       background: #1E88E5; border: 3px solid #ffffff;
@@ -122,6 +158,31 @@ function buildMapHtml(): string {
 
     ${markersJs}
 
+    var stopPoints = ${stopsJson};
+    window.stopMarkers = [];
+    window.stopsLayer = L.layerGroup();
+    stopPoints.forEach(function(s) {
+      var icon = L.divIcon({
+        className: '',
+        html: '<div class="stop-pin">' + s.emoji + '</div>',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+      var m = L.marker([s.lat, s.lng], { icon: icon })
+        .bindPopup('<b>' + s.title + '</b><br/>' + s.subtitle);
+      window.stopMarkers.push(m);
+      window.stopsLayer.addLayer(m);
+    });
+
+    window.setStopsVisible = function(visible) {
+      if (visible) {
+        if (!map.hasLayer(window.stopsLayer)) map.addLayer(window.stopsLayer);
+      } else {
+        if (map.hasLayer(window.stopsLayer)) map.removeLayer(window.stopsLayer);
+      }
+    };
+    window.setStopsVisible(true);
+
     window.userMarker = null;
     window.setUserLocation = function(lat, lng, recenter) {
       var icon = L.divIcon({
@@ -144,8 +205,11 @@ function buildMapHtml(): string {
     function handleMessage(raw) {
       try {
         var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (data && data.type === 'setUser') {
+        if (!data) return;
+        if (data.type === 'setUser') {
           window.setUserLocation(data.lat, data.lng, data.recenter);
+        } else if (data.type === 'setStops') {
+          window.setStopsVisible(!!data.visible);
         }
       } catch (e) {}
     }
@@ -156,11 +220,32 @@ function buildMapHtml(): string {
 </html>`;
 }
 
-export function GirivalamMap({ userLocation }: GirivalamMapProps) {
+export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapProps) {
   const html = React.useMemo(() => buildMapHtml(), []);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const webViewRef = useRef<WebView | null>(null);
   const isReady = useRef(false);
+
+  function postToMap(payload: string) {
+    if (Platform.OS === "web") {
+      iframeRef.current?.contentWindow?.postMessage(payload, "*");
+    } else {
+      webViewRef.current?.injectJavaScript(`
+        (function(){
+          try {
+            var data = ${JSON.stringify(payload)};
+            var parsed = JSON.parse(data);
+            if (parsed.type === 'setUser') {
+              window.setUserLocation(parsed.lat, parsed.lng, parsed.recenter);
+            } else if (parsed.type === 'setStops') {
+              window.setStopsVisible(!!parsed.visible);
+            }
+          } catch(e){}
+        })();
+        true;
+      `);
+    }
+  }
 
   useEffect(() => {
     if (!userLocation) return;
@@ -170,28 +255,29 @@ export function GirivalamMap({ userLocation }: GirivalamMapProps) {
       lng: userLocation.lng,
       recenter: userLocation.recenter ?? false,
     });
-
-    const send = () => {
-      if (Platform.OS === "web") {
-        iframeRef.current?.contentWindow?.postMessage(payload, "*");
-      } else {
-        webViewRef.current?.injectJavaScript(`
-          (function(){ try { window.setUserLocation(${userLocation.lat}, ${userLocation.lng}, ${userLocation.recenter ? "true" : "false"}); } catch(e){} })();
-          true;
-        `);
-      }
-    };
-
     if (isReady.current) {
-      send();
+      postToMap(payload);
     } else {
       const t = setTimeout(() => {
         isReady.current = true;
-        send();
+        postToMap(payload);
       }, 800);
       return () => clearTimeout(t);
     }
   }, [userLocation]);
+
+  useEffect(() => {
+    const payload = JSON.stringify({ type: "setStops", visible: showStops });
+    if (isReady.current) {
+      postToMap(payload);
+    } else {
+      const t = setTimeout(() => {
+        isReady.current = true;
+        postToMap(payload);
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, [showStops]);
 
   if (Platform.OS === "web") {
     return (
