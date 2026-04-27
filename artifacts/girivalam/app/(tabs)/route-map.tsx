@@ -1,7 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import React from "react";
+import * as Location from "expo-location";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -14,6 +16,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
+
+interface UserLoc {
+  lat: number;
+  lng: number;
+  recenter?: boolean;
+}
 
 const GOOGLE_MAPS_NAVIGATION =
   "https://maps.google.com/maps?saddr=My+Location&daddr=Arunachaleswarar+Temple,+Tiruvannamalai&travelmode=walking";
@@ -68,6 +76,112 @@ export default function RouteMapScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const bottomInset = isWeb ? 34 : insets.bottom;
+  const [userLocation, setUserLocation] = useState<UserLoc | null>(null);
+  const [tracking, setTracking] = useState(false);
+  const [requesting, setRequesting] = useState(false);
+  const watchSubRef = useRef<Location.LocationSubscription | null>(null);
+  const webWatchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      watchSubRef.current?.remove();
+      watchSubRef.current = null;
+      if (
+        Platform.OS === "web" &&
+        webWatchIdRef.current !== null &&
+        typeof navigator !== "undefined" &&
+        navigator.geolocation
+      ) {
+        navigator.geolocation.clearWatch(webWatchIdRef.current);
+        webWatchIdRef.current = null;
+      }
+    };
+  }, []);
+
+  async function startTracking() {
+    if (tracking) {
+      stopTracking();
+      return;
+    }
+    setRequesting(true);
+    try {
+      if (Platform.OS === "web") {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+          Alert.alert("Not Supported", "Your browser does not support location tracking.");
+          return;
+        }
+        webWatchIdRef.current = navigator.geolocation.watchPosition(
+          (pos) => {
+            setUserLocation({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              recenter: !tracking,
+            });
+            setTracking(true);
+          },
+          (err) => {
+            Alert.alert(
+              "Location Unavailable",
+              err.message || "Please allow location access in your browser."
+            );
+            setTracking(false);
+          },
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+        );
+      } else {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Needed",
+            "Allow location access so we can show your position on the Girivalam path."
+          );
+          return;
+        }
+        const initial = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        setUserLocation({
+          lat: initial.coords.latitude,
+          lng: initial.coords.longitude,
+          recenter: true,
+        });
+        setTracking(true);
+        watchSubRef.current = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 4000,
+            distanceInterval: 5,
+          },
+          (loc) => {
+            setUserLocation({
+              lat: loc.coords.latitude,
+              lng: loc.coords.longitude,
+              recenter: false,
+            });
+          }
+        );
+      }
+    } catch (e) {
+      Alert.alert("Error", "Could not start location tracking.");
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  function stopTracking() {
+    watchSubRef.current?.remove();
+    watchSubRef.current = null;
+    if (
+      Platform.OS === "web" &&
+      webWatchIdRef.current !== null &&
+      typeof navigator !== "undefined" &&
+      navigator.geolocation
+    ) {
+      navigator.geolocation.clearWatch(webWatchIdRef.current);
+      webWatchIdRef.current = null;
+    }
+    setTracking(false);
+  }
 
   return (
     <ScrollView
@@ -87,7 +201,7 @@ export default function RouteMapScreen() {
           </View>
         </View>
 
-        <GirivalamMap />
+        <GirivalamMap userLocation={userLocation} />
 
         <View style={styles.mapLegend}>
           <View style={styles.legendItem}>
@@ -102,9 +216,38 @@ export default function RouteMapScreen() {
             <View style={styles.legendDash} />
             <Text style={styles.legendText}>Walk Path</Text>
           </View>
+          {tracking && (
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "#1E88E5" }]} />
+              <Text style={styles.legendText}>You</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.mapButtonRow}>
+          <Pressable
+            style={[
+              styles.mapBtn,
+              tracking ? styles.mapBtnTracking : styles.mapBtnPrimary,
+            ]}
+            onPress={startTracking}
+            disabled={requesting}
+            accessibilityRole="button"
+            accessibilityLabel={tracking ? "Stop Live Tracking" : "Start Live Tracking"}
+          >
+            {requesting ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : (
+              <Ionicons
+                name={tracking ? "radio-button-on" : "locate"}
+                size={20}
+                color={Colors.white}
+              />
+            )}
+            <Text style={styles.mapBtnText}>
+              {tracking ? "Stop Tracking" : "Track My Location"}
+            </Text>
+          </Pressable>
           <Pressable
             style={[styles.mapBtn, styles.mapBtnSecondary]}
             onPress={() => openMaps(GOOGLE_MAPS_NAVIGATION)}
@@ -112,9 +255,18 @@ export default function RouteMapScreen() {
             accessibilityLabel="Open Walking Navigation"
           >
             <Ionicons name="navigate" size={20} color={Colors.saffron} />
-            <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Open Navigation</Text>
+            <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Navigate</Text>
           </Pressable>
         </View>
+
+        {tracking && (
+          <View style={styles.trackingBanner}>
+            <View style={styles.trackingDot} />
+            <Text style={styles.trackingText}>
+              Live tracking active — your position updates as you walk
+            </Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
@@ -254,6 +406,34 @@ const styles = StyleSheet.create({
   },
   mapBtnPrimary: {
     backgroundColor: Colors.saffron,
+  },
+  mapBtnTracking: {
+    backgroundColor: "#1E88E5",
+  },
+  trackingBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#E3F2FD",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: "#1E88E5",
+  },
+  trackingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#1E88E5",
+  },
+  trackingText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "#0D47A1",
   },
   mapBtnSecondary: {
     backgroundColor: Colors.cream,

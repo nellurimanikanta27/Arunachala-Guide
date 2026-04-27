@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 
@@ -45,6 +45,16 @@ const ROUTE_PATH: [number, number][] = [
   [12.2349, 79.0676],
 ];
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+  recenter?: boolean;
+}
+
+interface GirivalamMapProps {
+  userLocation?: UserLocation | null;
+}
+
 function buildMapHtml(): string {
   const markersJs = MARKERS.map(
     (m) => `
@@ -70,6 +80,17 @@ function buildMapHtml(): string {
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #FFF8EE; }
     .leaflet-popup-content { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; color: #2A1810; }
     .leaflet-control-attribution { font-size: 9px; }
+    .user-pulse {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #1E88E5; border: 3px solid #ffffff;
+      box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6); }
+      70% { box-shadow: 0 0 0 18px rgba(30, 136, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0); }
+    }
   </style>
 </head>
 <body>
@@ -100,19 +121,87 @@ function buildMapHtml(): string {
     }).addTo(map).bindPopup('<b>Arunachala Hill</b><br/>Sacred Mountain');
 
     ${markersJs}
+
+    window.userMarker = null;
+    window.setUserLocation = function(lat, lng, recenter) {
+      var icon = L.divIcon({
+        className: '',
+        html: '<div class="user-pulse"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+      });
+      if (window.userMarker) {
+        window.userMarker.setLatLng([lat, lng]);
+      } else {
+        window.userMarker = L.marker([lat, lng], { icon: icon, zIndexOffset: 1000 })
+          .addTo(map).bindPopup('<b>You are here</b>');
+      }
+      if (recenter) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 15));
+      }
+    };
+
+    function handleMessage(raw) {
+      try {
+        var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (data && data.type === 'setUser') {
+          window.setUserLocation(data.lat, data.lng, data.recenter);
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('message', function(e) { handleMessage(e.data); });
+    document.addEventListener('message', function(e) { handleMessage(e.data); });
   </script>
 </body>
 </html>`;
 }
 
-export function GirivalamMap() {
-  const html = buildMapHtml();
+export function GirivalamMap({ userLocation }: GirivalamMapProps) {
+  const html = React.useMemo(() => buildMapHtml(), []);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const webViewRef = useRef<WebView | null>(null);
+  const isReady = useRef(false);
+
+  useEffect(() => {
+    if (!userLocation) return;
+    const payload = JSON.stringify({
+      type: "setUser",
+      lat: userLocation.lat,
+      lng: userLocation.lng,
+      recenter: userLocation.recenter ?? false,
+    });
+
+    const send = () => {
+      if (Platform.OS === "web") {
+        iframeRef.current?.contentWindow?.postMessage(payload, "*");
+      } else {
+        webViewRef.current?.injectJavaScript(`
+          (function(){ try { window.setUserLocation(${userLocation.lat}, ${userLocation.lng}, ${userLocation.recenter ? "true" : "false"}); } catch(e){} })();
+          true;
+        `);
+      }
+    };
+
+    if (isReady.current) {
+      send();
+    } else {
+      const t = setTimeout(() => {
+        isReady.current = true;
+        send();
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, [userLocation]);
 
   if (Platform.OS === "web") {
     return (
       <View style={styles.container}>
         <iframe
+          ref={iframeRef}
           srcDoc={html}
+          onLoad={() => {
+            isReady.current = true;
+          }}
           style={{
             width: "100%",
             height: "100%",
@@ -128,12 +217,16 @@ export function GirivalamMap() {
   return (
     <View style={styles.container}>
       <WebView
+        ref={webViewRef}
         originWhitelist={["*"]}
         source={{ html }}
         style={styles.webview}
         scrollEnabled={false}
         javaScriptEnabled
         domStorageEnabled
+        onLoadEnd={() => {
+          isReady.current = true;
+        }}
       />
     </View>
   );
