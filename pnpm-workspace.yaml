@@ -171,6 +171,8 @@ overrides:
   "brace-expansion@<1.1.13": "^1.1.13"
   "brace-expansion@>=2.0.0 <2.0.3": "^2.0.3"
   "brace-expansion@>=4.0.0 <5.0.5": "^5.0.5"
+  # Fix postcss vulnerability GHSA-qx2v-qp2m-jg93
+  "postcss@<8.5.13": "^8.5.13"
   # Scope uuid upgrade narrowly to only the two transitive paths flagged by audit
   # (xcode in @expo/config-plugins and @expo/ngrok). Both are dev/build-time
   # tooling for Expo and use only basic uuid.v4() / v1() APIs that are
