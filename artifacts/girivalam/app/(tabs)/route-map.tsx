@@ -82,6 +82,8 @@ export default function RouteMapScreen() {
   const [showStops, setShowStops] = useState(true);
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
+  const [japaCount, setJapaCount] = useState(0);
+  const [japaTarget, setJapaTarget] = useState(108);
 
   useEffect(() => {
     return () => {
@@ -309,6 +311,48 @@ export default function RouteMapScreen() {
             </Text>
           </View>
         )}
+      </View>
+
+      <View style={styles.japaCard}>
+        <View style={styles.japaHeader}>
+          <Text style={styles.japaHeaderIcon}>📿</Text>
+          <Text style={styles.japaHeaderTitle}>Japa Counter</Text>
+          <Pressable onPress={() => setJapaCount(0)} accessibilityRole="button" style={styles.japaReset}>
+            <Text style={styles.japaResetText}>Reset</Text>
+          </Pressable>
+        </View>
+        <Pressable
+          style={styles.japaTapBtn}
+          onPress={() => setJapaCount((c) => c + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Count one chant"
+        >
+          <Text style={styles.japaCount}>{japaCount}</Text>
+          <Text style={styles.japaTapLabel}>TAP TO COUNT</Text>
+          {japaCount > 0 && japaCount % japaTarget === 0 && (
+            <Text style={styles.japaComplete}>🙏 {japaCount / japaTarget} mala complete!</Text>
+          )}
+        </Pressable>
+        <View style={styles.japaPresets}>
+          <Pressable
+            style={[styles.japaPresetBtn, japaTarget === 108 && styles.japaPresetActive]}
+            onPress={() => setJapaTarget(108)}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.japaPresetText, japaTarget === 108 && styles.japaPresetTextActive]}>108</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.japaPresetBtn, japaTarget === 1008 && styles.japaPresetActive]}
+            onPress={() => setJapaTarget(1008)}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.japaPresetText, japaTarget === 1008 && styles.japaPresetTextActive]}>1008</Text>
+          </Pressable>
+          <View style={styles.japaProgress}>
+            <View style={[styles.japaProgressFill, { width: `${Math.min(100, (japaCount % japaTarget || (japaCount > 0 && japaCount % japaTarget === 0 ? japaTarget : 0)) / japaTarget * 100)}%` as any }]} />
+          </View>
+          <Text style={styles.japaProgressLabel}>{japaTarget - (japaCount % japaTarget === 0 && japaCount > 0 ? japaTarget : japaCount % japaTarget)} to go</Text>
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
@@ -677,5 +721,115 @@ const styles = StyleSheet.create({
   },
   specialLingamEmojiText: {
     fontSize: 20,
+  },
+
+  japaCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+    gap: 12,
+  },
+  japaHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  japaHeaderIcon: { fontSize: 18 },
+  japaHeaderTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  japaReset: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: Colors.primaryFaint,
+    borderRadius: 8,
+  },
+  japaResetText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.primary,
+  },
+  japaTapBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 22,
+    alignItems: "center",
+    gap: 4,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  japaCount: {
+    fontSize: 52,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+    lineHeight: 60,
+  },
+  japaTapLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.6)",
+    letterSpacing: 1.5,
+  },
+  japaComplete: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.amberLight,
+    marginTop: 4,
+  },
+  japaPresets: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  japaPresetBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cream,
+  },
+  japaPresetActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryFaint,
+  },
+  japaPresetText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textLight,
+  },
+  japaPresetTextActive: { color: Colors.primary },
+  japaProgress: {
+    flex: 1,
+    height: 6,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  japaProgressFill: {
+    height: "100%",
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  japaProgressLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textLight,
+    minWidth: 42,
+    textAlign: "right",
   },
 });

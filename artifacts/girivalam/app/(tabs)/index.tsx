@@ -14,6 +14,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import {
+  getDailyQuote,
+  getMoonPhase,
+  getPournamiCountdown,
+  getPournamiDate,
+  getTithi,
+} from "@/lib/sacred-time";
 
 type FeatureRoute = "route-map" | "history" | "local-guide" | "ai-guide" | "translator";
 
@@ -26,52 +33,49 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
-  {
-    id: "route-map",
-    title: "Girivalam Route",
-    subtitle: "14 km sacred path · live map · 8 lingams",
-    icon: "map",
-    iconFamily: "Ionicons",
-  },
-  {
-    id: "history",
-    title: "History & Meditation",
-    subtitle: "Spiritual significance & guided practice",
-    icon: "om",
-    iconFamily: "MaterialCommunityIcons",
-  },
-  {
-    id: "local-guide",
-    title: "Local Guide",
-    subtitle: "Temples, ashrams, food & stay",
-    icon: "compass",
-    iconFamily: "Ionicons",
-  },
-  {
-    id: "ai-guide",
-    title: "AI Guide",
-    subtitle: "Ask anything about Girivalam",
-    icon: "chatbubble-ellipses",
-    iconFamily: "Ionicons",
-  },
-  {
-    id: "translator",
-    title: "Translator",
-    subtitle: "Translate across pilgrim languages",
-    icon: "language",
-    iconFamily: "Ionicons",
-  },
+  { id: "route-map", title: "Girivalam Route", subtitle: "14 km path · live map · 8 lingams", icon: "map", iconFamily: "Ionicons" },
+  { id: "history", title: "History & Meditation", subtitle: "Breathing guide · Ramana teachings", icon: "om", iconFamily: "MaterialCommunityIcons" },
+  { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
+  { id: "ai-guide", title: "AI Guide", subtitle: "Ask anything about Girivalam", icon: "chatbubble-ellipses", iconFamily: "Ionicons" },
+  { id: "translator", title: "Translator", subtitle: "Translate across pilgrim languages", icon: "language", iconFamily: "Ionicons" },
 ];
+
+function SacredMomentCard() {
+  const moon = getMoonPhase();
+  const tithi = getTithi();
+  const pournami = getPournamiCountdown();
+  const quote = getDailyQuote();
+  const pournamiDate = getPournamiDate();
+
+  return (
+    <View style={styles.sacredCard}>
+      <View style={styles.sacredTop}>
+        <View style={styles.moonBlock}>
+          <Text style={styles.moonEmoji}>{moon.emoji}</Text>
+          <View>
+            <Text style={styles.moonName}>{moon.name}</Text>
+            <Text style={styles.moonSub}>
+              {tithi.paksha} {tithi.name}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.pournamiPill, pournami.isToday && styles.pournamiPillActive]}>
+          <Text style={[styles.pournamiPillText, pournami.isToday && styles.pournamiPillTextActive]}>
+            {pournami.isToday ? "🌕 Pournami Today!" : pournami.days <= 1 ? `🌔 ${pournami.label}` : `${pournami.label} · ${pournamiDate}`}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.quoteDivider} />
+      <Text style={styles.quoteText}>"{quote}"</Text>
+      <Text style={styles.quoteAuthor}>— Sri Ramana Maharshi</Text>
+    </View>
+  );
+}
 
 function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
   const scale = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () =>
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, tension: 300, friction: 20 }).start();
-
-  const handlePressOut = () =>
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 300, friction: 20 }).start();
-
+  const handlePressIn = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, tension: 300, friction: 20 }).start();
+  const handlePressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 300, friction: 20 }).start();
   const isFirst = index === 0;
 
   return (
@@ -85,15 +89,16 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
       >
         {isFirst ? (
           <View style={styles.heroCard}>
-            <View style={styles.heroIconWrap}>
-              <Ionicons name="map" size={30} color={Colors.primary} />
+            <View style={styles.heroRow}>
+              <View style={styles.heroIconWrap}>
+                <Ionicons name="map" size={28} color={Colors.primary} />
+              </View>
+              <View style={styles.heroText}>
+                <Text style={styles.heroTitle}>Girivalam Route</Text>
+                <Text style={styles.heroSubtitle}>{feature.subtitle}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textFaint} />
             </View>
-            <View style={styles.heroText}>
-              <Text style={styles.heroTitle}>Girivalam Route</Text>
-              <Text style={styles.heroSubtitle}>14 km sacred path · live map · 8 lingams</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textFaint} />
-
             <View style={styles.heroStats}>
               <View style={styles.heroStatItem}>
                 <Text style={styles.heroStatValue}>14 km</Text>
@@ -115,16 +120,16 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
           <View style={styles.card}>
             <View style={styles.cardIconWrap}>
               {feature.iconFamily === "Ionicons" ? (
-                <Ionicons name={feature.icon as any} size={22} color={Colors.primary} />
+                <Ionicons name={feature.icon as any} size={20} color={Colors.primary} />
               ) : (
-                <MaterialCommunityIcons name={feature.icon as any} size={22} color={Colors.primary} />
+                <MaterialCommunityIcons name={feature.icon as any} size={20} color={Colors.primary} />
               )}
             </View>
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>{feature.title}</Text>
               <Text style={styles.cardSubtitle}>{feature.subtitle}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Colors.textFaint} />
+            <Ionicons name="chevron-forward" size={15} color={Colors.textFaint} />
           </View>
         )}
       </Pressable>
@@ -141,17 +146,17 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryDark]}
+        colors={[Colors.primaryDark, Colors.primary]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: topInset + 16 }]}
+        style={[styles.header, { paddingTop: topInset + 14 }]}
       >
         <View style={styles.headerTop}>
-          <MaterialCommunityIcons name="om" size={22} color="rgba(255,255,255,0.7)" />
-          <Text style={styles.headerTag}>Pournami & Daily Girivalam</Text>
+          <MaterialCommunityIcons name="om" size={18} color="rgba(255,255,255,0.6)" />
+          <Text style={styles.headerTag}>Arunachala Pilgrimage Guide</Text>
         </View>
         <Text style={styles.headerTitle}>Girivalam</Text>
-        <Text style={styles.headerSub}>Arunachala Pilgrimage Guide</Text>
+        <Text style={styles.headerSub}>Tiruvannamalai, Tamil Nadu</Text>
       </LinearGradient>
 
       <ScrollView
@@ -159,13 +164,15 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        <SacredMomentCard />
+
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
         ))}
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>ॐ नमः शिवाय · Om Namah Shivaya</Text>
+          <Text style={styles.footerText}>ॐ नमः शिवाय · Arunachala Shiva</Text>
         </View>
       </ScrollView>
     </View>
@@ -173,81 +180,147 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.warmWhite,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
-  },
+  container: { flex: 1, backgroundColor: Colors.warmWhite },
+  header: { paddingHorizontal: 20, paddingBottom: 20 },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    gap: 7,
+    marginBottom: 10,
   },
   headerTag: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.75)",
+    color: "rgba(255,255,255,0.65)",
     letterSpacing: 0.3,
   },
   headerTitle: {
-    fontSize: 34,
+    fontSize: 36,
     fontFamily: "Inter_700Bold",
     color: Colors.white,
     letterSpacing: -0.5,
   },
   headerSub: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.72)",
+    color: "rgba(255,255,255,0.65)",
     marginTop: 2,
   },
   scroll: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
+  scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
+
+  sacredCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sacredTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 12,
+  },
+  moonBlock: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
-  sectionLabel: {
+  moonEmoji: { fontSize: 28 },
+  moonName: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  moonSub: {
     fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    marginTop: 1,
+  },
+  pournamiPill: {
+    backgroundColor: Colors.primaryFaint,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  pournamiPillActive: {
+    backgroundColor: Colors.amber,
+    borderColor: Colors.amber,
+  },
+  pournamiPillText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+  },
+  pournamiPillTextActive: { color: Colors.white },
+  quoteDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginBottom: 12,
+  },
+  quoteText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    lineHeight: 20,
+    fontStyle: "italic",
+    marginBottom: 6,
+  },
+  quoteAuthor: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+  },
+
+  sectionLabel: {
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textFaint,
     letterSpacing: 1.5,
-    marginBottom: 4,
     marginLeft: 2,
+    marginBottom: 2,
   },
   heroCard: {
     backgroundColor: Colors.white,
     borderRadius: 16,
-    padding: 18,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
+    padding: 16,
     gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  heroRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   heroIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 13,
     backgroundColor: Colors.primaryFaint,
     alignItems: "center",
     justifyContent: "center",
   },
-  heroText: {
-    flex: 1,
-  },
+  heroText: { flex: 1 },
   heroTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 2,
@@ -258,23 +331,19 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
   },
   heroStats: {
-    width: "100%",
     flexDirection: "row",
     backgroundColor: Colors.cream,
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 11,
   },
-  heroStatItem: {
-    flex: 1,
-    alignItems: "center",
-  },
+  heroStatItem: { flex: 1, alignItems: "center" },
   heroStatValue: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.primary,
   },
   heroStatLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textLight,
     marginTop: 2,
@@ -286,50 +355,48 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.white,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    shadowRadius: 3,
+    elevation: 1,
   },
   cardIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 11,
     backgroundColor: Colors.primaryFaint,
     alignItems: "center",
     justifyContent: "center",
   },
   cardText: { flex: 1 },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
     marginBottom: 2,
   },
   cardSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textLight,
-    lineHeight: 17,
   },
   footer: {
     alignItems: "center",
     paddingVertical: 16,
-    marginTop: 4,
   },
   footerText: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textFaint,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
 });

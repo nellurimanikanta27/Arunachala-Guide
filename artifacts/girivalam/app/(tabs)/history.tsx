@@ -1,8 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
+  Easing,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -15,120 +17,183 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { getDailyQuote } from "@/lib/sacred-time";
 
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-interface Section {
-  id: string;
-  title: string;
-  icon: string;
-  iconFamily: "Ionicons" | "MaterialCommunityIcons";
-  content: string;
-}
+const BREATH_PHASES = [
+  { label: "Breathe In", duration: 4000, instruction: "Slowly inhale through your nose" },
+  { label: "Hold", duration: 2000, instruction: "Gently hold your breath" },
+  { label: "Breathe Out", duration: 6000, instruction: "Slowly exhale through your mouth" },
+  { label: "Rest", duration: 2000, instruction: "Pause in stillness" },
+];
 
-const HISTORY_SECTIONS: Section[] = [
+const HISTORY_SECTIONS = [
   {
     id: "arunachala",
     title: "Arunachala — The Sacred Hill",
-    icon: "flame",
-    iconFamily: "Ionicons",
+    icon: "flame" as const,
     content:
-      'Arunachala, also known as Annamalai, is one of the holiest sites in Shaivism. Located in Tiruvannamalai, Tamil Nadu, the hill is considered a manifestation of Lord Shiva himself — specifically as a column of fire (Jyotirlinga). The name "Arunachala" means "the Red Mountain" or "the Hill of Light" in Tamil.\n\nAccording to the Skanda Purana, when Brahma and Vishnu quarreled over supremacy, Shiva appeared as an infinite pillar of fire. Unable to find its top or bottom, they surrendered, and Shiva manifested as the Arunachala hill as a lasting symbol of that divine light.',
+      'Arunachala, also known as Annamalai, is considered the embodiment of Lord Shiva himself — a column of fire (Jyotirlinga) that took form as a hill. The name means "the Hill of Light" or "Red Mountain."\n\nWhen Brahma and Vishnu quarreled over supremacy, Shiva appeared as an infinite pillar of fire. Unable to find its top or bottom, they surrendered. Shiva then manifested as Arunachala — a lasting symbol of divine light. Even gazing at the hill is said to grant liberation.',
   },
   {
     id: "girivalam",
     title: "The Sacred Practice of Girivalam",
-    icon: "walk",
-    iconFamily: "Ionicons",
+    icon: "walk" as const,
     content:
-      "Girivalam (also called Pradakshina) is the act of circumambulating Arunachala Hill in a clockwise direction. The path is approximately 14 kilometers long, passing through temples, shrines, water tanks, and the eight directional Shivalingams.\n\nThe practice dates back thousands of years and is mentioned in ancient Tamil texts like Tevaram and Thiruvachagam. Saints and sages including Ramana Maharshi, Seshadri Swamigal, and countless others walked this sacred path regularly.\n\nPilgrims traditionally walk barefoot as a sign of surrender, though footwear is permitted for those with health needs.",
+      "Girivalam (Pradakshina) is the act of walking clockwise around Arunachala Hill — approximately 14 km. The path passes through the 8 Shivalingams, sacred temples, water tanks, and ashrams.\n\nThe practice is mentioned in ancient Tamil texts like Tevaram and Thiruvachagam. Saints including Ramana Maharshi, Seshadri Swamigal, and thousands of sages walked this path. Each step taken in surrender is considered a prayer.",
   },
   {
     id: "pournami",
     title: "Pournami — The Full Moon Night",
-    icon: "moon",
-    iconFamily: "Ionicons",
+    icon: "moon" as const,
     content:
-      "Pournami (full moon) Girivalam is considered especially auspicious. On full moon nights, hundreds of thousands of pilgrims gather to walk the path from dusk to dawn. The atmosphere is one of extraordinary spiritual energy — with chanting, oil lamps, incense, and a river of devotees moving together in devotion.\n\nMajor festivals like Karthigai Deepam draw millions when a massive fire beacon is lit atop Arunachala, visible from miles away. Thaipusam, Shivaratri, and other festivals also attract large crowds for the Girivalam.",
+      "On Pournami (full moon), hundreds of thousands of pilgrims walk together from dusk to dawn. The atmosphere is extraordinary — oil lamps, incense, chanting, and a river of devotees moving as one.\n\nKarthigai Deepam draws millions when a massive fire beacon is lit atop Arunachala, visible from miles away, symbolizing Shiva as the original column of light.",
   },
   {
     id: "ramana",
     title: "Ramana Maharshi & Arunachala",
-    icon: "person",
-    iconFamily: "Ionicons",
+    icon: "person" as const,
     content:
-      "Sri Ramana Maharshi (1879–1950) arrived at Arunachala as a young boy of 16 following a spontaneous spiritual awakening. He spent the rest of his life at the foot of this hill, teaching the path of Self-inquiry (Atma Vichara).\n\nRamana described Arunachala as the spiritual heart of the world and walked the Girivalam regularly, often spending entire nights in meditation along the path. His ashram, Sri Ramanasramam, remains an active spiritual center at the base of the hill and welcomes visitors from all over the world.",
+      "Sri Ramana Maharshi (1879–1950) arrived at age 16 following a spontaneous spiritual awakening. He spent 54 years at Arunachala, teaching the path of Self-inquiry: 'Who am I?'\n\nRamana described Arunachala as the spiritual heart of the world and walked the Girivalam regularly. His ashram at the foot of the hill welcomes all visitors. He taught that simply being near Arunachala destroys the ego.",
   },
   {
     id: "temple",
     title: "Arunachaleswarar Temple",
-    icon: "business",
-    iconFamily: "Ionicons",
+    icon: "business" as const,
     content:
-      'The Arunachaleswarar Temple (also called Annamalaiyar Temple) is one of the largest Hindu temples in the world, covering 10 hectares with 4 tall gopurams (gateway towers). The tallest eastern tower stands at 66 meters, making it one of the tallest temple towers in South India.\n\nThe main deity is Lord Shiva as "Annamalaiyar" (Arunachaleswarar) and the Goddess Parvati as "Unnamalai Amman." The temple was built over many centuries, with significant contributions from the Chola, Vijayanagara, and later dynasties. It is an active place of worship open to all.',
+      "One of the largest Hindu temples in the world, covering 10 hectares with 4 majestic gopurams. The tallest eastern tower stands at 66 meters. The main deity is Lord Shiva as Annamalaiyar and Goddess Parvati as Unnamalai Amman.\n\nBuilt over centuries by Chola and Vijayanagara kings. Open to all, with pujas held 6 times daily. Entry is free.",
   },
 ];
 
-const MEDITATIONS = [
-  {
-    id: "breathing",
-    title: "Walking Meditation",
-    duration: "During walk",
-    description:
-      "With each step, mentally repeat 'Shiva, Shiva' or 'Om Namah Shivaya.' Feel the earth beneath your feet and let each footfall be an offering. Keep your awareness gently on the hill, returning attention whenever the mind wanders.",
-  },
-  {
-    id: "self-inquiry",
-    title: "Self-Inquiry (Atma Vichara)",
-    duration: "Any time",
-    description:
-      "As taught by Ramana Maharshi: quietly ask yourself 'Who am I?' Don't seek an intellectual answer — simply turn attention inward to the source of the question. Rest in the natural silence that remains when thought subsides.",
-  },
-  {
-    id: "surrender",
-    title: "Surrender Meditation",
-    duration: "5–15 min",
-    description:
-      "Sit quietly, close your eyes, and mentally offer all your worries, desires, and problems to Lord Arunachala. Visualize each thought as a leaf being placed at the feet of the mountain. Feel the lightness of surrender and rest in presence.",
-  },
-  {
-    id: "chanting",
-    title: "Mantra Chanting",
-    duration: "Any duration",
-    description:
-      "Chant or silently repeat 'Arunachala Shiva, Arunachala Shiva' — the mantra given by Ramana Maharshi. This single mantra is said to contain the entire teaching of Arunachala. Let it rhythm naturally with your breath.",
-  },
-];
+function BreathingGuide() {
+  const [isRunning, setIsRunning] = useState(false);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [cycleCount, setCycleCount] = useState(0);
+  const circleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0.6)).current;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runningRef = useRef(false);
+  const phaseRef = useRef(0);
 
-function ExpandableSection({ section }: { section: Section }) {
+  function runPhase(index: number) {
+    if (!runningRef.current) return;
+    const phase = BREATH_PHASES[index % BREATH_PHASES.length];
+    phaseRef.current = index % BREATH_PHASES.length;
+    setPhaseIndex(index % BREATH_PHASES.length);
+
+    const toValue = index % 4 === 0 ? 1 : index % 4 === 2 ? 0 : circleAnim._value as number;
+
+    if (index % 4 === 0) {
+      Animated.parallel([
+        Animated.timing(circleAnim, { toValue: 1, duration: phase.duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: phase.duration, useNativeDriver: true }),
+      ]).start();
+    } else if (index % 4 === 2) {
+      Animated.parallel([
+        Animated.timing(circleAnim, { toValue: 0, duration: phase.duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 0.5, duration: phase.duration, useNativeDriver: true }),
+      ]).start();
+    }
+
+    timerRef.current = setTimeout(() => {
+      const next = index + 1;
+      if (next % BREATH_PHASES.length === 0) {
+        setCycleCount((c) => c + 1);
+      }
+      runPhase(next);
+    }, phase.duration);
+  }
+
+  function start() {
+    setIsRunning(true);
+    runningRef.current = true;
+    setCycleCount(0);
+    runPhase(0);
+  }
+
+  function stop() {
+    runningRef.current = false;
+    setIsRunning(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    Animated.parallel([
+      Animated.timing(circleAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+      Animated.timing(opacityAnim, { toValue: 0.6, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const scale = circleAnim.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] });
+  const phase = BREATH_PHASES[phaseIndex];
+
+  return (
+    <View style={styles.breathCard}>
+      <View style={styles.breathHeader}>
+        <MaterialCommunityIcons name="meditation" size={18} color={Colors.primary} />
+        <Text style={styles.breathTitle}>Breathing Meditation</Text>
+        {cycleCount > 0 && (
+          <View style={styles.cycleBadge}>
+            <Text style={styles.cycleBadgeText}>{cycleCount} cycles</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.breathCircleWrap}>
+        <Animated.View style={[styles.breathOuter, { opacity: opacityAnim, transform: [{ scale }] }]}>
+          <View style={styles.breathInner}>
+            <MaterialCommunityIcons name="om" size={28} color={Colors.white} />
+          </View>
+        </Animated.View>
+        {isRunning && (
+          <View style={styles.breathLabelWrap}>
+            <Text style={styles.breathPhaseLabel}>{phase.label}</Text>
+            <Text style={styles.breathInstruction}>{phase.instruction}</Text>
+          </View>
+        )}
+        {!isRunning && (
+          <View style={styles.breathLabelWrap}>
+            <Text style={styles.breathInstruction}>
+              4 sec inhale · 2 sec hold{"\n"}6 sec exhale · 2 sec rest
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Pressable
+        style={[styles.breathBtn, isRunning && styles.breathBtnStop]}
+        onPress={isRunning ? stop : start}
+        accessibilityRole="button"
+      >
+        <Ionicons
+          name={isRunning ? "stop-circle" : "play-circle"}
+          size={20}
+          color={Colors.white}
+        />
+        <Text style={styles.breathBtnText}>
+          {isRunning ? "Stop Meditation" : "Begin Breathing Guide"}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function ExpandableSection({ section }: { section: typeof HISTORY_SECTIONS[0] }) {
   const [expanded, setExpanded] = useState(false);
-
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((v) => !v);
   };
-
   return (
     <Pressable style={styles.historyCard} onPress={toggle} accessibilityRole="button">
       <View style={styles.historyCardHeader}>
         <View style={styles.historyIconWrap}>
-          {section.iconFamily === "Ionicons" ? (
-            <Ionicons name={section.icon as any} size={20} color={Colors.saffron} />
-          ) : (
-            <MaterialCommunityIcons name={section.icon as any} size={20} color={Colors.saffron} />
-          )}
+          <Ionicons name={section.icon as any} size={18} color={Colors.primary} />
         </View>
         <Text style={styles.historyCardTitle}>{section.title}</Text>
-        <Ionicons
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={18}
-          color={Colors.textLight}
-        />
+        <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={16} color={Colors.textLight} />
       </View>
       {expanded && <Text style={styles.historyCardContent}>{section.content}</Text>}
     </Pressable>
@@ -139,122 +204,243 @@ export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const bottomInset = isWeb ? 34 : insets.bottom;
-
-  const openYouTube = () => {
-    Linking.openURL(
-      "https://www.youtube.com/results?search_query=Arunachala+Girivalam+meditation"
-    ).catch(() => Alert.alert("Cannot open link", "Please check your internet connection."));
-  };
+  const quote = getDailyQuote();
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: bottomInset + 24 },
-      ]}
+      contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.bannerCard}>
-        <MaterialCommunityIcons name="om" size={40} color={Colors.amberLight} />
-        <View style={styles.bannerText}>
-          <Text style={styles.bannerQuote}>
-            "Arunachala! Thou dost root out the ego of those who meditate on Thee in the heart."
-          </Text>
-          <Text style={styles.bannerAuthor}>— Ramana Maharshi</Text>
+      <View style={styles.quoteCard}>
+        <Text style={styles.quoteEmoji}>🕯️</Text>
+        <Text style={styles.quoteText}>"{quote}"</Text>
+        <Text style={styles.quoteAuthor}>— Sri Ramana Maharshi</Text>
+      </View>
+
+      <BreathingGuide />
+
+      <Text style={styles.sectionTitle}>Self-Inquiry Practice</Text>
+      <View style={styles.inquiryCard}>
+        <Text style={styles.inquiryQuestion}>Who am I?</Text>
+        <Text style={styles.inquiryText}>
+          Sit quietly. Ask yourself this question — not to find a word-answer, but to turn attention inward toward the source of the question itself.{"\n\n"}Notice what remains when thought becomes still. That silent, aware presence is your true nature.{"\n\n"}Return to this question whenever the mind wanders. This is the direct path taught by Ramana at Arunachala.
+        </Text>
+        <View style={styles.inquiryMantras}>
+          <Text style={styles.inquiryMantraTitle}>Walking Mantras</Text>
+          <Text style={styles.inquiryMantra}>🔸 Om Namah Shivaya</Text>
+          <Text style={styles.inquiryMantra}>🔸 Arunachala Shiva, Arunachala Shiva</Text>
+          <Text style={styles.inquiryMantra}>🔸 Shiva, Shiva (one chant per step)</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>History & Significance</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 8 }]}>History & Significance</Text>
       <Text style={styles.sectionDesc}>Tap any section to expand</Text>
       {HISTORY_SECTIONS.map((section) => (
         <ExpandableSection key={section.id} section={section} />
       ))}
 
-      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Meditation Practices</Text>
-      <Text style={styles.sectionDesc}>
-        Traditional practices for walking the Girivalam path
-      </Text>
-      {MEDITATIONS.map((med) => (
-        <View key={med.id} style={styles.medCard}>
-          <View style={styles.medHeader}>
-            <MaterialCommunityIcons name="meditation" size={20} color={Colors.purple} />
-            <Text style={styles.medTitle}>{med.title}</Text>
-            <View style={styles.medBadge}>
-              <Text style={styles.medBadgeText}>{med.duration}</Text>
-            </View>
-          </View>
-          <Text style={styles.medDesc}>{med.description}</Text>
-        </View>
-      ))}
-
-      <Pressable style={styles.videoBtn} onPress={openYouTube} accessibilityRole="button">
-        <Ionicons name="play-circle" size={24} color={Colors.white} />
-        <View>
+      <Pressable
+        style={styles.videoBtn}
+        onPress={() =>
+          Linking.openURL("https://www.youtube.com/results?search_query=Arunachala+Girivalam+meditation").catch(() =>
+            Alert.alert("Cannot open link", "Please check your internet connection.")
+          )
+        }
+        accessibilityRole="button"
+      >
+        <Ionicons name="play-circle" size={22} color={Colors.white} />
+        <View style={{ flex: 1 }}>
           <Text style={styles.videoBtnTitle}>Watch & Listen</Text>
           <Text style={styles.videoBtnSub}>Girivalam videos & meditation audio on YouTube</Text>
         </View>
-        <Ionicons name="open-outline" size={18} color="rgba(255,255,255,0.7)" />
+        <Ionicons name="open-outline" size={16} color="rgba(255,255,255,0.65)" />
       </Pressable>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.warmWhite,
-  },
-  content: {
-    padding: 16,
-  },
-  bannerCard: {
-    backgroundColor: Colors.brown,
-    borderRadius: 18,
+  container: { flex: 1, backgroundColor: Colors.warmWhite },
+  content: { padding: 14, gap: 10 },
+
+  quoteCard: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 16,
     padding: 20,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 16,
-    marginBottom: 24,
+    alignItems: "center",
+    gap: 10,
   },
-  bannerText: {
-    flex: 1,
-  },
-  bannerQuote: {
+  quoteEmoji: { fontSize: 28 },
+  quoteText: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 21,
+    color: "rgba(255,255,255,0.88)",
+    lineHeight: 22,
     fontStyle: "italic",
-    marginBottom: 8,
+    textAlign: "center",
   },
-  bannerAuthor: {
+  quoteAuthor: {
     fontSize: 12,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_600SemiBold",
     color: Colors.amberLight,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: "Inter_700Bold",
-    color: Colors.brown,
-    marginBottom: 4,
-  },
-  sectionDesc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textLight,
-    marginBottom: 14,
-  },
-  historyCard: {
+
+  breathCard: {
     backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 8,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 1,
     shadowRadius: 6,
     elevation: 2,
+    gap: 16,
+  },
+  breathHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  breathTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  cycleBadge: {
+    backgroundColor: Colors.primaryFaint,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  cycleBadgeText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+  },
+  breathCircleWrap: {
+    alignItems: "center",
+    gap: 16,
+    paddingVertical: 8,
+  },
+  breathOuter: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  breathInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  breathLabelWrap: { alignItems: "center", gap: 4 },
+  breathPhaseLabel: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  breathInstruction: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  breathBtn: {
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+  },
+  breathBtnStop: { backgroundColor: Colors.textMid },
+  breathBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  sectionDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    marginBottom: 6,
+  },
+
+  inquiryCard: {
+    backgroundColor: Colors.cream,
+    borderRadius: 14,
+    padding: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+    gap: 10,
+  },
+  inquiryQuestion: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
+    textAlign: "center",
+    paddingVertical: 6,
+  },
+  inquiryText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    lineHeight: 21,
+  },
+  inquiryMantras: {
+    backgroundColor: Colors.white,
+    borderRadius: 10,
+    padding: 12,
+    gap: 6,
+  },
+  inquiryMantraTitle: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  inquiryMantra: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+  },
+
+  historyCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   historyCardHeader: {
     flexDirection: "row",
@@ -262,89 +448,48 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   historyIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.overlayLight,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: Colors.primaryFaint,
     alignItems: "center",
     justifyContent: "center",
   },
   historyCardTitle: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.brown,
+    color: Colors.text,
   },
   historyCardContent: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: Colors.text,
+    color: Colors.textMid,
     lineHeight: 20,
-    marginTop: 14,
-    paddingTop: 14,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.creamDark,
+    borderTopColor: Colors.borderLight,
   },
-  medCard: {
-    backgroundColor: Colors.white,
+
+  videoBtn: {
+    backgroundColor: Colors.primaryDark,
     borderRadius: 14,
     padding: 16,
-    marginBottom: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.purple,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  medHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  medTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.brown,
-  },
-  medBadge: {
-    backgroundColor: "rgba(107, 58, 138, 0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  medBadgeText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.purple,
-  },
-  medDesc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
-    lineHeight: 20,
-  },
-  videoBtn: {
-    backgroundColor: Colors.saffronDark,
-    borderRadius: 16,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginTop: 16,
+    gap: 12,
+    marginTop: 4,
   },
   videoBtnTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.white,
   },
   videoBtnSub: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.72)",
+    color: "rgba(255,255,255,0.65)",
     marginTop: 2,
   },
 });
