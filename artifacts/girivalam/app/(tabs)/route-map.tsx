@@ -1,10 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -72,29 +74,61 @@ function openMaps(url: string) {
   );
 }
 
+function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
+}
+
 export default function RouteMapScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const topInset = isWeb ? 0 : insets.top;
   const bottomInset = isWeb ? 34 : insets.bottom;
+
+  // Map & tracking state
   const [userLocation, setUserLocation] = useState<UserLoc | null>(null);
   const [tracking, setTracking] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [showStops, setShowStops] = useState(true);
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
+
+  // Japa counter
   const [japaCount, setJapaCount] = useState(0);
   const [japaTarget, setJapaTarget] = useState(108);
 
+  // Walk mode
+  const [walkMode, setWalkMode] = useState(false);
+  const [walkSeconds, setWalkSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const omPulse = useRef(new Animated.Value(0.4)).current;
+
+  // Timer for walk mode
+  useEffect(() => {
+    if (walkMode) {
+      timerRef.current = setInterval(() => setWalkSeconds((s) => s + 1), 1000);
+      // Om pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(omPulse, { toValue: 0.9, duration: 3000, useNativeDriver: true }),
+          Animated.timing(omPulse, { toValue: 0.4, duration: 3000, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      omPulse.stopAnimation();
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [walkMode]);
+
+  // Cleanup location on unmount
   useEffect(() => {
     return () => {
       watchSubRef.current?.remove();
       watchSubRef.current = null;
-      if (
-        Platform.OS === "web" &&
-        webWatchIdRef.current !== null &&
-        typeof navigator !== "undefined" &&
-        navigator.geolocation
-      ) {
+      if (Platform.OS === "web" && webWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
         navigator.geolocation.clearWatch(webWatchIdRef.current);
         webWatchIdRef.current = null;
       }
@@ -102,10 +136,7 @@ export default function RouteMapScreen() {
   }, []);
 
   async function startTracking() {
-    if (tracking) {
-      stopTracking();
-      return;
-    }
+    if (tracking) { stopTracking(); return; }
     setRequesting(true);
     try {
       if (Platform.OS === "web") {
@@ -115,58 +146,33 @@ export default function RouteMapScreen() {
         }
         webWatchIdRef.current = navigator.geolocation.watchPosition(
           (pos) => {
-            setUserLocation({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              recenter: !tracking,
-            });
+            setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, recenter: !tracking });
             setTracking(true);
           },
           (err) => {
-            Alert.alert(
-              "Location Unavailable",
-              err.message || "Please allow location access in your browser."
-            );
+            Alert.alert("Location Unavailable", err.message || "Please allow location access in your browser.");
             setTracking(false);
           },
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
         );
+        setRequesting(false);
       } else {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          Alert.alert(
-            "Permission Needed",
-            "Allow location access so we can show your position on the Girivalam path."
-          );
+          Alert.alert("Location Permission Denied", "Please allow location access in your phone settings.");
           return;
         }
-        const initial = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        setUserLocation({
-          lat: initial.coords.latitude,
-          lng: initial.coords.longitude,
-          recenter: true,
-        });
-        setTracking(true);
         watchSubRef.current = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 4000,
-            distanceInterval: 5,
-          },
+          { accuracy: Location.Accuracy.Balanced, timeInterval: 10000, distanceInterval: 20 },
           (loc) => {
-            setUserLocation({
-              lat: loc.coords.latitude,
-              lng: loc.coords.longitude,
-              recenter: false,
-            });
+            setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude, recenter: !tracking });
+            setTracking(true);
           }
         );
+        setRequesting(false);
       }
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Could not start location tracking.");
-    } finally {
       setRequesting(false);
     }
   }
@@ -174,27 +180,179 @@ export default function RouteMapScreen() {
   function stopTracking() {
     watchSubRef.current?.remove();
     watchSubRef.current = null;
-    if (
-      Platform.OS === "web" &&
-      webWatchIdRef.current !== null &&
-      typeof navigator !== "undefined" &&
-      navigator.geolocation
-    ) {
+    if (Platform.OS === "web" && webWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.clearWatch(webWatchIdRef.current);
       webWatchIdRef.current = null;
     }
     setTracking(false);
   }
 
+  function beginWalk() {
+    setJapaCount(0);
+    setWalkSeconds(0);
+    setWalkMode(true);
+  }
+
+  function endWalk() {
+    setWalkMode(false);
+  }
+
+  // ─── WALK MODE SCREEN ─────────────────────────────────────────────────────
+  if (walkMode) {
+    const distKm = (walkSeconds / 3600) * 3;
+    const lingamIdx = Math.min(7, Math.floor(distKm / 1.75));
+    const nextLingamIdx = Math.min(7, lingamIdx + (distKm > 0 ? 1 : 0));
+    const nextLingam = LINGAMS[nextLingamIdx];
+    const timeStr = formatTime(walkSeconds);
+    const malasDone = japaCount > 0 && japaCount % 108 === 0;
+
+    return (
+      <View style={wStyles.root}>
+        <LinearGradient
+          colors={["#1A0500", "#3A0F00", "#5C1A00"]}
+          style={wStyles.gradient}
+        >
+          {/* Top status bar */}
+          <View style={[wStyles.topBar, { paddingTop: topInset + 12 }]}>
+            <View style={wStyles.walkingBadge}>
+              <View style={wStyles.walkingDot} />
+              <Text style={wStyles.walkingBadgeText}>
+                {distKm > 0 ? `${distKm.toFixed(1)} km covered` : "Walking"}
+              </Text>
+            </View>
+            <Text style={wStyles.timerText}>{timeStr}</Text>
+            <Pressable
+              onPress={endWalk}
+              style={wStyles.endBtn}
+              accessibilityRole="button"
+              accessibilityLabel="End walk"
+            >
+              <Text style={wStyles.endBtnText}>End</Text>
+            </Pressable>
+          </View>
+
+          {/* Lingam progress dots */}
+          <View style={wStyles.lingamDots}>
+            {LINGAMS.map((l, i) => (
+              <View
+                key={l.number}
+                style={[wStyles.dot, i <= lingamIdx && wStyles.dotActive]}
+              />
+            ))}
+          </View>
+
+          {/* TAP ANYWHERE = +1 japa */}
+          <Pressable
+            style={wStyles.tapArea}
+            onPress={() => setJapaCount((c) => c + 1)}
+            accessibilityRole="button"
+            accessibilityLabel="Count one chant"
+          >
+            <Text style={wStyles.japaBig}>{japaCount}</Text>
+            <Text style={wStyles.tapHint}>TAP ANYWHERE TO COUNT</Text>
+            {malasDone && (
+              <View style={wStyles.malaBanner}>
+                <Text style={wStyles.malaBannerText}>
+                  🙏 {japaCount / 108} mala complete
+                </Text>
+              </View>
+            )}
+
+            {/* Pulsing Om */}
+            <Animated.View style={[wStyles.omCircle, { opacity: omPulse }]}>
+              <MaterialCommunityIcons name="om" size={34} color="rgba(255,255,255,0.7)" />
+            </Animated.View>
+            <Text style={wStyles.mantraText}>Om Namah Shivaya</Text>
+          </Pressable>
+
+          {/* Near-lingam banner */}
+          {lingamIdx < 7 && (
+            <View style={wStyles.lingamBanner}>
+              <Text style={wStyles.lingamBannerIcon}>🔴</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={wStyles.lingamBannerTitle}>
+                  Approaching {nextLingam.name}
+                </Text>
+                <Text style={wStyles.lingamBannerSub}>
+                  {nextLingam.direction} direction
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
+            </View>
+          )}
+
+          {/* Bottom 3-icon bar */}
+          <View style={[wStyles.bottomBar, { paddingBottom: bottomInset + 16 }]}>
+            <View style={wStyles.bottomIcon}>
+              <View style={wStyles.bottomIconCircle}>
+                <Text style={wStyles.bottomIconEmoji}>💧</Text>
+              </View>
+              <Text style={wStyles.bottomIconLabel}>Water</Text>
+            </View>
+
+            <View style={wStyles.bottomIcon}>
+              <View style={wStyles.bottomIconCircle}>
+                <Text style={wStyles.bottomIconCount}>{lingamIdx + 1}/8</Text>
+              </View>
+              <Text style={wStyles.bottomIconLabel}>Lingam</Text>
+            </View>
+
+            <Pressable
+              style={wStyles.bottomIcon}
+              accessibilityRole="button"
+              onPress={() =>
+                Alert.alert(
+                  "Emergency Contacts",
+                  "🏥 Hospital: +91-4175-223000\n\n🚔 Police: 100\n\n🛕 Ramana Ashram: +91-4175-237292",
+                  [{ text: "Close" }]
+                )
+              }
+            >
+              <View style={[wStyles.bottomIconCircle, wStyles.emergencyCircle]}>
+                <Text style={wStyles.bottomIconEmoji}>🆘</Text>
+              </View>
+              <Text style={wStyles.bottomIconLabel}>Help</Text>
+            </Pressable>
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+
+  // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: bottomInset + 24 },
-      ]}
+      contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
       showsVerticalScrollIndicator={false}
     >
+      {/* Begin Walk CTA */}
+      <Pressable
+        style={styles.beginWalkBtn}
+        onPress={beginWalk}
+        accessibilityRole="button"
+        accessibilityLabel="Begin my Girivalam"
+      >
+        <LinearGradient
+          colors={[Colors.primaryDark, Colors.primary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.beginWalkGradient}
+        >
+          <View style={styles.beginWalkLeft}>
+            <Text style={styles.beginWalkIcon}>🚶</Text>
+            <View>
+              <Text style={styles.beginWalkTitle}>Begin my Girivalam</Text>
+              <Text style={styles.beginWalkSub}>
+                Tap to enter walk mode · japa · map · emergency
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
+        </LinearGradient>
+      </Pressable>
+
+      {/* Map card */}
       <View style={styles.mapCard}>
         <View style={styles.mapHeader}>
           <MaterialCommunityIcons name="map-marker-path" size={22} color={Colors.saffron} />
@@ -212,17 +370,8 @@ export default function RouteMapScreen() {
             onPress={() => setShowStops((v) => !v)}
             accessibilityRole="button"
           >
-            <Ionicons
-              name={showStops ? "eye" : "eye-off"}
-              size={14}
-              color={showStops ? Colors.white : Colors.saffron}
-            />
-            <Text
-              style={[
-                styles.stopsChipText,
-                showStops && styles.stopsChipTextActive,
-              ]}
-            >
+            <Ionicons name={showStops ? "eye" : "eye-off"} size={14} color={showStops ? Colors.white : Colors.saffron} />
+            <Text style={[styles.stopsChipText, showStops && styles.stopsChipTextActive]}>
               {showStops ? "Hide Stops" : "Show Stops"}
             </Text>
           </Pressable>
@@ -270,23 +419,15 @@ export default function RouteMapScreen() {
 
         <View style={styles.mapButtonRow}>
           <Pressable
-            style={[
-              styles.mapBtn,
-              tracking ? styles.mapBtnTracking : styles.mapBtnPrimary,
-            ]}
+            style={[styles.mapBtn, tracking ? styles.mapBtnTracking : styles.mapBtnPrimary]}
             onPress={startTracking}
             disabled={requesting}
             accessibilityRole="button"
-            accessibilityLabel={tracking ? "Stop Live Tracking" : "Start Live Tracking"}
           >
             {requesting ? (
               <ActivityIndicator color={Colors.white} size="small" />
             ) : (
-              <Ionicons
-                name={tracking ? "radio-button-on" : "locate"}
-                size={20}
-                color={Colors.white}
-              />
+              <Ionicons name={tracking ? "radio-button-on" : "locate"} size={20} color={Colors.white} />
             )}
             <Text style={styles.mapBtnText}>
               {tracking ? "Stop Tracking" : "Track My Location"}
@@ -296,7 +437,6 @@ export default function RouteMapScreen() {
             style={[styles.mapBtn, styles.mapBtnSecondary]}
             onPress={() => openMaps(GOOGLE_MAPS_NAVIGATION)}
             accessibilityRole="button"
-            accessibilityLabel="Open Walking Navigation"
           >
             <Ionicons name="navigate" size={20} color={Colors.saffron} />
             <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Navigate</Text>
@@ -313,6 +453,7 @@ export default function RouteMapScreen() {
         )}
       </View>
 
+      {/* Japa Counter */}
       <View style={styles.japaCard}>
         <View style={styles.japaHeader}>
           <Text style={styles.japaHeaderIcon}>📿</Text>
@@ -377,9 +518,7 @@ export default function RouteMapScreen() {
       ))}
 
       <Text style={styles.sectionTitle}>Other Sacred Lingams</Text>
-      <Text style={styles.sectionDesc}>
-        Additional sacred Lingams on the Girivalam path
-      </Text>
+      <Text style={styles.sectionDesc}>Additional sacred Lingams on the Girivalam path</Text>
 
       {SPECIAL_LINGAMS.map((sl) => (
         <View key={sl.name} style={styles.specialLingamRow}>
@@ -406,19 +545,231 @@ export default function RouteMapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+// ─── Walk mode styles ─────────────────────────────────────────────────────────
+const wStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#1A0500" },
+  gradient: { flex: 1 },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  walkingBadge: {
     flex: 1,
-    backgroundColor: Colors.warmWhite,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
   },
-  content: {
-    padding: 16,
+  walkingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#C47A1E",
   },
+  walkingBadgeText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#C47A1E",
+  },
+  timerText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.4)",
+  },
+  endBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  endBtnText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.5)",
+  },
+  lingamDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 16,
+  },
+  dot: {
+    width: 16,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  dotActive: {
+    backgroundColor: "#C47A1E",
+    width: 20,
+  },
+  tapArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+  },
+  japaBig: {
+    fontSize: 100,
+    fontFamily: "Inter_700Bold",
+    color: "#FFFFFF",
+    lineHeight: 110,
+    textShadowColor: "rgba(196,122,30,0.5)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 30,
+  },
+  tapHint: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.25)",
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  malaBanner: {
+    backgroundColor: "rgba(196,122,30,0.2)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.4)",
+  },
+  malaBannerText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#E09A2A",
+  },
+  omCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(155,61,18,0.3)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  mantraText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.2)",
+    letterSpacing: 0.5,
+    marginTop: 8,
+  },
+  lingamBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: "rgba(196,122,30,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.25)",
+  },
+  lingamBannerIcon: { fontSize: 20 },
+  lingamBannerTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#E09A2A",
+  },
+  lingamBannerSub: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.4)",
+    marginTop: 2,
+  },
+  bottomBar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
+  },
+  bottomIcon: {
+    alignItems: "center",
+    gap: 6,
+  },
+  bottomIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(155,61,18,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emergencyCircle: {
+    backgroundColor: "rgba(180,30,30,0.45)",
+    borderWidth: 1,
+    borderColor: "rgba(255,80,80,0.2)",
+  },
+  bottomIconEmoji: { fontSize: 22 },
+  bottomIconCount: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: "#C47A1E",
+  },
+  bottomIconLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.35)",
+  },
+});
+
+// ─── Normal screen styles ──────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.warmWhite },
+  content: { padding: 16 },
+
+  beginWalkBtn: {
+    borderRadius: 18,
+    overflow: "hidden",
+    marginBottom: 16,
+    shadowColor: Colors.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  beginWalkGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 14,
+  },
+  beginWalkLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  beginWalkIcon: { fontSize: 26 },
+  beginWalkTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+  },
+  beginWalkSub: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 2,
+  },
+
   mapCard: {
     backgroundColor: Colors.white,
     borderRadius: 20,
     overflow: "hidden",
-    marginBottom: 24,
+    marginBottom: 16,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
@@ -433,301 +784,40 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
   },
-  mapHeaderText: {
-    flex: 1,
-  },
-  mapTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_700Bold",
-    color: Colors.saffronDark,
-  },
-  mapSubtitle: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textLight,
-    marginTop: 2,
-  },
-  mapLegend: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendDash: {
-    width: 14,
-    height: 3,
-    backgroundColor: Colors.saffron,
-    borderRadius: 2,
-  },
-  legendText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textLight,
-  },
-  stopsToggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  stopsChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: Colors.saffron,
-    backgroundColor: Colors.white,
-  },
-  stopsChipActive: {
-    backgroundColor: Colors.saffron,
-  },
-  stopsChipText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.saffron,
-  },
-  stopsChipTextActive: {
-    color: Colors.white,
-  },
-  stopsHint: {
-    flex: 1,
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textLight,
-  },
-  iconGuide: {
-    backgroundColor: Colors.cream,
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 10,
-  },
-  iconGuideTitle: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-    color: Colors.saffronDark,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  iconGuideRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    rowGap: 6,
-  },
-  iconGuideItem: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.text,
-  },
-  mapButtonRow: {
-    flexDirection: "row",
-    gap: 12,
-    padding: 16,
-  },
-  mapBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-  },
-  mapBtnPrimary: {
-    backgroundColor: Colors.saffron,
-  },
-  mapBtnTracking: {
-    backgroundColor: "#1E88E5",
-  },
-  trackingBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#E3F2FD",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: "#1E88E5",
-  },
-  trackingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#1E88E5",
-  },
-  trackingText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: "#0D47A1",
-  },
-  mapBtnSecondary: {
-    backgroundColor: Colors.cream,
-    borderWidth: 1.5,
-    borderColor: Colors.saffron,
-  },
-  mapBtnText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.white,
-  },
-  mapBtnTextSecondary: {
-    color: Colors.saffron,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: "Inter_700Bold",
-    color: Colors.brown,
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  sectionDesc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textLight,
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  lingamRow: {
-    flexDirection: "row",
-    gap: 12,
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  lingamNumber: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.saffron,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  lingamNumberText: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-    color: Colors.white,
-  },
-  lingamContent: {
-    flex: 1,
-  },
-  lingamHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  lingamName: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.brown,
-    flex: 1,
-  },
-  lingamDistance: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.saffron,
-    backgroundColor: Colors.overlayLight,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  lingamDirection: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textLight,
-    marginTop: 2,
-    marginBottom: 4,
-  },
-  lingamDesc: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textMid,
-    lineHeight: 17,
-  },
-  tipRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-  },
-  tipIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.overlayLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
-    lineHeight: 20,
-    paddingTop: 7,
-  },
-  specialLingamRow: {
-    flexDirection: "row",
-    gap: 12,
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  specialLingamEmoji: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.overlayLight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  specialLingamEmojiText: {
-    fontSize: 20,
-  },
+  mapHeaderText: { flex: 1 },
+  mapTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.saffronDark },
+  mapSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textLight, marginTop: 2 },
+  mapLegend: { flexDirection: "row", flexWrap: "wrap", gap: 16, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendDash: { width: 14, height: 3, backgroundColor: Colors.saffron, borderRadius: 2 },
+  legendText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight },
+  stopsToggleRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingTop: 12 },
+  stopsChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.saffron, backgroundColor: Colors.white },
+  stopsChipActive: { backgroundColor: Colors.saffron },
+  stopsChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.saffron },
+  stopsChipTextActive: { color: Colors.white },
+  stopsHint: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textLight },
+  iconGuide: { backgroundColor: Colors.cream, marginHorizontal: 16, marginTop: 12, padding: 12, borderRadius: 10 },
+  iconGuideTitle: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.saffronDark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 },
+  iconGuideRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, rowGap: 6 },
+  iconGuideItem: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.text },
+  mapButtonRow: { flexDirection: "row", gap: 12, padding: 16 },
+  mapBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 14, borderRadius: 12, gap: 8 },
+  mapBtnPrimary: { backgroundColor: Colors.saffron },
+  mapBtnTracking: { backgroundColor: "#1E88E5" },
+  mapBtnSecondary: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.saffron },
+  mapBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.white },
+  mapBtnTextSecondary: { color: Colors.saffron },
+  trackingBanner: { flexDirection: "row", alignItems: "center", gap: 8, margin: 16, marginTop: 0, backgroundColor: "rgba(30,136,229,0.08)", padding: 10, borderRadius: 10 },
+  trackingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#1E88E5" },
+  trackingText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#1E88E5", flex: 1 },
 
   japaCard: {
     backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 10,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: Colors.borderLight,
     shadowColor: Colors.shadow,
@@ -737,99 +827,42 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 12,
   },
-  japaHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
+  japaHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   japaHeaderIcon: { fontSize: 18 },
-  japaHeaderTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
-  },
-  japaReset: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: Colors.primaryFaint,
-    borderRadius: 8,
-  },
-  japaResetText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.primary,
-  },
-  japaTapBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 22,
-    alignItems: "center",
-    gap: 4,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  japaCount: {
-    fontSize: 52,
-    fontFamily: "Inter_700Bold",
-    color: Colors.white,
-    lineHeight: 60,
-  },
-  japaTapLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "rgba(255,255,255,0.6)",
-    letterSpacing: 1.5,
-  },
-  japaComplete: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.amberLight,
-    marginTop: 4,
-  },
-  japaPresets: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  japaPresetBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cream,
-  },
-  japaPresetActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryFaint,
-  },
-  japaPresetText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textLight,
-  },
+  japaHeaderTitle: { flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  japaReset: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: Colors.primaryFaint, borderRadius: 8 },
+  japaResetText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.primary },
+  japaTapBtn: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 22, alignItems: "center", gap: 4, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  japaCount: { fontSize: 52, fontFamily: "Inter_700Bold", color: Colors.white, lineHeight: 60 },
+  japaTapLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "rgba(255,255,255,0.6)", letterSpacing: 1.5 },
+  japaComplete: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.amberLight, marginTop: 4 },
+  japaPresets: { flexDirection: "row", alignItems: "center", gap: 8 },
+  japaPresetBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.cream },
+  japaPresetActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
+  japaPresetText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.textLight },
   japaPresetTextActive: { color: Colors.primary },
-  japaProgress: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.borderLight,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  japaProgressFill: {
-    height: "100%",
-    backgroundColor: Colors.primary,
-    borderRadius: 3,
-  },
-  japaProgressLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textLight,
-    minWidth: 42,
-    textAlign: "right",
-  },
+  japaProgress: { flex: 1, height: 6, backgroundColor: Colors.borderLight, borderRadius: 3, overflow: "hidden" },
+  japaProgressFill: { height: "100%" as any, backgroundColor: Colors.primary, borderRadius: 3 },
+  japaProgressLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textLight, minWidth: 42, textAlign: "right" },
+
+  sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 4, marginTop: 8 },
+  sectionDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textLight, marginBottom: 10 },
+
+  lingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
+  lingamNumber: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.primaryFaint, alignItems: "center", justifyContent: "center", marginTop: 2 },
+  lingamNumberText: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.primary },
+  lingamContent: { flex: 1 },
+  lingamHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  lingamName: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.brown, flex: 1 },
+  lingamDistance: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.saffron, backgroundColor: Colors.overlayLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2, marginBottom: 4 },
+  lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
+
+  tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8 },
+  tipIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center" },
+  tipText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.text, lineHeight: 20, paddingTop: 7 },
+
+  specialLingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
+  specialLingamEmoji: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center", marginTop: 2 },
+  specialLingamEmojiText: { fontSize: 20 },
 });
