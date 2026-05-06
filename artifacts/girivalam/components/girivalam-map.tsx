@@ -15,13 +15,7 @@ interface MapMarker {
 }
 
 const MARKERS: MapMarker[] = [
-  {
-    lat: 12.2349,
-    lng: 79.0676,
-    title: "Arunachaleswarar Temple",
-    subtitle: "Starting Point",
-    color: "#B8410E",
-  },
+  { lat: 12.2349, lng: 79.0676, title: "Arunachaleswarar Temple", subtitle: "Starting Point", color: "#B8410E" },
   { lat: 12.2330, lng: 79.0750, title: "1. Indra Lingam", subtitle: "East", color: "#E8620A" },
   { lat: 12.2264, lng: 79.0747, title: "2. Agni Lingam", subtitle: "South-East", color: "#E8620A" },
   { lat: 12.2195, lng: 79.0700, title: "3. Yama Lingam", subtitle: "South", color: "#E8620A" },
@@ -78,12 +72,14 @@ interface UserLocation {
   recenter?: boolean;
 }
 
-interface GirivalamMapProps {
+export interface GirivalamMapProps {
   userLocation?: UserLocation | null;
   showStops?: boolean;
+  height?: number;
+  zoom?: number;
 }
 
-function buildMapHtml(): string {
+function buildMapHtml(zoom = 14): string {
   const markersJs = MARKERS.map(
     (m) => `
       L.circleMarker([${m.lat}, ${m.lng}], {
@@ -117,15 +113,28 @@ function buildMapHtml(): string {
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     .user-pulse {
-      width: 18px; height: 18px; border-radius: 50%;
+      width: 20px; height: 20px; border-radius: 50%;
       background: #1E88E5; border: 3px solid #ffffff;
       box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6);
       animation: pulse 1.6s infinite;
+    }
+    .next-lingam-pin {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #9B3D12; border: 3px solid #ffffff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: bold; color: white;
+      box-shadow: 0 0 0 0 rgba(155,61,18,0.7);
+      animation: lingam-pulse 2s infinite;
     }
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6); }
       70% { box-shadow: 0 0 0 18px rgba(30, 136, 229, 0); }
       100% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0); }
+    }
+    @keyframes lingam-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(155,61,18,0.7); }
+      70% { box-shadow: 0 0 0 14px rgba(155,61,18,0); }
+      100% { box-shadow: 0 0 0 0 rgba(155,61,18,0); }
     }
   </style>
 </head>
@@ -134,7 +143,7 @@ function buildMapHtml(): string {
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     var map = L.map('map', { zoomControl: true, attributionControl: true })
-      .setView([${ARUNACHALA_CENTER[0]}, ${ARUNACHALA_CENTER[1]}], 14);
+      .setView([${ARUNACHALA_CENTER[0]}, ${ARUNACHALA_CENTER[1]}], ${zoom});
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -156,7 +165,22 @@ function buildMapHtml(): string {
       weight: 1
     }).addTo(map).bindPopup('<b>Arunachala Hill</b><br/>Sacred Mountain');
 
-    ${markersJs}
+    var lingamMarkers = [];
+    ${markersJs.replace(/\.addTo\(map\)/g, '')}
+
+    // Re-add markers collecting references
+    var lingamData = ${JSON.stringify(MARKERS)};
+    lingamData.forEach(function(m, i) {
+      var marker = L.circleMarker([m.lat, m.lng], {
+        radius: 9,
+        fillColor: m.color,
+        color: '#ffffff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 1
+      }).addTo(map).bindPopup('<b>' + m.title + '</b><br/>' + m.subtitle);
+      lingamMarkers.push(marker);
+    });
 
     var stopPoints = ${stopsJson};
     window.stopMarkers = [];
@@ -183,13 +207,32 @@ function buildMapHtml(): string {
     };
     window.setStopsVisible(true);
 
+    window.nextLingamMarker = null;
+    window.highlightNextLingam = function(idx) {
+      if (window.nextLingamMarker) {
+        map.removeLayer(window.nextLingamMarker);
+        window.nextLingamMarker = null;
+      }
+      if (idx < 0 || idx >= lingamData.length) return;
+      var d = lingamData[idx];
+      var icon = L.divIcon({
+        className: '',
+        html: '<div class="next-lingam-pin">' + (idx + 1) + '</div>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+      window.nextLingamMarker = L.marker([d.lat, d.lng], { icon: icon, zIndexOffset: 900 })
+        .addTo(map)
+        .bindPopup('<b>Next: ' + d.title + '</b><br/>' + d.subtitle);
+    };
+
     window.userMarker = null;
     window.setUserLocation = function(lat, lng, recenter) {
       var icon = L.divIcon({
         className: '',
         html: '<div class="user-pulse"></div>',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
       });
       if (window.userMarker) {
         window.userMarker.setLatLng([lat, lng]);
@@ -210,6 +253,8 @@ function buildMapHtml(): string {
           window.setUserLocation(data.lat, data.lng, data.recenter);
         } else if (data.type === 'setStops') {
           window.setStopsVisible(!!data.visible);
+        } else if (data.type === 'highlightLingam') {
+          window.highlightNextLingam(data.idx);
         }
       } catch (e) {}
     }
@@ -220,8 +265,8 @@ function buildMapHtml(): string {
 </html>`;
 }
 
-export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapProps) {
-  const html = React.useMemo(() => buildMapHtml(), []);
+export function GirivalamMap({ userLocation, showStops = true, height = 320, zoom = 14 }: GirivalamMapProps) {
+  const html = React.useMemo(() => buildMapHtml(zoom), [zoom]);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const webViewRef = useRef<WebView | null>(null);
   const isReady = useRef(false);
@@ -239,6 +284,8 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
               window.setUserLocation(parsed.lat, parsed.lng, parsed.recenter);
             } else if (parsed.type === 'setStops') {
               window.setStopsVisible(!!parsed.visible);
+            } else if (parsed.type === 'highlightLingam') {
+              window.highlightNextLingam(parsed.idx);
             }
           } catch(e){}
         })();
@@ -258,10 +305,7 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
     if (isReady.current) {
       postToMap(payload);
     } else {
-      const t = setTimeout(() => {
-        isReady.current = true;
-        postToMap(payload);
-      }, 800);
+      const t = setTimeout(() => { isReady.current = true; postToMap(payload); }, 800);
       return () => clearTimeout(t);
     }
   }, [userLocation]);
@@ -271,29 +315,19 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
     if (isReady.current) {
       postToMap(payload);
     } else {
-      const t = setTimeout(() => {
-        isReady.current = true;
-        postToMap(payload);
-      }, 800);
+      const t = setTimeout(() => { isReady.current = true; postToMap(payload); }, 800);
       return () => clearTimeout(t);
     }
   }, [showStops]);
 
   if (Platform.OS === "web") {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { height }]}>
         <iframe
           ref={iframeRef}
           srcDoc={html}
-          onLoad={() => {
-            isReady.current = true;
-          }}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            borderRadius: 16,
-          }}
+          onLoad={() => { isReady.current = true; }}
+          style={{ width: "100%", height: "100%", border: "none", borderRadius: 16 }}
           title="Girivalam Route Map"
         />
       </View>
@@ -301,7 +335,7 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { height }]}>
       <WebView
         ref={webViewRef}
         originWhitelist={["*"]}
@@ -310,9 +344,7 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
         scrollEnabled={false}
         javaScriptEnabled
         domStorageEnabled
-        onLoadEnd={() => {
-          isReady.current = true;
-        }}
+        onLoadEnd={() => { isReady.current = true; }}
       />
     </View>
   );
@@ -320,7 +352,6 @@ export function GirivalamMap({ userLocation, showStops = true }: GirivalamMapPro
 
 const styles = StyleSheet.create({
   container: {
-    height: 320,
     borderRadius: 16,
     overflow: "hidden",
     backgroundColor: Colors.cream,

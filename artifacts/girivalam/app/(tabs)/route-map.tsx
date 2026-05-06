@@ -27,6 +27,7 @@ interface UserLoc {
 
 const GOOGLE_MAPS_NAVIGATION =
   "https://maps.google.com/maps?saddr=My+Location&daddr=Arunachaleswarar+Temple,+Tiruvannamalai&travelmode=walking";
+void GOOGLE_MAPS_NAVIGATION;
 
 interface Lingam {
   number: number;
@@ -104,6 +105,10 @@ export default function RouteMapScreen() {
   const [walkSeconds, setWalkSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const omPulse = useRef(new Animated.Value(0.4)).current;
+
+  // In-app navigation mode
+  const [navMode, setNavMode] = useState(false);
+  const [navLingamIdx, setNavLingamIdx] = useState(0);
 
   // Timer for walk mode
   useEffect(() => {
@@ -195,6 +200,108 @@ export default function RouteMapScreen() {
 
   function endWalk() {
     setWalkMode(false);
+  }
+
+  function openNavMode() {
+    setNavLingamIdx(0);
+    setNavMode(true);
+    // Auto-start tracking if not already
+    if (!tracking) startTracking();
+  }
+
+  function exitNavMode() {
+    setNavMode(false);
+  }
+
+  // ─── IN-APP NAVIGATION MODE ───────────────────────────────────────────────
+  if (navMode) {
+    const currentLingam = LINGAMS[navLingamIdx];
+    const nearbyWater = [
+      "Siva Ganga Theertham", "Agastya Theertham", "Ayyankulam", "Brahma Theertham"
+    ][navLingamIdx % 4];
+
+    return (
+      <View style={nStyles.root}>
+        {/* Top bar */}
+        <View style={[nStyles.topBar, { paddingTop: topInset + 10 }]}>
+          <Pressable onPress={exitNavMode} style={nStyles.backBtn} accessibilityRole="button">
+            <Ionicons name="chevron-back" size={20} color={Colors.white} />
+            <Text style={nStyles.backBtnText}>Exit</Text>
+          </Pressable>
+          <View style={nStyles.topCenter}>
+            <View style={nStyles.navDot} />
+            <Text style={nStyles.topTitle}>Navigating Girivalam</Text>
+          </View>
+          <View style={{ width: 64 }} />
+        </View>
+
+        {/* Full map */}
+        <GirivalamMap
+          userLocation={userLocation}
+          showStops={true}
+          height={420}
+          zoom={15}
+        />
+
+        {/* Location status */}
+        {!tracking ? (
+          <Pressable style={nStyles.locationBanner} onPress={startTracking}>
+            <Ionicons name="locate-outline" size={16} color={Colors.amber} />
+            <Text style={nStyles.locationBannerText}>
+              Tap to show your live position on the map
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={[nStyles.locationBanner, nStyles.locationBannerActive]}>
+            <View style={nStyles.liveDot} />
+            <Text style={[nStyles.locationBannerText, { color: Colors.amberLight }]}>
+              Live location active — your dot is on the map
+            </Text>
+          </View>
+        )}
+
+        {/* Next lingam selector */}
+        <View style={nStyles.lingamNav}>
+          <Pressable
+            style={[nStyles.lingamNavBtn, navLingamIdx === 0 && nStyles.lingamNavBtnDisabled]}
+            onPress={() => setNavLingamIdx((i) => Math.max(0, i - 1))}
+            disabled={navLingamIdx === 0}
+          >
+            <Ionicons name="chevron-back" size={18} color={navLingamIdx === 0 ? Colors.border : Colors.primary} />
+          </Pressable>
+          <View style={nStyles.lingamInfo}>
+            <Text style={nStyles.lingamInfoNum}>{navLingamIdx + 1} / 8</Text>
+            <Text style={nStyles.lingamInfoName}>{currentLingam.name}</Text>
+            <Text style={nStyles.lingamInfoDir}>{currentLingam.direction} · {currentLingam.distance}</Text>
+          </View>
+          <Pressable
+            style={[nStyles.lingamNavBtn, navLingamIdx === 7 && nStyles.lingamNavBtnDisabled]}
+            onPress={() => setNavLingamIdx((i) => Math.min(7, i + 1))}
+            disabled={navLingamIdx === 7}
+          >
+            <Ionicons name="chevron-forward" size={18} color={navLingamIdx === 7 ? Colors.border : Colors.primary} />
+          </Pressable>
+        </View>
+
+        {/* Info row */}
+        <View style={[nStyles.infoRow, { paddingBottom: bottomInset + 12 }]}>
+          <View style={nStyles.infoCard}>
+            <Text style={nStyles.infoCardIcon}>🛕</Text>
+            <View>
+              <Text style={nStyles.infoCardLabel}>This lingam</Text>
+              <Text style={nStyles.infoCardText} numberOfLines={2}>{currentLingam.description}</Text>
+            </View>
+          </View>
+          <View style={nStyles.infoCard}>
+            <Text style={nStyles.infoCardIcon}>💧</Text>
+            <View>
+              <Text style={nStyles.infoCardLabel}>Nearby water</Text>
+              <Text style={nStyles.infoCardText}>{nearbyWater}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
   }
 
   // ─── WALK MODE SCREEN ─────────────────────────────────────────────────────
@@ -435,7 +542,7 @@ export default function RouteMapScreen() {
           </Pressable>
           <Pressable
             style={[styles.mapBtn, styles.mapBtnSecondary]}
-            onPress={() => openMaps(GOOGLE_MAPS_NAVIGATION)}
+            onPress={openNavMode}
             accessibilityRole="button"
           >
             <Ionicons name="navigate" size={20} color={Colors.saffron} />
@@ -544,6 +651,151 @@ export default function RouteMapScreen() {
     </ScrollView>
   );
 }
+
+// ─── Nav mode styles ──────────────────────────────────────────────────────────
+const nStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.warmWhite },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.primaryDark,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 6,
+    paddingRight: 10,
+    width: 64,
+  },
+  backBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+  topCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    justifyContent: "center",
+  },
+  navDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.amberLight,
+  },
+  topTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+  locationBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.amberFaint,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  locationBannerActive: {
+    backgroundColor: "rgba(155,61,18,0.07)",
+  },
+  locationBannerText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.amber,
+    flex: 1,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.amberLight,
+  },
+  lingamNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  lingamNavBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: Colors.primaryFaint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lingamNavBtnDisabled: {
+    backgroundColor: Colors.warmWhite,
+  },
+  lingamInfo: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  lingamInfoNum: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.amber,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  lingamInfoName: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primaryDark,
+  },
+  lingamInfoDir: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+  },
+  infoRow: {
+    flexDirection: "column",
+    gap: 8,
+    padding: 12,
+    backgroundColor: Colors.cream,
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  infoCardIcon: { fontSize: 22, marginTop: 1 },
+  infoCardLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.amber,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  infoCardText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    lineHeight: 18,
+    flex: 1,
+  },
+});
 
 // ─── Walk mode styles ─────────────────────────────────────────────────────────
 const wStyles = StyleSheet.create({
