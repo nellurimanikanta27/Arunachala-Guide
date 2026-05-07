@@ -173,6 +173,7 @@ export default function HomeScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>ॐ नमः शिवाय · Arunachala Shiva</Text>
+          <Text style={styles.footerCredit}>by Manikanta Nelluri</Text>
         </View>
       </ScrollView>
     </View>
@@ -398,5 +399,13 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: Colors.textFaint,
     letterSpacing: 0.4,
+  },
+  footerCredit: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textFaint,
+    letterSpacing: 0.3,
+    marginTop: 6,
+    opacity: 0.7,
   },
 });
