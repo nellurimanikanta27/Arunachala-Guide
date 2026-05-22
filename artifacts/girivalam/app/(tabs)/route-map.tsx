@@ -67,6 +67,36 @@ function formatDistance(m: number): string {
   return `${(m / 1000).toFixed(2)} km`;
 }
 
+type POIKind = "food" | "water" | "washroom";
+interface POI { kind: POIKind; lat: number; lng: number; name: string; subtitle?: string; }
+
+const POIS: POI[] = [
+  { kind: "food", lat: 12.2238, lng: 79.0682, name: "Sri Ramana Ashram", subtitle: "Free food 9–10 AM" },
+  { kind: "food", lat: 12.2247, lng: 79.0689, name: "Seshadri Swamigal Ashram", subtitle: "Free food 12 PM onwards" },
+  { kind: "food", lat: 12.2348, lng: 79.0668, name: "Annadanam – Main Temple", subtitle: "Free food all day" },
+  { kind: "water", lat: 12.2340, lng: 79.0688, name: "Siva Ganga Theertham", subtitle: "Sacred water tank" },
+  { kind: "water", lat: 12.2358, lng: 79.0651, name: "Brahma Theertham", subtitle: "Sacred bathing tank" },
+  { kind: "water", lat: 12.2255, lng: 79.0660, name: "Agastya Theertham", subtitle: "South side water tank" },
+];
+
+interface AudioTrack {
+  id: string;
+  title: string;
+  subtitle: string;
+  duration: string;
+  category: "guided" | "teaching" | "chant" | "music";
+}
+
+const AUDIO_TRACKS: AudioTrack[] = [
+  { id: "mental-girivalam", title: "Guided Mental Girivalam", subtitle: "Inner walk around the hill, in 25 minutes", duration: "25 min", category: "guided" },
+  { id: "who-am-i", title: "Who Am I?", subtitle: "Ramana's central teaching, read aloud", duration: "12 min", category: "teaching" },
+  { id: "ramana-talks", title: "Talks with Ramana — Selected", subtitle: "Short passages, one at a time", duration: "8 min", category: "teaching" },
+  { id: "aksharamanamalai", title: "Aksharamanamalai", subtitle: "Ramana's 108-verse hymn to Arunachala (Tamil)", duration: "18 min", category: "chant" },
+  { id: "om-namah-shivaya", title: "Om Namah Shivaya", subtitle: "Continuous chant for the walk", duration: "30 min", category: "chant" },
+  { id: "arunachala-shiva", title: "Arunachala Shiva", subtitle: "Devotional chant", duration: "20 min", category: "chant" },
+  { id: "bhajans", title: "Bhajans of Tiruvannamalai", subtitle: "Traditional devotional songs", duration: "45 min", category: "music" },
+];
+
 interface SpecialLingam {
   emoji: string;
   name: string;
@@ -268,6 +298,52 @@ export default function RouteMapScreen() {
 
   function exitNavMode() {
     setNavMode(false);
+  }
+
+  function handleEssential(kind: "water" | "food" | "washroom" | "emergency") {
+    if (kind === "emergency") {
+      Alert.alert(
+        "Emergency contacts",
+        "• Ambulance: 108\n• Police: 100\n• Government Hospital, Tiruvannamalai: 04175 222 444\n• Arunachaleswarar Temple office: 04175 252 438\n\nIf you are in immediate danger, call 108 right away."
+      );
+      return;
+    }
+    if (kind === "washroom") {
+      Alert.alert(
+        "Washrooms on the path",
+        "Public washrooms are available at:\n• Arunachaleswarar Temple\n• Sri Ramana Ashram\n• Seshadri Swamigal Ashram\n• Most ashrams along the path\n\nA full washroom map is being added. For now, ask at the nearest temple or ashram."
+      );
+      return;
+    }
+    if (!userLocation) {
+      Alert.alert(
+        kind === "food" ? "Find free food" : "Find water",
+        "Tap 'Find me on the path' first so the app knows where you are. Then it will show the nearest " + kind + "."
+      );
+      return;
+    }
+    const candidates = POIS.filter((p) => p.kind === kind);
+    if (candidates.length === 0) {
+      Alert.alert("Coming soon", "More locations being added.");
+      return;
+    }
+    let best = candidates[0];
+    let bestD = haversineDistanceM(userLocation.lat, userLocation.lng, best.lat, best.lng);
+    for (let i = 1; i < candidates.length; i++) {
+      const d = haversineDistanceM(userLocation.lat, userLocation.lng, candidates[i].lat, candidates[i].lng);
+      if (d < bestD) { bestD = d; best = candidates[i]; }
+    }
+    Alert.alert(
+      kind === "food" ? "Nearest free food (annadanam)" : "Nearest water",
+      `${best.name}\n${best.subtitle ? best.subtitle + "\n" : ""}${formatDistance(bestD)} away`
+    );
+  }
+
+  function playTrack(track: AudioTrack) {
+    Alert.alert(
+      track.title,
+      `${track.subtitle}\n\nDuration: ${track.duration}\n\nAudio file coming soon — this will play through your earphones while you walk.`
+    );
   }
 
   // ─── IN-APP NAVIGATION MODE ───────────────────────────────────────────────
@@ -683,6 +759,29 @@ export default function RouteMapScreen() {
         )}
       </View>
 
+      {/* Quick essentials — one-tap access to water, food, washroom, emergency */}
+      <View style={styles.quickCard}>
+        <Text style={styles.quickHeader}>QUICK ESSENTIALS</Text>
+        <View style={styles.quickRow}>
+          <Pressable style={styles.quickBtn} onPress={() => handleEssential("water")} accessibilityRole="button">
+            <Text style={styles.quickEmoji}>💧</Text>
+            <Text style={styles.quickLabel}>Water</Text>
+          </Pressable>
+          <Pressable style={styles.quickBtn} onPress={() => handleEssential("food")} accessibilityRole="button">
+            <Text style={styles.quickEmoji}>🍛</Text>
+            <Text style={styles.quickLabel}>Free Food</Text>
+          </Pressable>
+          <Pressable style={styles.quickBtn} onPress={() => handleEssential("washroom")} accessibilityRole="button">
+            <Text style={styles.quickEmoji}>🚻</Text>
+            <Text style={styles.quickLabel}>Washroom</Text>
+          </Pressable>
+          <Pressable style={[styles.quickBtn, styles.quickBtnEmergency]} onPress={() => handleEssential("emergency")} accessibilityRole="button">
+            <Text style={styles.quickEmoji}>🆘</Text>
+            <Text style={[styles.quickLabel, styles.quickLabelEmergency]}>Emergency</Text>
+          </Pressable>
+        </View>
+      </View>
+
       {/* Japa Counter */}
       <View style={styles.japaCard}>
         <View style={styles.japaHeader}>
@@ -724,6 +823,40 @@ export default function RouteMapScreen() {
           </View>
           <Text style={styles.japaProgressLabel}>{japaTarget - (japaCount % japaTarget === 0 && japaCount > 0 ? japaTarget : japaCount % japaTarget)} to go</Text>
         </View>
+      </View>
+
+      {/* Listen while you walk — Ramana audio, chants, bhajans */}
+      <View style={styles.audioCard}>
+        <View style={styles.audioHeader}>
+          <Text style={styles.audioHeaderIcon}>🎧</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.audioHeaderTitle}>Listen while you walk</Text>
+            <Text style={styles.audioHeaderHint}>Plug in your earphones. Walk with Ramana's words, or with sacred sound.</Text>
+          </View>
+        </View>
+
+        {AUDIO_TRACKS.map((track) => (
+          <Pressable
+            key={track.id}
+            style={styles.audioTrack}
+            onPress={() => playTrack(track)}
+            accessibilityRole="button"
+            accessibilityLabel={`Play ${track.title}, ${track.duration}`}
+          >
+            <View style={styles.audioPlayIcon}>
+              <Ionicons name="play" size={14} color={Colors.white} />
+            </View>
+            <View style={styles.audioTrackInfo}>
+              <Text style={styles.audioTrackTitle}>{track.title}</Text>
+              <Text style={styles.audioTrackSubtitle}>{track.subtitle}</Text>
+            </View>
+            <Text style={styles.audioTrackDuration}>{track.duration}</Text>
+          </Pressable>
+        ))}
+
+        <Text style={styles.audioFooterNote}>
+          Audio files coming soon. Plays in the background — keep walking, phone in pocket.
+        </Text>
       </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
@@ -1280,4 +1413,65 @@ const styles = StyleSheet.create({
   whereArrivedMeaning: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.white, opacity: 0.92, lineHeight: 19 },
   whereToggle: { paddingVertical: 6, alignItems: "center" },
   whereToggleText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight },
+
+  quickCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  quickHeader: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.textLight, letterSpacing: 1.2, marginBottom: 12, paddingHorizontal: 2 },
+  quickRow: { flexDirection: "row", gap: 8 },
+  quickBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+    backgroundColor: Colors.overlayLight,
+  },
+  quickBtnEmergency: { backgroundColor: Colors.primary },
+  quickEmoji: { fontSize: 24, marginBottom: 6 },
+  quickLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.text, textAlign: "center" },
+  quickLabelEmergency: { color: Colors.white },
+
+  audioCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  audioHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
+  audioHeaderIcon: { fontSize: 22, marginTop: 2 },
+  audioHeaderTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 2 },
+  audioHeaderHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
+  audioTrack: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.overlayLight,
+  },
+  audioPlayIcon: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: Colors.primary,
+    alignItems: "center", justifyContent: "center",
+    paddingLeft: 2,
+  },
+  audioTrackInfo: { flex: 1 },
+  audioTrackTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 2 },
+  audioTrackSubtitle: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 15 },
+  audioTrackDuration: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textLight, marginLeft: 4 },
+  audioFooterNote: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textLight, lineHeight: 16, marginTop: 12, fontStyle: "italic", textAlign: "center" },
 });
