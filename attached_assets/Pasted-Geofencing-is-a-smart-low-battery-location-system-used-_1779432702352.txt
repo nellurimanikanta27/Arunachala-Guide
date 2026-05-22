@@ -1,0 +1,73 @@
+Geofencing is a smart low-battery location system used in mobile apps to detect when a user enters or exits important places without continuously running heavy GPS tracking.
+
+Explain this system in a very simple but technically correct way.
+
+Cover these points clearly:
+
+1. What geofencing actually is
+
+* Explain that a geofence is an invisible virtual circle placed around a real-world location using latitude, longitude, and radius.
+* Example: placing a 100-meter invisible circle around a lingam or temple.
+
+2. How geofencing works internally
+
+* Explain step-by-step:
+
+  * The app stores important coordinates.
+  * The mobile operating system (Android/iPhone) manages the geofences in the background.
+  * The phone uses low-power location methods first (motion sensors, cell towers, WiFi signals, occasional GPS checks).
+  * The app itself remains asleep most of the time.
+  * When the user enters a geofence boundary, the operating system wakes the app and sends an “enter event”.
+  * The app then briefly shows a notification, vibration, audio, or information and goes back to sleep.
+
+3. How geofencing calculates whether the user entered a place
+
+* Explain that the phone compares:
+
+  * current user coordinates
+  * saved geofence coordinates
+* Then calculates the distance between them.
+* If the distance becomes smaller than the geofence radius, the system triggers the event.
+* Mention that this is based on latitude and longitude calculations using Earth distance formulas internally.
+
+4. Why geofencing uses very little battery
+
+* Explain clearly that:
+
+  * continuous GPS tracking constantly checks location every few seconds and drains battery.
+  * geofencing does NOT continuously keep the app awake.
+  * the operating system optimizes location checks intelligently.
+  * GPS is activated only occasionally or when necessary.
+  * most of the time the app is sleeping.
+* Compare battery usage between continuous GPS tracking and geofencing.
+
+5. Difference between GPS tracking and geofencing
+
+* GPS tracking:
+
+  * continuously follows the user.
+  * used for live maps and turn-by-turn navigation.
+  * higher battery usage.
+* Geofencing:
+
+  * event-based system.
+  * only reacts when user reaches important zones.
+  * much lower battery usage.
+
+6. How this applies to a Girivalam pilgrimage app
+
+* Explain how geofences can be placed around:
+
+  * 8 lingams
+  * temples
+  * washrooms
+  * annadanam centers
+  * emergency help points
+* Explain how the app can:
+
+  * work mostly offline
+  * wake only near important places
+  * give spiritual guidance calmly
+  * reduce battery drain during long walks.
+
+Use very simple language, real-life analogies, and beginner-friendly explanations.
