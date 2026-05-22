@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "k6aofL8CMlU04PCk7kwam"
+uri = "file://screenshots/girivalam-route-map-redesign.jpg"
+type = "image"
+title = "Girivalam Route Map — redesigned hub"
