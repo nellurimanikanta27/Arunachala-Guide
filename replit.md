@@ -94,3 +94,40 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+---
+
+## Girivalam Pilgrim Guide — Project Notes
+
+`artifacts/girivalam` — Expo React Native app. Maintained by Manikanta Nelluri.
+
+### Core principle (do not lose sight of this)
+
+**This app is not an information directory. It is an experience.**
+
+The purpose is to give every user the single best possible experience — both *during* their visit to Arunachala and *after* they return home. Information is only valuable here insofar as it shapes that experience.
+
+Two consequences of this principle:
+
+1. **No generic content.** Anything a tourist could find in a Wikipedia article, a TripAdvisor list, or the first Google result has no place in this app. We only include things that most people — even seasoned pilgrims — do not already know.
+2. **Beyond Arunachala is a first-class feature.** Plan and build a dedicated section that surfaces the hidden, rare, or overlooked layers of Arunachala and Tiruvannamalai: little-known shrines and caves, the lives and practices of less famous saints, the geological/mythological depth of the hill, lesser-known teachings of Ramana and Seshadri Swamigal, the surrounding villages and their stories, traditions that only locals know. Curate ruthlessly — if it's already common knowledge, leave it out.
+
+### Design philosophy
+
+- **The Dissolving Interface** — the app does less as the pilgrim goes deeper. Rich hub when the phone is out of the pocket; minimal/silent companion during the walk itself.
+- **Single accent color**: terracotta `#9B3D12`.
+- **Battery-efficient** for 4–6 hour walks with the phone in the pocket. Use layered location tracking (pre-loaded offline data → background geofencing → on-demand GPS bursts → opt-in continuous GPS) rather than always-on high-accuracy GPS.
+
+### Hard "never" list
+
+These betray the philosophy. Do not propose or add them under any framing:
+
+- Streaks, badges, points, achievements, gamification
+- Push notifications (other than safety/emergency)
+- Social sharing, leaderboards, friend lists, public profiles
+- Ads, sponsored content, paid promotion of any kind
+- Preachy or moralizing copy
+
+### Promotion strategy
+
+Organic only. Pournami-window posts, outreach to Sri Ramanasramam, WhatsApp groups of pilgrims. Never paid ads.
