@@ -35,18 +35,37 @@ interface Lingam {
   direction: string;
   description: string;
   distance: string;
+  lat: number;
+  lng: number;
+  meaning: string;
 }
 
 const LINGAMS: Lingam[] = [
-  { number: 1, name: "Indra Lingam", direction: "East", description: "Near the main Arunachaleswarar Temple entrance", distance: "0 km" },
-  { number: 2, name: "Agni Lingam", direction: "South-East", description: "Associated with fire element, near Kottai area", distance: "2 km" },
-  { number: 3, name: "Yama Lingam", direction: "South", description: "South direction shrine", distance: "3.5 km" },
-  { number: 4, name: "Niruthi Lingam", direction: "South-West", description: "Marking the south-west quarter of the hill", distance: "5 km" },
-  { number: 5, name: "Varuna Lingam", direction: "West", description: "Water element shrine on western path", distance: "7 km" },
-  { number: 6, name: "Vayu Lingam", direction: "North-West", description: "Wind element, scenic forest section", distance: "9 km" },
-  { number: 7, name: "Kubera Lingam", direction: "North", description: "Prosperity shrine near northern path", distance: "11 km" },
-  { number: 8, name: "Isanya Lingam", direction: "North-East", description: "Last major shrine before completing the circle", distance: "13 km" },
+  { number: 1, name: "Indra Lingam", direction: "East", description: "Near the main Arunachaleswarar Temple entrance", distance: "0 km", lat: 12.2330, lng: 79.0750, meaning: "East. The lingam of beginnings. The walk truly starts here — walk with intention." },
+  { number: 2, name: "Agni Lingam", direction: "South-East", description: "Associated with fire element, near Kottai area", distance: "2 km", lat: 12.2264, lng: 79.0747, meaning: "Fire. Sit briefly. What do you want to burn away on this walk?" },
+  { number: 3, name: "Yama Lingam", direction: "South", description: "South direction shrine", distance: "3.5 km", lat: 12.2195, lng: 79.0700, meaning: "South — the direction of endings, of letting go. If something wants to release here, let it." },
+  { number: 4, name: "Niruthi Lingam", direction: "South-West", description: "Marking the south-west quarter of the hill", distance: "5 km", lat: 12.2237, lng: 79.0584, meaning: "South-West. The halfway turning. You have come this far. Keep walking." },
+  { number: 5, name: "Varuna Lingam", direction: "West", description: "Water element shrine on western path", distance: "7 km", lat: 12.2322, lng: 79.0530, meaning: "Water. Let something soften inside you. The path is older here." },
+  { number: 6, name: "Vayu Lingam", direction: "North-West", description: "Wind element, scenic forest section", distance: "9 km", lat: 12.2456, lng: 79.0571, meaning: "Wind. The wild forest section. The hill feels very close here. Walk slowly." },
+  { number: 7, name: "Kubera Lingam", direction: "North", description: "Prosperity shrine near northern path", distance: "11 km", lat: 12.2516, lng: 79.0670, meaning: "North — the abundance of stillness, not of things. The quieter half." },
+  { number: 8, name: "Isanya Lingam", direction: "North-East", description: "Last major shrine before completing the circle", distance: "13 km", lat: 12.2474, lng: 79.0764, meaning: "Almost home. Something is completing. Let yourself feel it." },
 ];
+
+const GEOFENCE_RADIUS_M = 150;
+
+function haversineDistanceM(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function formatDistance(m: number): string {
+  if (m < 1000) return `${Math.round(m)} m`;
+  return `${(m / 1000).toFixed(2)} km`;
+}
 
 interface SpecialLingam {
   emoji: string;
@@ -110,6 +129,45 @@ export default function RouteMapScreen() {
   const [navMode, setNavMode] = useState(false);
   const [navLingamIdx, setNavLingamIdx] = useState(0);
 
+  // Geofence detection — which lingam are you inside (within 150m)
+  const [activeGeofenceIdx, setActiveGeofenceIdx] = useState<number | null>(null);
+  const lastEnteredRef = useRef<number | null>(null);
+
+  // Nearest lingam computation
+  const nearest = (() => {
+    if (!userLocation) return null;
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    LINGAMS.forEach((l, i) => {
+      const d = haversineDistanceM(userLocation.lat, userLocation.lng, l.lat, l.lng);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    });
+    return { idx: bestIdx, distance: bestDist, lingam: LINGAMS[bestIdx] };
+  })();
+
+  // Geofence trigger — fires when you enter the 150m radius of a lingam
+  useEffect(() => {
+    if (!userLocation) { setActiveGeofenceIdx(null); lastEnteredRef.current = null; return; }
+    if (!nearest) return;
+
+    // Enter: if nearest is within radius, mark it active (unless already active)
+    if (nearest.distance <= GEOFENCE_RADIUS_M && lastEnteredRef.current !== nearest.idx) {
+      lastEnteredRef.current = nearest.idx;
+      setActiveGeofenceIdx(nearest.idx);
+      return;
+    }
+
+    // Exit: check distance from the *currently active* geofence, not just nearest
+    if (activeGeofenceIdx !== null) {
+      const active = LINGAMS[activeGeofenceIdx];
+      const dActive = haversineDistanceM(userLocation.lat, userLocation.lng, active.lat, active.lng);
+      if (dActive > GEOFENCE_RADIUS_M + 50) {
+        lastEnteredRef.current = null;
+        setActiveGeofenceIdx(null);
+      }
+    }
+  }, [userLocation?.lat, userLocation?.lng, nearest?.idx, nearest?.distance, activeGeofenceIdx]);
+
   // Timer for walk mode
   useEffect(() => {
     if (walkMode) {
@@ -160,7 +218,6 @@ export default function RouteMapScreen() {
           },
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
         );
-        setRequesting(false);
       } else {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
@@ -174,10 +231,10 @@ export default function RouteMapScreen() {
             setTracking(true);
           }
         );
-        setRequesting(false);
       }
     } catch {
       Alert.alert("Error", "Could not start location tracking.");
+    } finally {
       setRequesting(false);
     }
   }
@@ -557,6 +614,72 @@ export default function RouteMapScreen() {
               Live tracking active — your position updates as you walk
             </Text>
           </View>
+        )}
+      </View>
+
+      {/* Where am I? card — live nearest lingam + geofence detection */}
+      <View style={styles.whereCard}>
+        <View style={styles.whereHeader}>
+          <Ionicons name="compass-outline" size={20} color={Colors.primary} />
+          <Text style={styles.whereTitle}>Where am I on the path?</Text>
+        </View>
+
+        {!userLocation && (
+          <>
+            <Text style={styles.whereHint}>
+              Tap below to find your position. The app will show the nearest lingam and quietly notice when you reach one.
+            </Text>
+            <Pressable
+              style={styles.whereBtn}
+              onPress={startTracking}
+              disabled={requesting}
+              accessibilityRole="button"
+            >
+              {requesting ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="locate" size={18} color={Colors.white} />
+                  <Text style={styles.whereBtnText}>Find me on the path</Text>
+                </>
+              )}
+            </Pressable>
+          </>
+        )}
+
+        {userLocation && nearest && (
+          <>
+            {activeGeofenceIdx !== null ? (
+              <View style={styles.whereArrived}>
+                <Text style={styles.whereArrivedBadge}>YOU HAVE REACHED</Text>
+                <Text style={styles.whereArrivedName}>
+                  {LINGAMS[activeGeofenceIdx].number}. {LINGAMS[activeGeofenceIdx].name}
+                </Text>
+                <Text style={styles.whereArrivedMeaning}>
+                  {LINGAMS[activeGeofenceIdx].meaning}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.whereNearest}>
+                <Text style={styles.whereNearestLabel}>Nearest lingam</Text>
+                <Text style={styles.whereNearestName}>
+                  {nearest.lingam.number}. {nearest.lingam.name}
+                </Text>
+                <Text style={styles.whereNearestDist}>
+                  {formatDistance(nearest.distance)} away · {nearest.lingam.direction}
+                </Text>
+              </View>
+            )}
+            <Pressable
+              onPress={tracking ? stopTracking : startTracking}
+              style={styles.whereToggle}
+              accessibilityRole="button"
+            >
+              <Text style={styles.whereToggleText}>
+                {tracking ? "Stop live updates" : "Resume live updates"}
+              </Text>
+            </Pressable>
+          </>
         )}
       </View>
 
@@ -1117,4 +1240,44 @@ const styles = StyleSheet.create({
   specialLingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
   specialLingamEmoji: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center", marginTop: 2 },
   specialLingamEmojiText: { fontSize: 20 },
+
+  whereCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  whereHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  whereTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  whereHint: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 19, marginBottom: 12 },
+  whereBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, backgroundColor: Colors.primary, paddingVertical: 12, borderRadius: 12,
+  },
+  whereBtnText: { color: Colors.white, fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  whereNearest: {
+    backgroundColor: Colors.overlayLight,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  whereNearestLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.textLight, letterSpacing: 1, marginBottom: 4 },
+  whereNearestName: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.primary, marginBottom: 2 },
+  whereNearestDist: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid },
+  whereArrived: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+  },
+  whereArrivedBadge: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: Colors.white, opacity: 0.85, letterSpacing: 1.4, marginBottom: 6 },
+  whereArrivedName: { fontSize: 18, fontFamily: "Inter_600SemiBold", color: Colors.white, marginBottom: 6 },
+  whereArrivedMeaning: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.white, opacity: 0.92, lineHeight: 19 },
+  whereToggle: { paddingVertical: 6, alignItems: "center" },
+  whereToggleText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight },
 });
