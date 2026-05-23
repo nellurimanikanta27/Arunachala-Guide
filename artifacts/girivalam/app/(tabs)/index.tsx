@@ -22,7 +22,7 @@ import {
   getTithi,
 } from "@/lib/sacred-time";
 
-type FeatureRoute = "route-map" | "history" | "local-guide" | "ai-guide" | "translator";
+type FeatureRoute = "route-map" | "history" | "local-guide" | "ai-guide" | "translator" | "me";
 
 interface Feature {
   id: FeatureRoute;
@@ -38,6 +38,7 @@ const FEATURES: Feature[] = [
   { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
   { id: "ai-guide", title: "AI Guide", subtitle: "Ask anything about Girivalam", icon: "chatbubble-ellipses", iconFamily: "Ionicons" },
   { id: "translator", title: "Translator", subtitle: "Translate across pilgrim languages", icon: "language", iconFamily: "Ionicons" },
+  { id: "me", title: "My Pilgrimage", subtitle: "Your moments, walks & reflections", icon: "foot-print", iconFamily: "MaterialCommunityIcons" },
 ];
 
 function SacredMomentCard() {

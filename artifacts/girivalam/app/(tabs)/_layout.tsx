@@ -29,6 +29,7 @@ export default function TabLayout() {
         name="translator"
         options={{ title: "Language Translator" }}
       />
+      <Stack.Screen name="me" options={{ title: "My Pilgrimage" }} />
     </Stack>
   );
 }

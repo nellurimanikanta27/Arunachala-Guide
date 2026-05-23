@@ -158,13 +158,6 @@ export default function RouteMapScreen() {
   // Saved moments at each lingam (in-memory; persistence next pass)
   const [savedMoments, setSavedMoments] = useState<Record<number, string[]>>({});
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
-  // Clear "just keep walking" once the pilgrim leaves the geofence,
-  // so re-arrival at the same lingam shows the rich card again.
-  useEffect(() => {
-    if (activeGeofenceIdx === null && dismissedFor !== null) {
-      setDismissedFor(null);
-    }
-  }, [activeGeofenceIdx, dismissedFor]);
 
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
@@ -185,6 +178,14 @@ export default function RouteMapScreen() {
 
   // Geofence detection — which lingam are you inside (within 150m)
   const [activeGeofenceIdx, setActiveGeofenceIdx] = useState<number | null>(null);
+
+  // Clear "just keep walking" once the pilgrim leaves the geofence,
+  // so re-arrival at the same lingam shows the rich card again.
+  useEffect(() => {
+    if (activeGeofenceIdx === null && dismissedFor !== null) {
+      setDismissedFor(null);
+    }
+  }, [activeGeofenceIdx, dismissedFor]);
   const lastEnteredRef = useRef<number | null>(null);
 
   // Nearest lingam computation
