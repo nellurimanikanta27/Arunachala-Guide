@@ -155,6 +155,19 @@ export default function RouteMapScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const omPulse = useRef(new Animated.Value(0.4)).current;
 
+  // Edge panel (quick-access drawer during walk)
+  const [edgePanelOpen, setEdgePanelOpen] = useState(false);
+  const edgeSlide = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const anim = Animated.timing(edgeSlide, {
+      toValue: edgePanelOpen ? 1 : 0,
+      duration: 260,
+      useNativeDriver: true,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [edgePanelOpen, edgeSlide]);
+
   // In-app navigation mode
   const [navMode, setNavMode] = useState(false);
   const [navLingamIdx, setNavLingamIdx] = useState(0);
@@ -520,6 +533,89 @@ export default function RouteMapScreen() {
               <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
             </View>
           )}
+
+          {/* Edge tab — always visible thin handle on the right when panel closed */}
+          {!edgePanelOpen && (
+            <Pressable
+              style={[wStyles.edgeTab, { top: "45%" }]}
+              onPress={() => setEdgePanelOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Open quick access"
+              hitSlop={12}
+            >
+              <Ionicons name="chevron-back" size={16} color="rgba(255,255,255,0.7)" />
+            </Pressable>
+          )}
+
+          {/* Backdrop dim when panel open */}
+          {edgePanelOpen && (
+            <Pressable
+              style={wStyles.edgeBackdrop}
+              onPress={() => setEdgePanelOpen(false)}
+              accessibilityLabel="Close quick access"
+            />
+          )}
+
+          {/* The edge panel — slides in from right */}
+          <Animated.View
+            style={[
+              wStyles.edgePanel,
+              {
+                pointerEvents: edgePanelOpen ? "auto" : "none",
+                top: topInset + 80,
+                bottom: bottomInset + 110,
+                transform: [
+                  {
+                    translateX: edgeSlide.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [260, 0],
+                    }),
+                  },
+                ],
+                opacity: edgeSlide,
+              },
+            ]}
+          >
+            <View style={wStyles.edgePanelHeader}>
+              <Text style={wStyles.edgePanelLabel}>QUICK</Text>
+              <Pressable
+                onPress={() => setEdgePanelOpen(false)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.4)" />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              {[
+                { key: "annaprasadam", icon: "🍛", label: "Annaprasadam", sub: "Free food · donations", onPress: () => { setEdgePanelOpen(false); handleEssential("food"); } },
+                { key: "restaurants",  icon: "🍴", label: "Restaurants",  sub: "Nearby", onPress: () => { setEdgePanelOpen(false); Alert.alert("Restaurants nearby", "Manna Restaurant (near temple) · Dreaming Tree Cafe (Ramana Nagar) · Shanti Cafe · German Bakery · Usha Inn\n\nA curated guide is being added."); } },
+                { key: "washrooms",    icon: "🚻", label: "Washrooms",    sub: "On the path", onPress: () => { setEdgePanelOpen(false); handleEssential("washroom"); } },
+                { key: "audiobooks",   icon: "📖", label: "Audio books",  sub: "Ramana · Talks", onPress: () => { setEdgePanelOpen(false); Alert.alert("Audio books", "Talks with Ramana — Selected (8 min)\nWho Am I? (12 min)\nGuided Mental Girivalam (25 min)\n\nFor your earphones. Recordings being added."); } },
+                { key: "music",        icon: "🎵", label: "Music",        sub: "Chants · Bhajans", onPress: () => { setEdgePanelOpen(false); Alert.alert("Music", "Om Namah Shivaya chant (30 min)\nArunachala Shiva chant (20 min)\nAksharamanamalai (18 min)\nBhajans of Tiruvannamalai (45 min)\n\nFor your earphones. Recordings being added."); } },
+                { key: "japa",         icon: "📿", label: "Japa counter", sub: `${japaCount} / ${japaTarget}`, onPress: () => { setEdgePanelOpen(false); } },
+              ].map((item) => (
+                <Pressable
+                  key={item.key}
+                  style={wStyles.edgeItem}
+                  onPress={item.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
+                >
+                  <View style={wStyles.edgeItemIcon}>
+                    <Text style={wStyles.edgeItemEmoji}>{item.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={wStyles.edgeItemLabel}>{item.label}</Text>
+                    <Text style={wStyles.edgeItemSub}>{item.sub}</Text>
+                  </View>
+                </Pressable>
+              ))}
+              <Text style={wStyles.edgeFooter}>Tap the tab anytime</Text>
+            </ScrollView>
+          </Animated.View>
 
           {/* Bottom 3-icon bar */}
           <View style={[wStyles.bottomBar, { paddingBottom: bottomInset + 16 }]}>
@@ -1229,6 +1325,100 @@ const wStyles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_500Medium",
     color: "rgba(255,255,255,0.35)",
+  },
+
+  // Edge panel
+  edgeTab: {
+    position: "absolute",
+    right: 0,
+    width: 18,
+    height: 96,
+    backgroundColor: "rgba(155,61,18,0.55)",
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderColor: "rgba(196,122,30,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 20,
+  },
+  edgeBackdrop: {
+    position: "absolute",
+    top: 0, bottom: 0, left: 0, right: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    zIndex: 30,
+  },
+  edgePanel: {
+    position: "absolute",
+    right: 0,
+    width: 240,
+    backgroundColor: "rgba(20,6,0,0.92)",
+    borderTopLeftRadius: 28,
+    borderBottomLeftRadius: 28,
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderColor: "rgba(196,122,30,0.25)",
+    paddingTop: 14,
+    paddingLeft: 16,
+    paddingRight: 12,
+    paddingBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: -8, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 12,
+    zIndex: 40,
+  },
+  edgePanelHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingLeft: 2,
+  },
+  edgePanelLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.4)",
+    letterSpacing: 2,
+  },
+  edgeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 8,
+  },
+  edgeItemIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#9B3D12",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  edgeItemEmoji: { fontSize: 18 },
+  edgeItemLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.9)",
+  },
+  edgeItemSub: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.4)",
+    marginTop: 1,
+  },
+  edgeFooter: {
+    marginTop: 10,
+    paddingTop: 10,
+    paddingLeft: 2,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
+    fontSize: 9,
+    color: "rgba(255,255,255,0.25)",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });
 
