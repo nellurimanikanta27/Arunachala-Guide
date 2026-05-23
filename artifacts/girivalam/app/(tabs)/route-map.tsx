@@ -155,6 +155,17 @@ export default function RouteMapScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const omPulse = useRef(new Animated.Value(0.4)).current;
 
+  // Saved moments at each lingam (in-memory; persistence next pass)
+  const [savedMoments, setSavedMoments] = useState<Record<number, string[]>>({});
+  const [dismissedFor, setDismissedFor] = useState<number | null>(null);
+  // Clear "just keep walking" once the pilgrim leaves the geofence,
+  // so re-arrival at the same lingam shows the rich card again.
+  useEffect(() => {
+    if (activeGeofenceIdx === null && dismissedFor !== null) {
+      setDismissedFor(null);
+    }
+  }, [activeGeofenceIdx, dismissedFor]);
+
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
   const edgeSlide = useRef(new Animated.Value(0)).current;
@@ -352,6 +363,20 @@ export default function RouteMapScreen() {
     );
   }
 
+  function saveMoment(lingamIdx: number, kind: "photo" | "voice" | "note" | "feeling") {
+    setSavedMoments((prev) => {
+      const existing = prev[lingamIdx] ?? [];
+      if (existing.includes(kind)) return prev;
+      return { ...prev, [lingamIdx]: [...existing, kind] };
+    });
+    const label = { photo: "Photo", voice: "Voice note", note: "Written note", feeling: "Feeling" }[kind];
+    const lingamName = LINGAMS[lingamIdx]?.name ?? "this lingam";
+    Alert.alert(
+      `${label} — ${lingamName}`,
+      `Your ${label.toLowerCase()} is being remembered for this moment.\n\nCapture and storage are being added in the next pass. For now, the timeline will show that you marked this moment.`
+    );
+  }
+
   function playTrack(track: AudioTrack) {
     Alert.alert(
       track.title,
@@ -518,21 +543,95 @@ export default function RouteMapScreen() {
             <Text style={wStyles.mantraText}>Om Namah Shivaya</Text>
           </Pressable>
 
-          {/* Near-lingam banner */}
-          {lingamIdx < 7 && (
-            <View style={wStyles.lingamBanner}>
-              <Text style={wStyles.lingamBannerIcon}>🔴</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={wStyles.lingamBannerTitle}>
-                  Approaching {nextLingam.name}
-                </Text>
-                <Text style={wStyles.lingamBannerSub}>
-                  {nextLingam.direction} direction
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
-            </View>
-          )}
+          {/* ─── Morphing lingam banner ───────────────────────────────────
+              Three states based on real GPS distance to the nearest lingam:
+              ① FAR  (> 300 m)         → tiny "Approaching X" line
+              ② NEAR (≤ 300 m)         → softer card with meaning preview
+              ③ AT   (geofence active) → rich "You have reached" + save moment
+          ─────────────────────────────────────────────────────────────────── */}
+          {(() => {
+            // ③ AT — arrived (geofence triggered)
+            if (activeGeofenceIdx !== null && dismissedFor !== activeGeofenceIdx) {
+              const here = LINGAMS[activeGeofenceIdx];
+              const saved = savedMoments[activeGeofenceIdx] ?? [];
+              const isSaved = (k: string) => saved.includes(k);
+              return (
+                <View style={wStyles.arrivalCard}>
+                  <View style={wStyles.arrivalHead}>
+                    <Text style={wStyles.arrivalLabel}>YOU HAVE REACHED</Text>
+                    <Text style={wStyles.arrivalName}>{here.name}</Text>
+                    <Text style={wStyles.arrivalMeaning}>{here.meaning}</Text>
+                  </View>
+
+                  <View style={wStyles.arrivalSaveSection}>
+                    <Text style={wStyles.arrivalSaveHint}>Save this moment</Text>
+                    <View style={wStyles.arrivalSaveRow}>
+                      {([
+                        { k: "photo",   icon: "📷", l: "Photo" },
+                        { k: "voice",   icon: "🎙️", l: "Voice" },
+                        { k: "note",    icon: "✍️", l: "Note" },
+                        { k: "feeling", icon: "❤️", l: "Feeling" },
+                      ] as const).map((b) => (
+                        <Pressable
+                          key={b.k}
+                          style={wStyles.arrivalSaveBtn}
+                          onPress={() => saveMoment(activeGeofenceIdx, b.k)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Save ${b.l.toLowerCase()}`}
+                        >
+                          <View style={[wStyles.arrivalSaveIcon, isSaved(b.k) && wStyles.arrivalSaveIconActive]}>
+                            <Text style={wStyles.arrivalSaveEmoji}>{b.icon}</Text>
+                          </View>
+                          <Text style={wStyles.arrivalSaveLabel}>{isSaved(b.k) ? `${b.l} ✓` : b.l}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+
+                  <Pressable
+                    style={wStyles.arrivalDismiss}
+                    onPress={() => setDismissedFor(activeGeofenceIdx)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Just keep walking"
+                  >
+                    <Text style={wStyles.arrivalDismissText}>Just keep walking</Text>
+                  </Pressable>
+                </View>
+              );
+            }
+
+            // ② NEAR — within 300 m, show meaning preview
+            if (nearest && nearest.distance <= 300) {
+              return (
+                <View style={wStyles.nearCard}>
+                  <View style={wStyles.nearHead}>
+                    <View style={wStyles.nearDot} />
+                    <Text style={wStyles.nearLabel}>
+                      {nearest.lingam.name.toUpperCase()} · {formatDistance(nearest.distance)}
+                    </Text>
+                  </View>
+                  <Text style={wStyles.nearMeaning}>{nearest.lingam.meaning}</Text>
+                </View>
+              );
+            }
+
+            // ① FAR — gentle "approaching" line, only if a lingam is reasonably ahead
+            if (nearest && nearest.distance <= 2500) {
+              return (
+                <View style={wStyles.farBanner}>
+                  <View style={wStyles.farDot} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={wStyles.farTitle}>Approaching {nearest.lingam.name}</Text>
+                    <Text style={wStyles.farSub}>
+                      {nearest.lingam.direction} · {formatDistance(nearest.distance)} ahead
+                    </Text>
+                  </View>
+                </View>
+              );
+            }
+
+            return null;
+          })()}
 
           {/* Edge tab — always visible thin handle on the right when panel closed */}
           {!edgePanelOpen && (
@@ -1419,6 +1518,156 @@ const wStyles = StyleSheet.create({
     color: "rgba(255,255,255,0.25)",
     letterSpacing: 1,
     textTransform: "uppercase",
+  },
+
+  // ── Morphing banner: ① FAR
+  farBanner: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "rgba(196,122,30,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.20)",
+  },
+  farDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(196,122,30,0.55)",
+  },
+  farTitle: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(224,154,42,0.8)",
+  },
+  farSub: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.4)",
+    marginTop: 1,
+  },
+
+  // ── Morphing banner: ② NEAR
+  nearCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: "rgba(196,122,30,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.35)",
+  },
+  nearHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  nearDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#E09A2A" },
+  nearLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: "#E09A2A",
+    letterSpacing: 2,
+  },
+  nearMeaning: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.9)",
+    fontStyle: "italic",
+    lineHeight: 20,
+  },
+
+  // ── Morphing banner: ③ AT (arrival + save this moment)
+  arrivalCard: {
+    marginHorizontal: 14,
+    marginBottom: 16,
+    borderRadius: 22,
+    backgroundColor: "rgba(155,61,18,0.95)",
+    borderWidth: 1,
+    borderColor: "rgba(255,200,140,0.35)",
+    overflow: "hidden",
+    shadowColor: "#C47A1E",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  arrivalHead: {
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  arrivalLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  arrivalName: {
+    fontSize: 22,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  arrivalMeaning: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+    fontStyle: "italic",
+    lineHeight: 19,
+  },
+  arrivalSaveSection: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.12)",
+  },
+  arrivalSaveHint: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.65)",
+    marginBottom: 10,
+  },
+  arrivalSaveRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  arrivalSaveBtn: {
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+  arrivalSaveIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
+  arrivalSaveIconActive: {
+    backgroundColor: "rgba(255,255,255,0.28)",
+    borderColor: "rgba(255,255,255,0.55)",
+  },
+  arrivalSaveEmoji: { fontSize: 16 },
+  arrivalSaveLabel: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.75)",
+  },
+  arrivalDismiss: {
+    paddingVertical: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.15)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
+  },
+  arrivalDismissText: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.55)",
   },
 });
 
