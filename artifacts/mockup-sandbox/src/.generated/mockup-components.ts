@@ -5,5 +5,9 @@ export const modules: ModuleMap = {
   "./components/mockups/girivalam/EdgePanel.tsx": () => import("../components/mockups/girivalam/EdgePanel.tsx"),
   "./components/mockups/walk-flow/AfterScreen.tsx": () => import("../components/mockups/walk-flow/AfterScreen.tsx"),
   "./components/mockups/walk-flow/BeforeScreen.tsx": () => import("../components/mockups/walk-flow/BeforeScreen.tsx"),
-  "./components/mockups/walk-flow/DuringScreen.tsx": () => import("../components/mockups/walk-flow/DuringScreen.tsx")
+  "./components/mockups/walk-flow/DuringScreen.tsx": () => import("../components/mockups/walk-flow/DuringScreen.tsx"),
+  "./components/mockups/girivalam/memory/AtBanner.tsx": () => import("../components/mockups/girivalam/memory/AtBanner.tsx"),
+  "./components/mockups/girivalam/memory/FarBanner.tsx": () => import("../components/mockups/girivalam/memory/FarBanner.tsx"),
+  "./components/mockups/girivalam/memory/NearBanner.tsx": () => import("../components/mockups/girivalam/memory/NearBanner.tsx"),
+  "./components/mockups/girivalam/memory/Timeline.tsx": () => import("../components/mockups/girivalam/memory/Timeline.tsx")
 };
