@@ -160,6 +160,10 @@ export default function RouteMapScreen() {
   const [savedMoments, setSavedMoments] = useState<Record<number, string[]>>({});
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
   const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
+  // Walk-screen overlay (japa / audio / plus / utilities / temple info)
+  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple";
+  const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
+  const [templeInfoIdx, setTempleInfoIdx] = useState<number | null>(null);
   // Refs avoid stale-closure / concurrent-tap races on saveMoment.
   const currentWalkIdRef = useRef<string | null>(null);
   const walkInFlightRef = useRef<Promise<string> | null>(null);
@@ -333,6 +337,8 @@ export default function RouteMapScreen() {
     setWalkSeconds(0);
     setSavedMoments({});
     setDismissedFor(null);
+    setWalkOverlay(null);
+    setTempleInfoIdx(null);
     savedKindsRef.current = new Set();
     setWalkMode(true);
     try {
@@ -344,6 +350,8 @@ export default function RouteMapScreen() {
 
   async function endWalk() {
     setWalkMode(false);
+    setWalkOverlay(null);
+    setTempleInfoIdx(null);
     const id = currentWalkIdRef.current;
     if (id) {
       try {
@@ -551,276 +559,533 @@ export default function RouteMapScreen() {
   if (walkMode) {
     const distKm = (walkSeconds / 3600) * 3;
     const lingamIdx = Math.min(7, Math.floor(distKm / 1.75));
-    const nextLingamIdx = Math.min(7, lingamIdx + (distKm > 0 ? 1 : 0));
-    const nextLingam = LINGAMS[nextLingamIdx];
     const timeStr = formatTime(walkSeconds);
-    const malasDone = japaCount > 0 && japaCount % 108 === 0;
 
     return (
-      <View style={wStyles.root}>
+      <View style={dStyles.root}>
         <LinearGradient
-          colors={["#1A0500", "#3A0F00", "#5C1A00"]}
-          style={wStyles.gradient}
+          colors={["#0A0604", "#1A0F08", "#0A0604"]}
+          style={dStyles.gradient}
         >
-          {/* Top status bar */}
-          <View style={[wStyles.topBar, { paddingTop: topInset + 12 }]}>
-            <View style={wStyles.walkingBadge}>
-              <View style={wStyles.walkingDot} />
-              <Text style={wStyles.walkingBadgeText}>
-                {distKm > 0 ? `${distKm.toFixed(1)} km covered` : "Walking"}
+          {/* ── Top header: KM · timer · End Session ── */}
+          <View style={[dStyles.topBar, { paddingTop: topInset + 14 }]}>
+            <View>
+              <Text style={dStyles.kmBig}>
+                {distKm.toFixed(1)}
+                <Text style={dStyles.kmUnit}> KM</Text>
               </Text>
+              <Text style={dStyles.kmLabel}>Covered</Text>
             </View>
-            <Text style={wStyles.timerText}>{timeStr}</Text>
-            <Pressable
-              onPress={endWalk}
-              style={wStyles.endBtn}
-              accessibilityRole="button"
-              accessibilityLabel="End walk"
-            >
-              <Text style={wStyles.endBtnText}>End</Text>
-            </Pressable>
-          </View>
-
-          {/* Lingam progress dots */}
-          <View style={wStyles.lingamDots}>
-            {LINGAMS.map((l, i) => (
-              <View
-                key={l.number}
-                style={[wStyles.dot, i <= lingamIdx && wStyles.dotActive]}
-              />
-            ))}
-          </View>
-
-          {/* TAP ANYWHERE = +1 japa */}
-          <Pressable
-            style={wStyles.tapArea}
-            onPress={() => setJapaCount((c) => c + 1)}
-            accessibilityRole="button"
-            accessibilityLabel="Count one chant"
-          >
-            <Text style={wStyles.japaBig}>{japaCount}</Text>
-            <Text style={wStyles.tapHint}>TAP ANYWHERE TO COUNT</Text>
-            {malasDone && (
-              <View style={wStyles.malaBanner}>
-                <Text style={wStyles.malaBannerText}>
-                  🙏 {japaCount / 108} mala complete
-                </Text>
+            <View style={dStyles.topRight}>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={dStyles.timer}>{timeStr}</Text>
+                <View style={dStyles.liveRow}>
+                  <View style={dStyles.liveDot} />
+                  <Text style={dStyles.liveText}>Live Session</Text>
+                </View>
               </View>
-            )}
-
-            {/* Pulsing Om */}
-            <Animated.View style={[wStyles.omCircle, { opacity: omPulse }]}>
-              <MaterialCommunityIcons name="om" size={34} color="rgba(255,255,255,0.7)" />
-            </Animated.View>
-            <Text style={wStyles.mantraText}>Om Namah Shivaya</Text>
-          </Pressable>
-
-          {/* ─── Morphing lingam banner ───────────────────────────────────
-              Three states based on real GPS distance to the nearest lingam:
-              ① FAR  (> 300 m)         → tiny "Approaching X" line
-              ② NEAR (≤ 300 m)         → softer card with meaning preview
-              ③ AT   (geofence active) → rich "You have reached" + save moment
-          ─────────────────────────────────────────────────────────────────── */}
-          {(() => {
-            // ③ AT — arrived (geofence triggered)
-            if (activeGeofenceIdx !== null && dismissedFor !== activeGeofenceIdx) {
-              const here = LINGAMS[activeGeofenceIdx];
-              const saved = savedMoments[activeGeofenceIdx] ?? [];
-              const isSaved = (k: string) => saved.includes(k);
-              return (
-                <View style={wStyles.arrivalCard}>
-                  <View style={wStyles.arrivalHead}>
-                    <Text style={wStyles.arrivalLabel}>YOU HAVE REACHED</Text>
-                    <Text style={wStyles.arrivalName}>{here.name}</Text>
-                    <Text style={wStyles.arrivalMeaning}>{here.meaning}</Text>
-                  </View>
-
-                  <View style={wStyles.arrivalSaveSection}>
-                    <Text style={wStyles.arrivalSaveHint}>Save this moment</Text>
-                    <View style={wStyles.arrivalSaveRow}>
-                      {([
-                        { k: "photo",   icon: "📷", l: "Photo" },
-                        { k: "voice",   icon: "🎙️", l: "Voice" },
-                        { k: "note",    icon: "✍️", l: "Note" },
-                        { k: "feeling", icon: "❤️", l: "Feeling" },
-                      ] as const).map((b) => (
-                        <Pressable
-                          key={b.k}
-                          style={wStyles.arrivalSaveBtn}
-                          onPress={() => saveMoment(activeGeofenceIdx, b.k)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Save ${b.l.toLowerCase()}`}
-                        >
-                          <View style={[wStyles.arrivalSaveIcon, isSaved(b.k) && wStyles.arrivalSaveIconActive]}>
-                            <Text style={wStyles.arrivalSaveEmoji}>{b.icon}</Text>
-                          </View>
-                          <Text style={wStyles.arrivalSaveLabel}>{isSaved(b.k) ? `${b.l} ✓` : b.l}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-
-                  <Pressable
-                    style={wStyles.arrivalDismiss}
-                    onPress={() => setDismissedFor(activeGeofenceIdx)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Just keep walking"
-                  >
-                    <Text style={wStyles.arrivalDismissText}>Just keep walking</Text>
-                  </Pressable>
-                </View>
-              );
-            }
-
-            // ② NEAR — within 300 m, show meaning preview
-            if (nearest && nearest.distance <= 300) {
-              return (
-                <View style={wStyles.nearCard}>
-                  <View style={wStyles.nearHead}>
-                    <View style={wStyles.nearDot} />
-                    <Text style={wStyles.nearLabel}>
-                      {nearest.lingam.name.toUpperCase()} · {formatDistance(nearest.distance)}
-                    </Text>
-                  </View>
-                  <Text style={wStyles.nearMeaning}>{nearest.lingam.meaning}</Text>
-                </View>
-              );
-            }
-
-            // ① FAR — gentle "approaching" line, only if a lingam is reasonably ahead
-            if (nearest && nearest.distance <= 2500) {
-              return (
-                <View style={wStyles.farBanner}>
-                  <View style={wStyles.farDot} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={wStyles.farTitle}>Approaching {nearest.lingam.name}</Text>
-                    <Text style={wStyles.farSub}>
-                      {nearest.lingam.direction} · {formatDistance(nearest.distance)} ahead
-                    </Text>
-                  </View>
-                </View>
-              );
-            }
-
-            return null;
-          })()}
-
-          {/* Edge tab — always visible thin handle on the right when panel closed */}
-          {!edgePanelOpen && (
-            <Pressable
-              style={[wStyles.edgeTab, { top: "45%" }]}
-              onPress={() => setEdgePanelOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Open quick access"
-              hitSlop={12}
-            >
-              <Ionicons name="chevron-back" size={16} color="rgba(255,255,255,0.7)" />
-            </Pressable>
-          )}
-
-          {/* Backdrop dim when panel open */}
-          {edgePanelOpen && (
-            <Pressable
-              style={wStyles.edgeBackdrop}
-              onPress={() => setEdgePanelOpen(false)}
-              accessibilityLabel="Close quick access"
-            />
-          )}
-
-          {/* The edge panel — slides in from right */}
-          <Animated.View
-            style={[
-              wStyles.edgePanel,
-              {
-                pointerEvents: edgePanelOpen ? "auto" : "none",
-                top: topInset + 80,
-                bottom: bottomInset + 110,
-                transform: [
-                  {
-                    translateX: edgeSlide.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [260, 0],
-                    }),
-                  },
-                ],
-                opacity: edgeSlide,
-              },
-            ]}
-          >
-            <View style={wStyles.edgePanelHeader}>
-              <Text style={wStyles.edgePanelLabel}>QUICK</Text>
               <Pressable
-                onPress={() => setEdgePanelOpen(false)}
-                hitSlop={10}
+                onPress={endWalk}
+                style={dStyles.endBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Close"
+                accessibilityLabel="End session"
               >
-                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.4)" />
+                <Text style={dStyles.endBtnText}>End Session</Text>
               </Pressable>
             </View>
+          </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
-              {[
-                { key: "annaprasadam", icon: "🍛", label: "Annaprasadam", sub: "Free food · donations", onPress: () => { setEdgePanelOpen(false); handleEssential("food"); } },
-                { key: "restaurants",  icon: "🍴", label: "Restaurants",  sub: "Nearby", onPress: () => { setEdgePanelOpen(false); Alert.alert("Restaurants nearby", "Manna Restaurant (near temple) · Dreaming Tree Cafe (Ramana Nagar) · Shanti Cafe · German Bakery · Usha Inn\n\nA curated guide is being added."); } },
-                { key: "washrooms",    icon: "🚻", label: "Washrooms",    sub: "On the path", onPress: () => { setEdgePanelOpen(false); handleEssential("washroom"); } },
-                { key: "audiobooks",   icon: "📖", label: "Audio books",  sub: "Ramana · Talks", onPress: () => { setEdgePanelOpen(false); Alert.alert("Audio books", "Talks with Ramana — Selected (8 min)\nWho Am I? (12 min)\nGuided Mental Girivalam (25 min)\n\nFor your earphones. Recordings being added."); } },
-                { key: "music",        icon: "🎵", label: "Music",        sub: "Chants · Bhajans", onPress: () => { setEdgePanelOpen(false); Alert.alert("Music", "Om Namah Shivaya chant (30 min)\nArunachala Shiva chant (20 min)\nAksharamanamalai (18 min)\nBhajans of Tiruvannamalai (45 min)\n\nFor your earphones. Recordings being added."); } },
-                { key: "japa",         icon: "📿", label: "Japa counter", sub: `${japaCount} / ${japaTarget}`, onPress: () => { setEdgePanelOpen(false); } },
-              ].map((item) => (
+          {/* ── 8-temple progress strip ── */}
+          <View style={dStyles.progressRow}>
+            <View style={dStyles.progressStrip}>
+              {LINGAMS.map((l, i) => {
+                const isDone = i < lingamIdx;
+                const isCurrent = i === lingamIdx;
+                return (
+                  <Pressable
+                    key={l.number}
+                    style={dStyles.progressItem}
+                    onPress={() => {
+                      setTempleInfoIdx(i);
+                      setWalkOverlay("temple");
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${l.name} info`}
+                  >
+                    <View
+                      style={[
+                        dStyles.templeIconWrap,
+                        isCurrent && dStyles.templeIconCurrent,
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name="temple-hindu"
+                        size={isCurrent ? 24 : 18}
+                        color={
+                          isCurrent
+                            ? GOLD
+                            : isDone
+                            ? GOLD_DIM
+                            : "rgba(255,255,255,0.22)"
+                        }
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        dStyles.templeName,
+                        (isDone || isCurrent) && dStyles.templeNameLit,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {l.name.replace(" Lingam", "")}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={dStyles.progressCounter}>{Math.min(8, lingamIdx + 1)}/8</Text>
+          </View>
+
+          {/* ── Faux dark map area ── */}
+          <View style={dStyles.mapArea}>
+            {[200, 160, 120, 80].map((r, i) => (
+              <View
+                key={i}
+                style={[
+                  dStyles.contour,
+                  { width: r * 2, height: r * 2, marginLeft: -r, marginTop: -r },
+                ]}
+              />
+            ))}
+            <Text style={dStyles.mountainLabel}>ARUNACHALA</Text>
+
+            {/* Glowing route — dots forming an oval ring */}
+            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+              {Array.from({ length: 40 }).map((_, i) => {
+                const a = (i / 40) * Math.PI * 2;
+                const rx = 130;
+                const ry = 170;
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      marginLeft: Math.cos(a) * rx - 2,
+                      marginTop: Math.sin(a) * ry - 2,
+                      width: 4,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: GOLD,
+                      opacity: 0.6,
+                      shadowColor: GOLD,
+                      shadowOpacity: 1,
+                      shadowRadius: 4,
+                      shadowOffset: { width: 0, height: 0 },
+                    }}
+                  />
+                );
+              })}
+            </View>
+
+            {/* Temple pins on the route */}
+            {LINGAMS.map((l, i) => {
+              const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+              const rx = 130;
+              const ry = 170;
+              const isDone = i < lingamIdx;
+              const isCurrent = i === lingamIdx;
+              return (
                 <Pressable
-                  key={item.key}
-                  style={wStyles.edgeItem}
-                  onPress={item.onPress}
+                  key={l.number}
+                  onPress={() => {
+                    setTempleInfoIdx(i);
+                    setWalkOverlay("temple");
+                  }}
+                  style={[
+                    dStyles.templePin,
+                    isCurrent && dStyles.templePinCurrent,
+                    {
+                      left: "50%",
+                      top: "50%",
+                      marginLeft: Math.cos(a) * rx - 14,
+                      marginTop: Math.sin(a) * ry - 14,
+                    },
+                  ]}
                   accessibilityRole="button"
-                  accessibilityLabel={item.label}
+                  accessibilityLabel={l.name}
                 >
-                  <View style={wStyles.edgeItemIcon}>
-                    <Text style={wStyles.edgeItemEmoji}>{item.icon}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={wStyles.edgeItemLabel}>{item.label}</Text>
-                    <Text style={wStyles.edgeItemSub}>{item.sub}</Text>
-                  </View>
+                  <MaterialCommunityIcons
+                    name="temple-hindu"
+                    size={isCurrent ? 18 : 14}
+                    color={isDone || isCurrent ? GOLD : "rgba(255,255,255,0.4)"}
+                  />
                 </Pressable>
-              ))}
-              <Text style={wStyles.edgeFooter}>Tap the tab anytime</Text>
-            </ScrollView>
-          </Animated.View>
+              );
+            })}
 
-          {/* Bottom 3-icon bar */}
-          <View style={[wStyles.bottomBar, { paddingBottom: bottomInset + 16 }]}>
-            <View style={wStyles.bottomIcon}>
-              <View style={wStyles.bottomIconCircle}>
-                <Text style={wStyles.bottomIconEmoji}>💧</Text>
-              </View>
-              <Text style={wStyles.bottomIconLabel}>Water</Text>
+            {/* Utility pins (visual hint — full list lives in Utilities overlay) */}
+            <View style={[dStyles.utilPin, { top: 14, left: 18 }]}>
+              <Text style={dStyles.utilPinText}>💧 Water · 120m</Text>
+            </View>
+            <View style={[dStyles.utilPin, { top: 14, right: 18 }]}>
+              <Text style={dStyles.utilPinText}>🚻 Toilet · 240m</Text>
+            </View>
+            <View style={[dStyles.utilPin, { bottom: 110, left: 18 }]}>
+              <Text style={dStyles.utilPinText}>🍛 Annaprasadam · 150m</Text>
+            </View>
+            <View style={[dStyles.utilPin, { bottom: 110, right: 18 }]}>
+              <Text style={dStyles.utilPinText}>🍴 Restaurant · 300m</Text>
             </View>
 
-            <View style={wStyles.bottomIcon}>
-              <View style={wStyles.bottomIconCircle}>
-                <Text style={wStyles.bottomIconCount}>{lingamIdx + 1}/8</Text>
-              </View>
-              <Text style={wStyles.bottomIconLabel}>Lingam</Text>
+            {/* User location */}
+            <View style={[dStyles.userDotWrap, { left: "50%", top: "78%", marginLeft: -10 }]}>
+              <View style={dStyles.userDotPulse} />
+              <View style={dStyles.userDot} />
             </View>
 
+            {/* Re-center FAB — requests a fresh GPS fix and triggers re-center */}
             <Pressable
-              style={wStyles.bottomIcon}
+              style={dStyles.recenterFab}
               accessibilityRole="button"
-              onPress={() =>
-                Alert.alert(
-                  "Emergency Contacts",
-                  "🏥 Hospital: +91-4175-223000\n\n🚔 Police: 100\n\n🛕 Ramana Ashram: +91-4175-237292",
-                  [{ text: "Close" }]
-                )
-              }
+              accessibilityLabel="Re-center map on my location"
+              onPress={() => {
+                if (!tracking) {
+                  startTracking();
+                } else {
+                  Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+                    .then((p) =>
+                      setUserLocation({
+                        lat: p.coords.latitude,
+                        lng: p.coords.longitude,
+                        recenter: true,
+                      })
+                    )
+                    .catch(() => {
+                      Alert.alert("Re-center", "Couldn't get a fresh fix right now. Keep walking — it will retry.");
+                    });
+                }
+              }}
             >
-              <View style={[wStyles.bottomIconCircle, wStyles.emergencyCircle]}>
-                <Text style={wStyles.bottomIconEmoji}>🆘</Text>
-              </View>
-              <Text style={wStyles.bottomIconLabel}>Help</Text>
+              <Ionicons name="locate" size={18} color={GOLD} />
             </Pressable>
           </View>
+
+          {/* ── Geofence card (uses real AT logic) ── */}
+          {activeGeofenceIdx !== null && dismissedFor !== activeGeofenceIdx && (
+            <View style={dStyles.geofenceCard}>
+              <View style={dStyles.geofenceIcon}>
+                <MaterialCommunityIcons name="temple-hindu" size={20} color={GOLD} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={dStyles.geofenceApproach}>Approaching</Text>
+                <Text style={dStyles.geofenceName}>
+                  {LINGAMS[activeGeofenceIdx].name}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setTempleInfoIdx(activeGeofenceIdx);
+                    setWalkOverlay("temple");
+                  }}
+                  style={dStyles.geofenceCta}
+                  accessibilityRole="button"
+                  accessibilityLabel="Know about this temple"
+                >
+                  <Text style={dStyles.geofenceCtaText}>Know About This Temple</Text>
+                </Pressable>
+              </View>
+              <Pressable
+                onPress={() => setDismissedFor(activeGeofenceIdx)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss"
+              >
+                <Ionicons name="close" size={18} color="rgba(255,255,255,0.5)" />
+              </Pressable>
+            </View>
+          )}
+
+          {/* ── Bottom 4-button nav ── */}
+          <View style={[dStyles.bottomNav, { paddingBottom: bottomInset + 14 }]}>
+            <NavTabBtn
+              emoji="📿"
+              label="Japa"
+              active={walkOverlay === "japa"}
+              onPress={() => setWalkOverlay(walkOverlay === "japa" ? null : "japa")}
+            />
+            <NavTabBtn
+              emoji="🎵"
+              label="Audio"
+              active={walkOverlay === "audio"}
+              onPress={() => setWalkOverlay(walkOverlay === "audio" ? null : "audio")}
+            />
+            <Pressable
+              onPress={() => setWalkOverlay(walkOverlay === "plus" ? null : "plus")}
+              style={[
+                dStyles.plusBtn,
+                walkOverlay === "plus" && { transform: [{ rotate: "45deg" }] },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Quick actions"
+            >
+              <Ionicons name="add" size={32} color="#0A0604" />
+            </Pressable>
+            <NavTabBtn
+              emoji="🧭"
+              label="Utilities"
+              active={walkOverlay === "utilities"}
+              onPress={() => setWalkOverlay(walkOverlay === "utilities" ? null : "utilities")}
+            />
+          </View>
+
+          {/* ── Overlays (always inside the session) ── */}
+          {walkOverlay === "japa" && (
+            <WalkSheet title="JAPA COUNTER" onClose={() => setWalkOverlay(null)}>
+              <View style={dStyles.japaWrap}>
+                <View style={dStyles.japaMandala}>
+                  <Text style={dStyles.japaBig}>{japaCount}</Text>
+                  <Text style={dStyles.japaSub}>Mantras</Text>
+                </View>
+                <View style={dStyles.japaRow}>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => Math.max(0, c - 1))}
+                    style={dStyles.japaSideBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Decrease"
+                  >
+                    <Ionicons name="remove" size={22} color={GOLD} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => c + 1)}
+                    style={dStyles.japaTapBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Count one chant"
+                  >
+                    <Text style={dStyles.japaTapText}>Tap to count</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => c + 1)}
+                    style={dStyles.japaSideBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add one"
+                  >
+                    <Ionicons name="add" size={22} color={GOLD} />
+                  </Pressable>
+                </View>
+                <Pressable
+                  onPress={() => setJapaCount(0)}
+                  style={dStyles.japaReset}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset count"
+                >
+                  <Ionicons name="refresh" size={13} color="rgba(255,255,255,0.5)" />
+                  <Text style={dStyles.japaResetText}>Reset</Text>
+                </Pressable>
+              </View>
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "audio" && (
+            <WalkSheet title="AUDIO" onClose={() => setWalkOverlay(null)}>
+              <View style={dStyles.audioTabs}>
+                {["Bhajans", "Audiobooks", "Ambient"].map((t, i) => (
+                  <Text
+                    key={t}
+                    style={[dStyles.audioTab, i === 0 && dStyles.audioTabActive]}
+                  >
+                    {t}
+                  </Text>
+                ))}
+              </View>
+              {[
+                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda" },
+                { title: "Arunachala Ashtakam", artist: "Traditional" },
+                { title: "Lingashtakam", artist: "Adi Shankaracharya" },
+                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda", playing: true },
+              ].map((t, i) => (
+                <View key={i} style={dStyles.audioRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.audioTitle}>{t.title}</Text>
+                    <Text style={dStyles.audioArtist}>{t.artist}</Text>
+                  </View>
+                  <Ionicons
+                    name={t.playing ? "pause-circle" : "play-circle"}
+                    size={30}
+                    color={GOLD}
+                  />
+                </View>
+              ))}
+              <Text style={dStyles.audioFoot}>
+                Plays under the map · mini-player stays on
+              </Text>
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "plus" && (
+            <WalkSheet title="ACTIONS" onClose={() => setWalkOverlay(null)}>
+              {[
+                {
+                  icon: "create-outline" as const,
+                  title: "Quick Note",
+                  sub: "Write your thoughts",
+                },
+                {
+                  icon: "camera-outline" as const,
+                  title: "Photo Capture",
+                  sub: "Capture the moment",
+                },
+                {
+                  icon: "videocam-outline" as const,
+                  title: "Video Capture",
+                  sub: "Record your journey",
+                },
+              ].map((a) => (
+                <Pressable
+                  key={a.title}
+                  style={dStyles.actionRow}
+                  onPress={() => {
+                    setWalkOverlay(null);
+                    Alert.alert(
+                      a.title,
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={a.title}
+                >
+                  <View style={dStyles.actionIcon}>
+                    <Ionicons name={a.icon} size={20} color={GOLD} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.actionTitle}>{a.title}</Text>
+                    <Text style={dStyles.actionSub}>{a.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.3)" />
+                </Pressable>
+              ))}
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "utilities" && (
+            <WalkSheet title="UTILITIES" onClose={() => setWalkOverlay(null)}>
+              {[
+                { emoji: "💧", label: "Water", sub: "Find water stations nearby" },
+                { emoji: "🚻", label: "Toilets", sub: "Find toilets nearby" },
+                { emoji: "🍛", label: "Annaprasadam", sub: "Free food locations" },
+                { emoji: "🍴", label: "Restaurants", sub: "Nearby restaurants" },
+                { emoji: "🏛️", label: "Ashramas", sub: "Nearby ashramas" },
+                { emoji: "✨", label: "Nearby Essentials", sub: "All essential services" },
+              ].map((u) => (
+                <Pressable
+                  key={u.label}
+                  style={dStyles.utilRow}
+                  onPress={() => {
+                    setWalkOverlay(null);
+                    Alert.alert(
+                      u.label,
+                      `Pins for ${u.label.toLowerCase()} will appear on your map. The session stays active.`
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={u.label}
+                >
+                  <Text style={dStyles.utilRowIcon}>{u.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.utilLabel}>{u.label}</Text>
+                    <Text style={dStyles.utilSub}>{u.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
+                </Pressable>
+              ))}
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "temple" && templeInfoIdx !== null && (() => {
+            const t = LINGAMS[templeInfoIdx];
+            const saved = savedMoments[templeInfoIdx] ?? [];
+            return (
+              <View style={dStyles.templeOverlay}>
+                <Pressable
+                  style={dStyles.templeBackdrop}
+                  onPress={() => setWalkOverlay(null)}
+                  accessibilityLabel="Close temple info"
+                />
+                <View style={dStyles.templeSheet}>
+                  <View style={dStyles.templeHero}>
+                    <Pressable
+                      onPress={() => setWalkOverlay(null)}
+                      style={dStyles.templeClose}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close"
+                    >
+                      <Ionicons name="close" size={18} color="white" />
+                    </Pressable>
+                    <Text style={dStyles.templeKicker}>
+                      LINGAM #{t.number} · {t.direction.toUpperCase()}
+                    </Text>
+                    <Text style={dStyles.templeHeadName}>{t.name}</Text>
+                  </View>
+                  <View style={dStyles.templeTabs}>
+                    {["History", "Significance", "Experiences", "Blog"].map((tab, i) => (
+                      <View
+                        key={tab}
+                        style={[dStyles.templeTabWrap, i === 0 && dStyles.templeTabWrapActive]}
+                      >
+                        <Text
+                          style={[dStyles.templeTab, i === 0 && dStyles.templeTabActive]}
+                        >
+                          {tab}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <Text style={dStyles.templeBody}>{t.meaning}</Text>
+                    <Text style={[dStyles.templeBody, { marginTop: 14 }]}>
+                      {t.description}
+                    </Text>
+                  </ScrollView>
+                  <View style={dStyles.templeFootRow}>
+                    {[
+                      { icon: "camera-outline" as const, label: "Add Memory", k: "photo" as const },
+                      { icon: "share-outline" as const, label: "Share" },
+                      { icon: "navigate-outline" as const, label: "Nav Guide" },
+                      { icon: "close-outline" as const, label: "Close" },
+                    ].map((f) => (
+                      <Pressable
+                        key={f.label}
+                        style={dStyles.templeFootBtn}
+                        onPress={() => {
+                          if (f.k && templeInfoIdx !== null) {
+                            saveMoment(templeInfoIdx, f.k);
+                          } else if (f.label === "Close") {
+                            setWalkOverlay(null);
+                          } else {
+                            Alert.alert(f.label, "Coming next.");
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={f.label}
+                      >
+                        <Ionicons name={f.icon} size={18} color={GOLD} />
+                        <Text style={dStyles.templeFootLabel}>{f.label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  <Text style={dStyles.templeFootNote}>
+                    Your walk is still active · {saved.length}{" "}
+                    {saved.length === 1 ? "memory" : "memories"} here
+                  </Text>
+                </View>
+              </View>
+            );
+          })()}
+
         </LinearGradient>
       </View>
     );
@@ -1985,4 +2250,556 @@ const styles = StyleSheet.create({
   audioTrackSubtitle: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 15 },
   audioTrackDuration: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textLight, marginLeft: 4 },
   audioFooterNote: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textLight, lineHeight: 16, marginTop: 12, fontStyle: "italic", textAlign: "center" },
+});
+
+// ─── Dark/Gold walk-mode tokens & helpers ────────────────────────────────────
+const GOLD = "#C47A1E";
+const GOLD_DIM = "rgba(196,122,30,0.55)";
+const DARK_BG = "#0A0604";
+const DARK_PANEL = "rgba(20,12,6,0.95)";
+const HAIRLINE = "rgba(196,122,30,0.18)";
+const TEXT_DIM = "rgba(255,255,255,0.55)";
+
+function NavTabBtn({
+  emoji,
+  label,
+  active,
+  onPress,
+}: {
+  emoji: string;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={dStyles.navTab}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+    >
+      <View style={[dStyles.navTabIcon, active && dStyles.navTabIconActive]}>
+        <Text style={{ fontSize: 18 }}>{emoji}</Text>
+      </View>
+      <Text style={[dStyles.navTabLabel, active && dStyles.navTabLabelActive]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function WalkSheet({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <View style={dStyles.sheetOverlay} pointerEvents="box-none">
+      <Pressable
+        style={dStyles.sheetBackdrop}
+        onPress={onClose}
+        accessibilityLabel="Close panel"
+      />
+      <View style={dStyles.sheet}>
+        <View style={dStyles.sheetHandle} />
+        <View style={dStyles.sheetHeader}>
+          <Text style={dStyles.sheetTitle}>{title}</Text>
+          <Pressable
+            onPress={onClose}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={20} color="rgba(255,255,255,0.7)" />
+          </Pressable>
+        </View>
+        <ScrollView
+          contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
+
+const dStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: DARK_BG },
+  gradient: { flex: 1 },
+
+  // Top bar
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+  },
+  kmBig: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 32,
+    color: "white",
+    letterSpacing: -0.5,
+    lineHeight: 36,
+  },
+  kmUnit: { fontFamily: "Inter_500Medium", fontSize: 14, color: TEXT_DIM, letterSpacing: 1 },
+  kmLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, marginTop: 2 },
+  topRight: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  timer: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: GOLD },
+  liveRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: GOLD },
+  liveText: { fontFamily: "Inter_500Medium", fontSize: 10, color: TEXT_DIM, letterSpacing: 0.5 },
+  endBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,80,60,0.55)",
+    backgroundColor: "rgba(255,80,60,0.08)",
+  },
+  endBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#FF806C", letterSpacing: 0.5 },
+
+  // Progress strip
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+  },
+  progressStrip: { flex: 1, flexDirection: "row", justifyContent: "space-between" },
+  progressItem: { alignItems: "center", paddingHorizontal: 2, flex: 1 },
+  templeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  templeIconCurrent: {
+    backgroundColor: "rgba(196,122,30,0.12)",
+    shadowColor: GOLD,
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  templeName: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
+    color: "rgba(255,255,255,0.35)",
+    marginTop: 2,
+    textAlign: "center",
+  },
+  templeNameLit: { color: "rgba(255,255,255,0.85)" },
+  progressCounter: {
+    marginLeft: 8,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    color: GOLD,
+  },
+
+  // Map area
+  mapArea: {
+    flex: 1,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contour: {
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.08)",
+  },
+  mountainLabel: {
+    position: "absolute",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.35)",
+    letterSpacing: 3,
+  },
+  templePin: {
+    position: "absolute",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(20,12,6,0.85)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  templePinCurrent: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginLeft: -18,
+    marginTop: -18,
+    backgroundColor: "rgba(196,122,30,0.18)",
+    borderColor: GOLD,
+    shadowColor: GOLD,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  utilPin: {
+    position: "absolute",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    backgroundColor: "rgba(20,12,6,0.85)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+  },
+  utilPinText: { fontFamily: "Inter_500Medium", fontSize: 10, color: "rgba(255,255,255,0.75)" },
+  userDotWrap: { position: "absolute", width: 20, height: 20, alignItems: "center", justifyContent: "center" },
+  userDotPulse: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(196,122,30,0.25)",
+  },
+  userDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: GOLD,
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  recenterFab: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(20,12,6,0.9)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Geofence card
+  geofenceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 14,
+    marginBottom: 8,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: DARK_PANEL,
+    borderWidth: 1,
+    borderColor: GOLD_DIM,
+  },
+  geofenceIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(196,122,30,0.12)",
+  },
+  geofenceApproach: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    letterSpacing: 1,
+    color: TEXT_DIM,
+  },
+  geofenceName: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "white", marginTop: 1 },
+  geofenceCta: { marginTop: 6, alignSelf: "flex-start" },
+  geofenceCtaText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: GOLD, letterSpacing: 0.3 },
+
+  // Bottom nav
+  bottomNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: HAIRLINE,
+    backgroundColor: "rgba(10,6,4,0.95)",
+  },
+  navTab: { alignItems: "center", flex: 1 },
+  navTabIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  navTabIconActive: {
+    backgroundColor: "rgba(196,122,30,0.15)",
+    shadowColor: GOLD,
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  navTabLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: TEXT_DIM,
+    marginTop: 4,
+  },
+  navTabLabelActive: { color: GOLD },
+  plusBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 6,
+    shadowColor: GOLD,
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+
+  // Sheet (overlay)
+  sheetOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: "flex-end" },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)" },
+  sheet: {
+    backgroundColor: DARK_PANEL,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: GOLD_DIM,
+    maxHeight: "75%",
+    paddingTop: 8,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    marginBottom: 6,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: 6,
+  },
+  sheetTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    color: GOLD,
+    letterSpacing: 2,
+  },
+
+  // Japa
+  japaWrap: { alignItems: "center", paddingVertical: 10 },
+  japaMandala: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 2,
+    borderColor: GOLD_DIM,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    shadowColor: GOLD,
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  japaBig: { fontFamily: "Inter_700Bold", fontSize: 56, color: "white", letterSpacing: -1 },
+  japaSub: { fontFamily: "Inter_500Medium", fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, marginTop: 2 },
+  japaRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  japaSideBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(196,122,30,0.1)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+  },
+  japaTapBtn: {
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    borderRadius: 28,
+    backgroundColor: GOLD,
+  },
+  japaTapText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#0A0604", letterSpacing: 0.5 },
+  japaReset: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 6 },
+  japaResetText: { fontFamily: "Inter_500Medium", fontSize: 11, color: TEXT_DIM, letterSpacing: 0.5 },
+
+  // Audio
+  audioTabs: {
+    flexDirection: "row",
+    gap: 8,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+    marginBottom: 12,
+  },
+  audioTab: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: TEXT_DIM,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  audioTabActive: {
+    color: GOLD,
+    backgroundColor: "rgba(196,122,30,0.12)",
+  },
+  audioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  audioTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "white" },
+  audioArtist: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, marginTop: 2 },
+  audioFoot: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: TEXT_DIM,
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 14,
+  },
+
+  // Plus / actions
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  actionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(196,122,30,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "white" },
+  actionSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, marginTop: 2 },
+
+  // Utilities
+  utilRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  utilRowIcon: { fontSize: 22, width: 34, textAlign: "center" },
+  utilLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "white" },
+  utilSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, marginTop: 2 },
+
+  // Temple info
+  templeOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: "flex-end" },
+  templeBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.7)" },
+  templeSheet: {
+    height: "85%",
+    backgroundColor: DARK_BG,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: "hidden",
+    borderTopWidth: 1,
+    borderColor: GOLD_DIM,
+  },
+  templeHero: {
+    height: 180,
+    backgroundColor: "#1A0F08",
+    paddingHorizontal: 22,
+    paddingTop: 24,
+    justifyContent: "flex-end",
+    paddingBottom: 18,
+    borderBottomWidth: 1,
+    borderColor: HAIRLINE,
+  },
+  templeClose: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  templeKicker: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: GOLD,
+    letterSpacing: 2,
+    marginBottom: 6,
+  },
+  templeHeadName: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 24,
+    color: "white",
+    letterSpacing: -0.5,
+  },
+  templeTabs: {
+    flexDirection: "row",
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+  },
+  templeTabWrap: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  templeTabWrapActive: { backgroundColor: "rgba(196,122,30,0.12)" },
+  templeTab: { fontFamily: "Inter_500Medium", fontSize: 12, color: TEXT_DIM },
+  templeTabActive: { color: GOLD },
+  templeBody: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.85)",
+  },
+  templeFootRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+    backgroundColor: "rgba(20,12,6,0.7)",
+  },
+  templeFootBtn: { alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
+  templeFootLabel: { fontFamily: "Inter_500Medium", fontSize: 10, color: TEXT_DIM, letterSpacing: 0.3 },
+  templeFootNote: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    color: TEXT_DIM,
+    textAlign: "center",
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+    fontStyle: "italic",
+  },
 });

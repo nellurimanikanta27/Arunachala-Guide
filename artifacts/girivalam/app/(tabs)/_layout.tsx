@@ -18,7 +18,7 @@ export default function TabLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="route-map" options={{ title: "Girivalam Route" }} />
+      <Stack.Screen name="route-map" options={{ headerShown: false }} />
       <Stack.Screen
         name="history"
         options={{ title: "History & Meditation" }}
