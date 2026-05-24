@@ -1,0 +1,159 @@
+Tracking Screen UI Update
+
+Main Header:
+- Left side:
+  - KM covered
+- Right side:
+  - Live session timer
+  - End Session button
+
+Temple Progress Navigation:
+- Positioned directly below the header
+- Shows temple progression/tracking status
+- 8 temple milestones
+- Right side shows:
+  - completed temple count
+  - example: 0/8
+- Should visually resemble:
+  - train tracking progression
+  - delivery tracking progress line
+- Completed temples:
+  - glowing/check state
+- Current temple:
+  - active/pulsing state
+- Upcoming temples:
+  - dimmed state
+
+Main Center Space:
+- Default state:
+  - Offline tracking map
+- Main center space should support:
+  - Offline Map View
+  - Japa Counter Overlay
+
+Map View Requirements:
+- Maintain active tracking map
+- Show:
+  - current user location
+  - route path
+  - temple locations
+  - utility overlays when enabled
+- Utility overlays:
+  - water
+  - toilets
+  - Annaprasadam
+  - restaurants
+  - ashramas
+- Clicking utility categories should render locations directly on the same active map
+- User should be able to:
+  - tap nearest location
+  - see distance from current position
+
+Bottom Navigation:
+Use only 4 main actions:
+
+1. Japa
+- Opens floating overlay
+- Must NOT leave tracking screen
+- Overlay includes:
+  - chant counter
+  - close button
+  - reset button
+  - decrease button for misclick correction
+- Should feel immersive and minimal
+
+2. Audio
+- Opens audio overlay/player
+- Includes:
+  - music
+  - audiobooks
+  - ambient chants
+- Persistent mini-player supported
+- Audio should continue while using map/tracking
+
+3. Plus Button (+)
+- Main quick action button
+- Opens compact floating action sheet
+- Includes:
+  - Quick Note
+  - Photo Capture
+  - Video Capture
+
+Quick Notes:
+- Every walk/session must create:
+  - unique session
+  - grouped by date + time
+- Notes belong only to that session
+
+Capture:
+- Open in-app camera
+- Save:
+  - image/video
+  - timestamp
+  - GPS coordinates
+  - session linkage
+
+Session Replay:
+- Captured images/videos should appear floating along the walked route map
+- Similar to Snapchat map memories
+
+4. Utilities
+- Opens compact overlay menu
+- Must NOT leave tracking experience
+
+Utilities Overlay Includes:
+- Water
+- Toilets
+- Annaprasadam
+- Restaurants
+- Ashramas
+- Nearby essentials
+
+Temple Info Access:
+Temple info should NOT have a dedicated bottom nav button.
+
+Temple info should open from:
+- clicking temple milestone in progress tracker
+- clicking temple marker on map
+- temple geofence popup CTA
+
+Temple Info Includes:
+- history
+- significance
+- images
+- experience content
+- temple blog/info page
+
+Temple Geofence Experience:
+When user enters temple geomesh/geofence:
+- trigger local notification
+- show in-app popup for 10–15 seconds
+
+Popup Example:
+“Approaching [Temple Name]”
+
+Popup CTA:
+“Know about this temple”
+
+Clicking popup:
+- opens temple info overlay
+- must NOT leave active tracking session
+
+Important UX Rule:
+Once pilgrimage tracking/session starts:
+- user must never leave the active tracking experience
+- all overlays/pages/features must remain layered inside the same session UI
+
+This includes:
+- temple info
+- notes
+- music
+- audiobooks
+- utility overlays
+- memories
+- experiences
+
+Tracking session only ends when:
+- user manually ends session
+OR
+- pilgrimage/girivalam is completed.
