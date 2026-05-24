@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Platform,
@@ -13,32 +14,21 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-
-type MomentKind = "photo" | "voice" | "note" | "feeling";
-
-interface SavedMoment {
-  walkId: string;
-  walkDate: string;
-  walkLabel: string;
-  lingamName: string;
-  time: string;
-  kind: MomentKind;
-  excerpt: string;
-}
-
-interface Story {
-  id: string;
-  date: string;
-  title: string;
-  excerpt: string;
-  walks: number;
-}
-
-function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
-}
+import {
+  clearAllPilgrimageData,
+  getMoments,
+  getSettings,
+  getStats,
+  getStories,
+  getWalks,
+  type Moment,
+  type MomentKind,
+  type Settings,
+  type Stats,
+  type Story,
+  type Walk,
+  updateSettings,
+} from "@/lib/pilgrimage-store";
 
 const KIND_META: Record<MomentKind, { icon: string; label: string }> = {
   photo: { icon: "📷", label: "Photo" },
@@ -47,64 +37,26 @@ const KIND_META: Record<MomentKind, { icon: string; label: string }> = {
   feeling: { icon: "❤️", label: "Feeling" },
 };
 
-const SAMPLE_MOMENTS: SavedMoment[] = [
-  {
-    walkId: "w3",
-    walkDate: "23 May 2026",
-    walkLabel: "Pournami 🌕",
-    lingamName: "Indra Lingam",
-    time: "5:42 AM",
-    kind: "voice",
-    excerpt: "Started in the dark. Cool air. A dog walked with me for the first 100 m.",
-  },
-  {
-    walkId: "w3",
-    walkDate: "23 May 2026",
-    walkLabel: "Pournami 🌕",
-    lingamName: "Agni Lingam",
-    time: "6:38 AM",
-    kind: "feeling",
-    excerpt: "Sat for 8 minutes. Wanted to burn away the impatience.",
-  },
-  {
-    walkId: "w3",
-    walkDate: "23 May 2026",
-    walkLabel: "Pournami 🌕",
-    lingamName: "Yama Lingam",
-    time: "7:21 AM",
-    kind: "photo",
-    excerpt: "Sunrise hit just as I arrived.",
-  },
-  {
-    walkId: "w2",
-    walkDate: "23 Apr 2026",
-    walkLabel: "Pournami 🌕",
-    lingamName: "Varuna Lingam",
-    time: "6:14 PM",
-    kind: "note",
-    excerpt: "Sunset over the tank. The hill turned copper.",
-  },
-  {
-    walkId: "w1",
-    walkDate: "24 Mar 2026",
-    walkLabel: "First walk",
-    lingamName: "Indra Lingam",
-    time: "5:10 AM",
-    kind: "note",
-    excerpt: "First time. Nervous about the distance, but my mother said just keep walking.",
-  },
-];
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
 
-const SAMPLE_STORIES: Story[] = [
-  {
-    id: "s1",
-    date: "23 May 2026",
-    title: "What stayed with me from this Pournami",
-    excerpt:
-      "I came in heavy and walked out lighter. Somewhere between Agni and Yama the chatter in my head got quiet — not gone, just quiet — and I noticed the sound my own feet were making for the first time.",
-    walks: 3,
-  },
-];
+function formatDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 function StatBlock({ value, label }: { value: string; label: string }) {
   return (
@@ -115,7 +67,7 @@ function StatBlock({ value, label }: { value: string; label: string }) {
   );
 }
 
-function MomentRow({ moment, isLast }: { moment: SavedMoment; isLast: boolean }) {
+function MomentRow({ moment, isLast }: { moment: Moment; isLast: boolean }) {
   const meta = KIND_META[moment.kind];
   return (
     <View style={styles.momentRow}>
@@ -126,14 +78,17 @@ function MomentRow({ moment, isLast }: { moment: SavedMoment; isLast: boolean })
       <View style={styles.momentBody}>
         <View style={styles.momentHead}>
           <Text style={styles.momentLingam}>{moment.lingamName}</Text>
-          <Text style={styles.momentTime}>{moment.time}</Text>
+          <Text style={styles.momentTime}>{formatTime(moment.savedAt)}</Text>
         </View>
-        <Text style={styles.momentExcerpt}>"{moment.excerpt}"</Text>
+        {moment.note ? (
+          <Text style={styles.momentExcerpt}>"{moment.note}"</Text>
+        ) : (
+          <Text style={styles.momentExcerptFaint}>Marked at this lingam</Text>
+        )}
         <View style={styles.momentTagRow}>
           <Text style={styles.momentTag}>
             {meta.icon} {meta.label}
           </Text>
-          <Text style={styles.momentTagFaint}>· {moment.walkDate}</Text>
         </View>
       </View>
     </View>
@@ -174,19 +129,34 @@ export default function MeScreen() {
   const topInset = isWeb ? 67 : insets.top;
   const bottomInset = isWeb ? 34 : insets.bottom;
 
-  // Group moments by walk
-  const momentsByWalk = SAMPLE_MOMENTS.reduce<
-    Record<string, { date: string; label: string; items: SavedMoment[] }>
-  >((acc, m) => {
-    if (!acc[m.walkId]) acc[m.walkId] = { date: m.walkDate, label: m.walkLabel, items: [] };
-    acc[m.walkId].items.push(m);
-    return acc;
-  }, {});
-  const walkIds = Object.keys(momentsByWalk);
+  const [loaded, setLoaded] = useState(false);
+  const [walks, setWalks] = useState<Walk[]>([]);
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
 
-  const totalWalks = walkIds.length;
-  const totalKm = totalWalks * 14;
-  const totalMoments = SAMPLE_MOMENTS.length;
+  const reload = useCallback(async () => {
+    const [w, m, s, st, statsData] = await Promise.all([
+      getWalks(),
+      getMoments(),
+      getStories(),
+      getSettings(),
+      getStats(),
+    ]);
+    setWalks(w);
+    setMoments(m);
+    setStories(s);
+    setSettings(st);
+    setStats(statsData);
+    setLoaded(true);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
 
   function comingSoon(what: string, body: string) {
     Alert.alert(what, body);
@@ -195,21 +165,52 @@ export default function MeScreen() {
   function confirmClear() {
     Alert.alert(
       "Clear all pilgrimage data?",
-      "This will remove every saved moment, story, and walk from this device. There is no cloud backup — this cannot be undone.",
+      "This will remove every saved moment, walk, story, and setting from this device. There is no cloud backup — this cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Clear everything",
           style: "destructive",
-          onPress: () =>
-            Alert.alert(
-              "Coming soon",
-              "Local data clearing is being wired to storage in the next pass."
-            ),
+          onPress: async () => {
+            await clearAllPilgrimageData();
+            await reload();
+            Alert.alert("Cleared", "Your pilgrimage archive on this device is now empty.");
+          },
         },
       ]
     );
   }
+
+  async function toggleBackup() {
+    if (!settings) return;
+    if (!settings.backupOptIn) {
+      Alert.alert(
+        "Cloud backup",
+        "Turning on backup will need a one-time sign-in (Google or email) so your archive can survive a phone change.\n\nThe sign-in flow is being added in the next pass. For now, your pilgrimage stays on this phone only.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    const next = await updateSettings({ backupOptIn: false });
+    setSettings(next);
+  }
+
+  // Group moments under their walk
+  const walkById = new Map(walks.map((w) => [w.id, w]));
+  const momentsByWalk = new Map<string, Moment[]>();
+  for (const m of moments) {
+    const list = momentsByWalk.get(m.walkId) ?? [];
+    list.push(m);
+    momentsByWalk.set(m.walkId, list);
+  }
+  // Sort walks newest first
+  const walkIdsOrdered = [...momentsByWalk.keys()].sort((a, b) => {
+    const wa = walkById.get(a)?.startedAt ?? 0;
+    const wb = walkById.get(b)?.startedAt ?? 0;
+    return wb - wa;
+  });
+
+  const hasAnyData = moments.length > 0 || walks.length > 0 || stories.length > 0;
 
   return (
     <View style={styles.container}>
@@ -225,8 +226,14 @@ export default function MeScreen() {
         </View>
         <Text style={styles.headerTitle}>My walks around{"\n"}Arunachala</Text>
         <View style={styles.privacyPill}>
-          <Ionicons name="lock-closed" size={10} color="rgba(255,255,255,0.7)" />
-          <Text style={styles.privacyPillText}>Stays on this phone · no account</Text>
+          <Ionicons
+            name={settings?.backupOptIn ? "cloud-done" : "lock-closed"}
+            size={10}
+            color="rgba(255,255,255,0.7)"
+          />
+          <Text style={styles.privacyPillText}>
+            {settings?.backupOptIn ? "Backed up to cloud" : "Stays on this phone · no account"}
+          </Text>
         </View>
       </LinearGradient>
 
@@ -238,81 +245,93 @@ export default function MeScreen() {
         {/* ── STATS ───────────────────────────────────────── */}
         <View style={styles.statsCard}>
           <View style={styles.statsRow}>
-            <StatBlock value={String(totalWalks)} label="Walks" />
+            <StatBlock value={String(stats?.walks ?? 0)} label="Walks" />
             <View style={styles.statDivider} />
-            <StatBlock value={`${totalKm} km`} label="Distance" />
+            <StatBlock value={`${stats?.distanceKm ?? 0} km`} label="Distance" />
             <View style={styles.statDivider} />
-            <StatBlock value="3" label="Malas" />
+            <StatBlock value={String(stats?.malas ?? 0)} label="Malas" />
             <View style={styles.statDivider} />
-            <StatBlock value="2" label="Pournamis" />
+            <StatBlock value={String(stats?.pournamis ?? 0)} label="Pournamis" />
           </View>
           <View style={styles.statsFootDivider} />
           <Text style={styles.statsFoot}>
-            {totalMoments} moments saved · since 24 March 2026
+            {stats && stats.totalMoments > 0
+              ? `${stats.totalMoments} moment${stats.totalMoments === 1 ? "" : "s"} saved${stats.firstWalkAt ? ` · since ${formatDate(stats.firstWalkAt)}` : ""}`
+              : "No moments saved yet"}
           </Text>
         </View>
 
-        {/* ── ON THIS DAY ─────────────────────────────────── */}
-        <View style={styles.onThisDayCard}>
-          <Text style={styles.sectionLabelInline}>FROM AN EARLIER WALK</Text>
-          <Text style={styles.onThisDayText}>
-            Last Pournami you sat at Varuna Lingam at sunset and wrote "the hill turned copper."
-          </Text>
-          <Pressable
-            onPress={() => comingSoon("On this day", "Reading past entries will open in the next pass.")}
-            accessibilityRole="button"
-            accessibilityLabel="Read what you wrote"
-          >
-            <Text style={styles.onThisDayLink}>Read what you wrote →</Text>
-          </Pressable>
-        </View>
+        {/* ── EMPTY STATE or TIMELINE ─────────────────────── */}
+        {loaded && !hasAnyData ? (
+          <View style={styles.emptyCard}>
+            <MaterialCommunityIcons name="foot-print" size={36} color={Colors.textFaint} />
+            <Text style={styles.emptyTitle}>Your archive is empty</Text>
+            <Text style={styles.emptyText}>
+              When you walk and save a moment at a lingam — a note, a feeling, a photo — it will appear here, kept only on this phone.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.sectionLabel}>MOMENTS</Text>
+            {walkIdsOrdered.map((wid) => {
+              const walk = walkById.get(wid);
+              const items = momentsByWalk.get(wid) ?? [];
+              return (
+                <View key={wid} style={styles.walkCard}>
+                  <View style={styles.walkHead}>
+                    <Text style={styles.walkDate}>
+                      {walk ? formatDate(walk.startedAt) : "Walk"}
+                    </Text>
+                    {walk?.label ? <Text style={styles.walkLabel}>{walk.label}</Text> : null}
+                  </View>
+                  <View style={styles.walkBody}>
+                    {items
+                      .sort((a, b) => a.savedAt - b.savedAt)
+                      .map((m, i) => (
+                        <MomentRow key={m.id} moment={m} isLast={i === items.length - 1} />
+                      ))}
+                  </View>
+                </View>
+              );
+            })}
+          </>
+        )}
 
-        {/* ── TIMELINE ────────────────────────────────────── */}
-        <Text style={styles.sectionLabel}>MOMENTS</Text>
-        {walkIds.map((wid) => {
-          const walk = momentsByWalk[wid];
-          return (
-            <View key={wid} style={styles.walkCard}>
-              <View style={styles.walkHead}>
-                <Text style={styles.walkDate}>{walk.date}</Text>
-                <Text style={styles.walkLabel}>{walk.label}</Text>
-              </View>
-              <View style={styles.walkBody}>
-                {walk.items.map((m, i) => (
-                  <MomentRow key={i} moment={m} isLast={i === walk.items.length - 1} />
-                ))}
-              </View>
-            </View>
-          );
-        })}
-
-        {/* ── STORIES ─────────────────────────────────────── */}
+        {/* ── REFLECTIONS ─────────────────────────────────── */}
         <Text style={styles.sectionLabel}>REFLECTIONS</Text>
-        {SAMPLE_STORIES.map((s) => (
-          <Pressable
-            key={s.id}
-            style={styles.storyCard}
-            onPress={() =>
-              comingSoon(
-                s.title,
-                "Full reflections will open in the next pass — for now this is a preview of what your archive will look like."
-              )
-            }
-            accessibilityRole="button"
-            accessibilityLabel={s.title}
-          >
-            <Text style={styles.storyDate}>{s.date} · after {ordinal(s.walks)} walk</Text>
-            <Text style={styles.storyTitle}>{s.title}</Text>
-            <Text style={styles.storyExcerpt}>{s.excerpt}</Text>
-            <Text style={styles.storyMore}>Read more →</Text>
-          </Pressable>
-        ))}
+        {stories.length === 0 ? (
+          <Text style={styles.softHint}>
+            Longer reflections you write after a walk will appear here.
+          </Text>
+        ) : (
+          stories.map((s) => (
+            <Pressable
+              key={s.id}
+              style={styles.storyCard}
+              onPress={() =>
+                comingSoon(
+                  s.title,
+                  "Reading and editing full reflections is being added in the next pass."
+                )
+              }
+              accessibilityRole="button"
+              accessibilityLabel={s.title}
+            >
+              <Text style={styles.storyDate}>
+                {formatDate(s.createdAt)} · after {ordinal(s.walksAtTime)} walk
+              </Text>
+              <Text style={styles.storyTitle}>{s.title}</Text>
+              <Text style={styles.storyExcerpt}>{s.body.slice(0, 180)}</Text>
+              <Text style={styles.storyMore}>Read more →</Text>
+            </Pressable>
+          ))
+        )}
         <Pressable
           style={styles.writeBtn}
           onPress={() =>
             comingSoon(
               "Write a reflection",
-              "Longer reflections you write after a walk will live here. The editor is being added in the next pass."
+              "The editor for longer reflections is being added in the next pass."
             )
           }
           accessibilityRole="button"
@@ -326,17 +345,30 @@ export default function MeScreen() {
         <Text style={styles.sectionLabel}>SETTINGS</Text>
         <View style={styles.settingsGroup}>
           <SettingsRow
+            icon={settings?.backupOptIn ? "cloud-done-outline" : "cloud-offline-outline"}
+            title="Cloud backup"
+            value={settings?.backupOptIn ? "On" : "Off"}
+            onPress={toggleBackup}
+          />
+          <View style={styles.settingsDivider} />
+          <SettingsRow
             icon="language-outline"
             title="Language"
-            value="English"
+            value={
+              settings?.language === "ta" ? "தமிழ்" : settings?.language === "hi" ? "हिन्दी" : "English"
+            }
             onPress={() => comingSoon("Language", "Tamil and Hindi are being added in the next pass.")}
           />
           <View style={styles.settingsDivider} />
           <SettingsRow
             icon="speedometer-outline"
             title="Units"
-            value="Kilometres"
-            onPress={() => comingSoon("Units", "Switching to miles is being added in the next pass.")}
+            value={settings?.units === "mi" ? "Miles" : "Kilometres"}
+            onPress={async () => {
+              if (!settings) return;
+              const next = await updateSettings({ units: settings.units === "km" ? "mi" : "km" });
+              setSettings(next);
+            }}
           />
           <View style={styles.settingsDivider} />
           <SettingsRow
@@ -346,7 +378,7 @@ export default function MeScreen() {
             onPress={() =>
               comingSoon(
                 "Location permission",
-                "This will open the system settings in the next pass. Location is only used while you walk and is never sent off your phone."
+                "Location is only used while you walk and is never sent off your phone. System settings link is being added in the next pass."
               )
             }
           />
@@ -359,6 +391,12 @@ export default function MeScreen() {
           />
         </View>
 
+        <Text style={styles.storageNote}>
+          {settings?.backupOptIn
+            ? "Your pilgrimage is kept on this phone and quietly backed up."
+            : "Your pilgrimage is kept only on this phone. Uninstalling the app or losing the phone will lose this archive — turn on Cloud backup to protect it."}
+        </Text>
+
         <Text style={styles.footerText}>ॐ नमः शिवाय · Arunachala Shiva</Text>
       </ScrollView>
     </View>
@@ -368,12 +406,7 @@ export default function MeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.warmWhite },
   header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginBottom: 10,
-  },
+  headerTop: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 10 },
   headerTag: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
@@ -407,7 +440,6 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
 
-  // ── Stats
   statsCard: {
     backgroundColor: Colors.white,
     borderRadius: 16,
@@ -422,22 +454,14 @@ const styles = StyleSheet.create({
   },
   statsRow: { flexDirection: "row", alignItems: "center" },
   statBlock: { flex: 1, alignItems: "center" },
-  statValue: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: Colors.primary,
-  },
+  statValue: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.primary },
   statLabel: {
     fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textLight,
     marginTop: 2,
   },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: Colors.border,
-  },
+  statDivider: { width: 1, height: 28, backgroundColor: Colors.border },
   statsFootDivider: {
     height: 1,
     backgroundColor: Colors.borderLight,
@@ -451,37 +475,30 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // ── On this day
-  onThisDayCard: {
-    backgroundColor: Colors.amberFaint,
+  emptyCard: {
+    backgroundColor: Colors.white,
     borderRadius: 14,
-    padding: 14,
+    padding: 22,
+    marginTop: 8,
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.20)",
+    borderColor: Colors.borderLight,
+    alignItems: "center",
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
     marginTop: 4,
   },
-  sectionLabelInline: {
-    fontSize: 10,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.amber,
-    letterSpacing: 1.5,
-    marginBottom: 6,
-  },
-  onThisDayText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textMid,
-    lineHeight: 19,
-    fontStyle: "italic",
-  },
-  onThisDayLink: {
+  emptyText: {
     fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.primary,
-    marginTop: 8,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    lineHeight: 18,
   },
 
-  // ── Section label (matches index)
   sectionLabel: {
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
@@ -492,7 +509,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-  // ── Walks (timeline)
   walkCard: {
     backgroundColor: Colors.white,
     borderRadius: 14,
@@ -515,32 +531,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  walkDate: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textMid,
-  },
-  walkLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textLight,
-  },
+  walkDate: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.textMid },
+  walkLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textLight },
   walkBody: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 },
 
   momentRow: { flexDirection: "row", gap: 10 },
   momentRail: { alignItems: "center", paddingTop: 4, width: 14 },
-  momentDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-  },
-  momentLine: {
-    width: 1,
-    flex: 1,
-    backgroundColor: Colors.border,
-    marginTop: 2,
-  },
+  momentDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary },
+  momentLine: { width: 1, flex: 1, backgroundColor: Colors.border, marginTop: 2 },
   momentBody: { flex: 1, paddingBottom: 12 },
   momentHead: {
     flexDirection: "row",
@@ -548,16 +546,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 3,
   },
-  momentLingam: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
-  },
-  momentTime: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textFaint,
-  },
+  momentLingam: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  momentTime: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textFaint },
   momentExcerpt: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
@@ -565,20 +555,24 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 17,
   },
-  momentTagRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
-  momentTag: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-    color: Colors.primary,
-  },
-  momentTagFaint: {
-    fontSize: 10,
+  momentExcerptFaint: {
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textFaint,
-    marginLeft: 4,
+    fontStyle: "italic",
+  },
+  momentTagRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
+  momentTag: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.primary },
+
+  softHint: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    fontStyle: "italic",
+    paddingHorizontal: 6,
+    paddingVertical: 8,
   },
 
-  // ── Stories
   storyCard: {
     backgroundColor: Colors.white,
     borderRadius: 14,
@@ -629,13 +623,8 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     backgroundColor: Colors.primaryFaint,
   },
-  writeBtnText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.primary,
-  },
+  writeBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.primary },
 
-  // ── Settings
   settingsGroup: {
     backgroundColor: Colors.white,
     borderRadius: 14,
@@ -666,10 +655,16 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: Colors.textLight,
   },
-  settingsDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginLeft: 44,
+  settingsDivider: { height: 1, backgroundColor: Colors.borderLight, marginLeft: 44 },
+
+  storageNote: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    lineHeight: 16,
+    marginTop: 12,
+    paddingHorizontal: 16,
   },
 
   footerText: {
@@ -678,7 +673,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     color: Colors.textFaint,
     letterSpacing: 0.4,
-    marginTop: 16,
+    marginTop: 12,
     marginBottom: 4,
   },
 });

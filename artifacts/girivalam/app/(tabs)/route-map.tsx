@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
+import { addMoment, finishWalk, startWalk } from "@/lib/pilgrimage-store";
 
 interface UserLoc {
   lat: number;
@@ -155,9 +156,14 @@ export default function RouteMapScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const omPulse = useRef(new Animated.Value(0.4)).current;
 
-  // Saved moments at each lingam (in-memory; persistence next pass)
+  // Saved moments at each lingam — persisted via pilgrimage-store
   const [savedMoments, setSavedMoments] = useState<Record<number, string[]>>({});
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
+  const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
+  // Refs avoid stale-closure / concurrent-tap races on saveMoment.
+  const currentWalkIdRef = useRef<string | null>(null);
+  const walkInFlightRef = useRef<Promise<string> | null>(null);
+  const savedKindsRef = useRef<Set<string>>(new Set()); // "lingamIdx:kind"
 
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
@@ -304,14 +310,50 @@ export default function RouteMapScreen() {
     setTracking(false);
   }
 
-  function beginWalk() {
-    setJapaCount(0);
-    setWalkSeconds(0);
-    setWalkMode(true);
+  // Lazily start a walk record; concurrent callers share the same promise
+  // so we never create duplicate walks (architect-flagged race).
+  function ensureWalkId(): Promise<string> {
+    if (currentWalkIdRef.current) return Promise.resolve(currentWalkIdRef.current);
+    if (walkInFlightRef.current) return walkInFlightRef.current;
+    const p = startWalk()
+      .then((w) => {
+        currentWalkIdRef.current = w.id;
+        setCurrentWalkId(w.id);
+        return w.id;
+      })
+      .finally(() => {
+        walkInFlightRef.current = null;
+      });
+    walkInFlightRef.current = p;
+    return p;
   }
 
-  function endWalk() {
+  async function beginWalk() {
+    setJapaCount(0);
+    setWalkSeconds(0);
+    setSavedMoments({});
+    setDismissedFor(null);
+    savedKindsRef.current = new Set();
+    setWalkMode(true);
+    try {
+      await ensureWalkId();
+    } catch (e) {
+      console.warn("Failed to record walk start", e);
+    }
+  }
+
+  async function endWalk() {
     setWalkMode(false);
+    const id = currentWalkIdRef.current;
+    if (id) {
+      try {
+        await finishWalk(id);
+      } catch (e) {
+        console.warn("Failed to record walk end", e);
+      }
+      currentWalkIdRef.current = null;
+      setCurrentWalkId(null);
+    }
   }
 
   function openNavMode() {
@@ -364,17 +406,46 @@ export default function RouteMapScreen() {
     );
   }
 
-  function saveMoment(lingamIdx: number, kind: "photo" | "voice" | "note" | "feeling") {
+  async function saveMoment(lingamIdx: number, kind: "photo" | "voice" | "note" | "feeling") {
+    const dedupeKey = `${lingamIdx}:${kind}`;
+    // Synchronous guard against rapid double-taps (state updates are async).
+    if (savedKindsRef.current.has(dedupeKey)) return;
+    savedKindsRef.current.add(dedupeKey);
+
     setSavedMoments((prev) => {
       const existing = prev[lingamIdx] ?? [];
       if (existing.includes(kind)) return prev;
       return { ...prev, [lingamIdx]: [...existing, kind] };
     });
+
+    const lingam = LINGAMS[lingamIdx];
     const label = { photo: "Photo", voice: "Voice note", note: "Written note", feeling: "Feeling" }[kind];
-    const lingamName = LINGAMS[lingamIdx]?.name ?? "this lingam";
+
+    // Persist via local pilgrimage-store. Walk record is created lazily and
+    // shared across concurrent saves via ensureWalkId(). The store itself
+    // also idempotency-guards on (walkId, lingamIdx, kind).
+    try {
+      const walkId = await ensureWalkId();
+      await addMoment({
+        walkId,
+        lingamIdx,
+        lingamName: lingam?.name ?? "Unknown lingam",
+        kind,
+      });
+    } catch (e) {
+      console.warn("Failed to persist moment", e);
+      // Roll back the ref guard so the pilgrim can retry.
+      savedKindsRef.current.delete(dedupeKey);
+    }
+
+    const captureNote =
+      kind === "photo" || kind === "voice"
+        ? `\n\n${label === "Photo" ? "Camera" : "Microphone"} capture is being added next. The moment marker is already saved to your pilgrimage.`
+        : "";
+
     Alert.alert(
-      `${label} — ${lingamName}`,
-      `Your ${label.toLowerCase()} is being remembered for this moment.\n\nCapture and storage are being added in the next pass. For now, the timeline will show that you marked this moment.`
+      `${label} — ${lingam?.name ?? ""}`,
+      `Saved to your pilgrimage archive on this phone.${captureNote}`
     );
   }
 
