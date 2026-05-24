@@ -7,18 +7,23 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Easing,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
+  TextInput,
+  Vibration,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
-import { addMoment, finishWalk, startWalk } from "@/lib/pilgrimage-store";
+import { addMoment, finishWalk, startWalk, updateWalk } from "@/lib/pilgrimage-store";
 
 interface UserLoc {
   lat: number;
@@ -169,6 +174,17 @@ export default function RouteMapScreen() {
   const walkInFlightRef = useRef<Promise<string> | null>(null);
   const savedKindsRef = useRef<Set<string>>(new Set()); // "lingamIdx:kind"
 
+  // Sankalpa thread — the "why" of this walk
+  const [sankalpa, setSankalpa] = useState("");
+  const [sankalpaPromptOpen, setSankalpaPromptOpen] = useState(false);
+
+  // Silent walk mode — phone stays dark, only vibrates at each lingam
+  const [silentMode, setSilentMode] = useState(false);
+
+  // End-of-walk ritual overlay (animated lingam glow + sankalpa return)
+  const [endRitualOpen, setEndRitualOpen] = useState(false);
+  const lingamGlows = useRef(LINGAMS.map(() => new Animated.Value(0))).current;
+
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
   const edgeSlide = useRef(new Animated.Value(0)).current;
@@ -219,6 +235,10 @@ export default function RouteMapScreen() {
     if (nearest.distance <= GEOFENCE_RADIUS_M && lastEnteredRef.current !== nearest.idx) {
       lastEnteredRef.current = nearest.idx;
       setActiveGeofenceIdx(nearest.idx);
+      // Silent walk mode: phone is dark, but vibrate gently when you reach a lingam.
+      if (walkMode && silentMode && Platform.OS !== "web") {
+        try { Vibration.vibrate([0, 220, 120, 220]); } catch { /* noop */ }
+      }
       return;
     }
 
@@ -332,7 +352,20 @@ export default function RouteMapScreen() {
     return p;
   }
 
-  async function beginWalk() {
+  // Opening the walk now opens the Sankalpa prompt first — the pilgrim
+  // sets an intention (the "why") and chooses silent vs normal walk.
+  function beginWalk() {
+    setSankalpa("");
+    setSilentMode(false);
+    setSankalpaPromptOpen(true);
+  }
+
+  const startingWalkRef = useRef(false);
+  async function startWalkAfterSankalpa() {
+    // Guard rapid double-taps so we don't create two walk records.
+    if (startingWalkRef.current) return;
+    startingWalkRef.current = true;
+    setSankalpaPromptOpen(false);
     setJapaCount(0);
     setWalkSeconds(0);
     setSavedMoments({});
@@ -342,16 +375,55 @@ export default function RouteMapScreen() {
     savedKindsRef.current = new Set();
     setWalkMode(true);
     try {
-      await ensureWalkId();
+      const id = await ensureWalkId();
+      // Persist sankalpa + silent-mode flag on the walk record.
+      const trimmed = sankalpa.trim();
+      if (trimmed.length > 0 || silentMode) {
+        try {
+          await updateWalk(id, {
+            ...(trimmed.length > 0 ? { sankalpa: trimmed } : {}),
+            ...(silentMode ? { silent: true } : {}),
+          });
+        } catch (e) {
+          console.warn("Failed to save sankalpa/silent flag", e);
+        }
+      }
     } catch (e) {
       console.warn("Failed to record walk start", e);
+    } finally {
+      startingWalkRef.current = false;
     }
+  }
+
+  // End Session now opens the End-of-Walk ritual instead of closing instantly.
+  // The walk timer freezes here — the ritual screen shows the final distance.
+  function requestEndWalk() {
+    setWalkOverlay(null);
+    setEndRitualOpen(true);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // Reset + animate 8 lingam glows in sequence.
+    lingamGlows.forEach((g) => g.setValue(0));
+    Animated.stagger(
+      280,
+      lingamGlows.map((g) =>
+        Animated.timing(g, {
+          toValue: 1,
+          duration: 520,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        })
+      )
+    ).start();
   }
 
   async function endWalk() {
     setWalkMode(false);
     setWalkOverlay(null);
     setTempleInfoIdx(null);
+    setEndRitualOpen(false);
     const id = currentWalkIdRef.current;
     if (id) {
       try {
@@ -585,7 +657,20 @@ export default function RouteMapScreen() {
                 </View>
               </View>
               <Pressable
-                onPress={endWalk}
+                onPress={() => setSilentMode((v) => !v)}
+                style={[dStyles.silentPill, silentMode && dStyles.silentPillOn]}
+                accessibilityRole="button"
+                accessibilityLabel={silentMode ? "Turn off silent mode" : "Turn on silent mode"}
+                hitSlop={6}
+              >
+                <Ionicons
+                  name={silentMode ? "moon" : "moon-outline"}
+                  size={14}
+                  color={silentMode ? "#0A0604" : GOLD}
+                />
+              </Pressable>
+              <Pressable
+                onPress={requestEndWalk}
                 style={dStyles.endBtn}
                 accessibilityRole="button"
                 accessibilityLabel="End session"
@@ -1001,6 +1086,98 @@ export default function RouteMapScreen() {
             </WalkSheet>
           )}
 
+          {/* Silent walk mode: dim the whole screen — phone "goes quiet".
+              The pilgrim taps anywhere to wake briefly. Vibrates at each lingam. */}
+          {silentMode && !endRitualOpen && walkOverlay === null && (
+            <Pressable
+              style={dStyles.silentScrim}
+              onPress={() => setSilentMode(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Wake screen"
+            >
+              <View style={dStyles.silentInner}>
+                <Ionicons name="moon" size={28} color={GOLD} />
+                <Text style={dStyles.silentTitle}>Silent walk</Text>
+                <Text style={dStyles.silentSub}>
+                  Phone is resting. It will vibrate gently when you reach a lingam.
+                </Text>
+                <Text style={dStyles.silentTap}>Tap anywhere to wake</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {/* ── End-of-walk ritual ── */}
+          {endRitualOpen && (
+            <View style={dStyles.ritualRoot}>
+              <View style={dStyles.ritualInner}>
+                <Text style={dStyles.ritualKicker}>YOUR WALK IS COMPLETE</Text>
+                <Text style={dStyles.ritualKm}>
+                  {((walkSeconds / 3600) * 3).toFixed(1)}
+                  <Text style={dStyles.ritualKmUnit}> km</Text>
+                </Text>
+                <Text style={dStyles.ritualTime}>{formatTime(walkSeconds)}</Text>
+
+                {/* 8 lingams glow one by one */}
+                <View style={dStyles.ritualLingamRow}>
+                  {LINGAMS.map((l, i) => (
+                    <Animated.View
+                      key={l.number}
+                      style={[
+                        dStyles.ritualLingamDot,
+                        {
+                          opacity: lingamGlows[i],
+                          transform: [
+                            {
+                              scale: lingamGlows[i].interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.6, 1],
+                              }),
+                            },
+                          ],
+                          shadowOpacity: lingamGlows[i] as unknown as number,
+                        },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name="temple-hindu"
+                        size={18}
+                        color={GOLD}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+
+                {/* Sankalpa returned */}
+                {sankalpa.trim().length > 0 ? (
+                  <View style={dStyles.ritualSankalpaCard}>
+                    <Text style={dStyles.ritualSankalpaLabel}>
+                      YOU BEGAN WITH THIS IN YOUR HEART
+                    </Text>
+                    <Text style={dStyles.ritualSankalpaText}>
+                      &ldquo;{sankalpa.trim()}&rdquo;
+                    </Text>
+                    <Text style={dStyles.ritualSankalpaHand}>
+                      The mountain has heard it.
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={dStyles.ritualMessage}>
+                    You walked. That is enough.
+                  </Text>
+                )}
+
+                <Pressable
+                  onPress={endWalk}
+                  style={dStyles.ritualBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close walk"
+                >
+                  <Text style={dStyles.ritualBtnText}>Close</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           {walkOverlay === "temple" && templeInfoIdx !== null && (() => {
             const t = LINGAMS[templeInfoIdx];
             const saved = savedMoments[templeInfoIdx] ?? [];
@@ -1093,6 +1270,70 @@ export default function RouteMapScreen() {
 
   // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
+    <>
+    {sankalpaPromptOpen && (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={dStyles.sankalpaRoot}
+      >
+        <ScrollView
+          contentContainerStyle={dStyles.sankalpaScroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={dStyles.sankalpaKicker}>SANKALPA · YOUR INTENTION</Text>
+          <Text style={dStyles.sankalpaTitle}>
+            Why are you walking today?
+          </Text>
+          <Text style={dStyles.sankalpaSub}>
+            One line, in your own words. The app will return it to you at the end of your walk.
+          </Text>
+
+          <TextInput
+            value={sankalpa}
+            onChangeText={setSankalpa}
+            placeholder="For my mother's health · for peace · for nothing at all…"
+            placeholderTextColor="rgba(255,255,255,0.3)"
+            multiline
+            maxLength={140}
+            style={dStyles.sankalpaInput}
+            autoFocus
+          />
+
+          <View style={dStyles.silentRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={dStyles.silentRowTitle}>Walk in silence</Text>
+              <Text style={dStyles.silentRowSub}>
+                Phone stays dark. Vibrates only when you reach a lingam.
+              </Text>
+            </View>
+            <Switch
+              value={silentMode}
+              onValueChange={setSilentMode}
+              trackColor={{ false: "rgba(255,255,255,0.15)", true: GOLD }}
+              thumbColor={silentMode ? "#FFE9B0" : "#888"}
+            />
+          </View>
+
+          <Pressable
+            onPress={startWalkAfterSankalpa}
+            style={dStyles.sankalpaBeginBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Begin the walk"
+          >
+            <Text style={dStyles.sankalpaBeginText}>Begin the walk</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setSankalpaPromptOpen(false)}
+            style={dStyles.sankalpaSkipBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+          >
+            <Text style={dStyles.sankalpaSkipText}>Not now</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    )}
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
@@ -1437,6 +1678,7 @@ export default function RouteMapScreen() {
         </View>
       ))}
     </ScrollView>
+    </>
   );
 }
 
@@ -2801,5 +3043,280 @@ const dStyles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 12,
     fontStyle: "italic",
+  },
+
+  // ─── Silent walk mode ───────────────────────────────────────────────────
+  silentPill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  silentPillOn: {
+    backgroundColor: GOLD,
+    borderColor: GOLD,
+  },
+  silentScrim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.93)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 60,
+  },
+  silentInner: {
+    alignItems: "center",
+    paddingHorizontal: 36,
+    gap: 10,
+  },
+  silentTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 17,
+    color: GOLD,
+    letterSpacing: 1.2,
+    marginTop: 4,
+  },
+  silentSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: TEXT_DIM,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  silentTap: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    color: "rgba(255,255,255,0.3)",
+    letterSpacing: 1.5,
+    marginTop: 24,
+    fontStyle: "italic",
+  },
+
+  // ─── End-of-walk ritual ─────────────────────────────────────────────────
+  ritualRoot: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#000",
+    zIndex: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  ritualInner: {
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+  },
+  ritualKicker: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: GOLD,
+    letterSpacing: 2.5,
+  },
+  ritualKm: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 56,
+    color: "white",
+    marginTop: 6,
+    letterSpacing: -1,
+  },
+  ritualKmUnit: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 18,
+    color: TEXT_DIM,
+  },
+  ritualTime: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: TEXT_DIM,
+    letterSpacing: 1,
+    marginTop: -4,
+  },
+  ritualLingamRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 28,
+    marginBottom: 20,
+    justifyContent: "center",
+  },
+  ritualLingamDot: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(196,122,30,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: GOLD,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  ritualSankalpaCard: {
+    width: "100%",
+    paddingHorizontal: 22,
+    paddingVertical: 22,
+    borderRadius: 18,
+    backgroundColor: "rgba(196,122,30,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.25)",
+    alignItems: "center",
+    marginTop: 6,
+  },
+  ritualSankalpaLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
+    color: GOLD,
+    letterSpacing: 2,
+    textAlign: "center",
+  },
+  ritualSankalpaText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    color: "white",
+    textAlign: "center",
+    lineHeight: 24,
+    marginTop: 10,
+    fontStyle: "italic",
+  },
+  ritualSankalpaHand: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: TEXT_DIM,
+    marginTop: 12,
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
+  ritualMessage: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    color: TEXT_DIM,
+    textAlign: "center",
+    marginTop: 12,
+    fontStyle: "italic",
+  },
+  ritualBtn: {
+    marginTop: 32,
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    borderRadius: 24,
+    backgroundColor: GOLD,
+  },
+  ritualBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#0A0604",
+    letterSpacing: 0.5,
+  },
+
+  // ─── Sankalpa prompt (before walk) ──────────────────────────────────────
+  sankalpaRoot: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#0A0604",
+    zIndex: 100,
+  },
+  sankalpaScroll: {
+    flexGrow: 1,
+    paddingHorizontal: 26,
+    paddingTop: 90,
+    paddingBottom: 40,
+    justifyContent: "center",
+  },
+  sankalpaKicker: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: GOLD,
+    letterSpacing: 2.5,
+    textAlign: "center",
+  },
+  sankalpaTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 26,
+    color: "white",
+    textAlign: "center",
+    marginTop: 10,
+    letterSpacing: -0.4,
+    lineHeight: 32,
+  },
+  sankalpaSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: TEXT_DIM,
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 20,
+    paddingHorizontal: 4,
+  },
+  sankalpaInput: {
+    marginTop: 28,
+    minHeight: 110,
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    color: "white",
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 22,
+    textAlignVertical: "top",
+  },
+  silentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+  },
+  silentRowTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "white",
+  },
+  silentRowSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: TEXT_DIM,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  sankalpaBeginBtn: {
+    marginTop: 28,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: GOLD,
+    alignItems: "center",
+  },
+  sankalpaBeginText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#0A0604",
+    letterSpacing: 0.5,
+  },
+  sankalpaSkipBtn: {
+    marginTop: 10,
+    padding: 14,
+    alignItems: "center",
+  },
+  sankalpaSkipText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: TEXT_DIM,
   },
 });

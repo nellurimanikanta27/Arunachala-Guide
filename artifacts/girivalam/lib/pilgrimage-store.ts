@@ -29,6 +29,8 @@ export interface Walk {
   startedAt: number; // ms epoch
   endedAt?: number;
   label?: string;    // e.g. "Pournami", "First walk"
+  sankalpa?: string; // why the pilgrim is walking today
+  silent?: boolean;  // walked in silent mode
 }
 
 export interface Moment {
@@ -112,6 +114,19 @@ export async function finishWalk(id: string): Promise<void> {
     const next = walks.map((w) => (w.id === id ? { ...w, endedAt: Date.now() } : w));
     await save(K.walks, next);
   });
+}
+
+export async function updateWalk(id: string, patch: Partial<Walk>): Promise<void> {
+  return withKeyLock(K.walks, async () => {
+    const walks = await getWalks();
+    const next = walks.map((w) => (w.id === id ? { ...w, ...patch } : w));
+    await save(K.walks, next);
+  });
+}
+
+export async function getWalk(id: string): Promise<Walk | undefined> {
+  const walks = await getWalks();
+  return walks.find((w) => w.id === id);
 }
 
 // ── Moments ─────────────────────────────────────────────────────────────
