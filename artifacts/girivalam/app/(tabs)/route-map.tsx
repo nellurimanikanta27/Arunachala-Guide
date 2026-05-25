@@ -188,6 +188,33 @@ export default function RouteMapScreen() {
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
 
+  // Utility filter column (left edge of the map). Each toggle reveals
+  // its pins on the map. Defaults to all on so the map feels alive.
+  type UtilKey = "water" | "toilet" | "anna" | "rest" | "ashram" | "ess";
+  const UTILS: { key: UtilKey; icon: keyof typeof Ionicons.glyphMap; color: string; label: string }[] = [
+    { key: "water", icon: "water", color: "#4FA8FF", label: "Water" },
+    { key: "toilet", icon: "medkit", color: "#B583FF", label: "Toilet" },
+    { key: "anna", icon: "leaf", color: "#E0B658", label: "Annaprasadam" },
+    { key: "rest", icon: "restaurant", color: "#FF6B6B", label: "Restaurant" },
+    { key: "ashram", icon: "home", color: "#9BD17C", label: "Ashram" },
+    { key: "ess", icon: "sparkles", color: "#FFD98A", label: "Essentials" },
+  ];
+  const [utilOn, setUtilOn] = useState<Record<UtilKey, boolean>>({
+    water: true, toilet: true, anna: true, rest: true, ashram: false, ess: false,
+  });
+  const toggleUtil = (k: UtilKey) =>
+    setUtilOn((s) => ({ ...s, [k]: !s[k] }));
+
+  // Sample on-map utility pins — each tied to a UtilKey + position + distance
+  const UTIL_PINS: { key: UtilKey; top: string; left?: string; right?: string; dist: string }[] = [
+    { key: "water", top: "18%", left: "8%", dist: "120m" },
+    { key: "toilet", top: "20%", right: "8%", dist: "240m" },
+    { key: "anna", top: "44%", left: "6%", dist: "150m" },
+    { key: "rest", top: "44%", right: "6%", dist: "300m" },
+    { key: "ashram", top: "62%", right: "10%", dist: "200m" },
+    { key: "water", top: "70%", left: "12%", dist: "80m" },
+  ];
+
   // Translator state — real translation via MyMemory free API
   type TrLang = "ta" | "hi" | "te";
   const TR_LANG_LABEL: Record<TrLang, string> = {
@@ -872,18 +899,56 @@ export default function RouteMapScreen() {
               );
             })}
 
-            {/* Utility pins (visual hint — full list lives in Utilities overlay) */}
-            <View style={[dStyles.utilPin, { top: 14, left: 18 }]}>
-              <Text style={dStyles.utilPinText}>💧 Water · 120m</Text>
-            </View>
-            <View style={[dStyles.utilPin, { top: 14, right: 18 }]}>
-              <Text style={dStyles.utilPinText}>🚻 Toilet · 240m</Text>
-            </View>
-            <View style={[dStyles.utilPin, { bottom: 110, left: 18 }]}>
-              <Text style={dStyles.utilPinText}>🍛 Annaprasadam · 150m</Text>
-            </View>
-            <View style={[dStyles.utilPin, { bottom: 110, right: 18 }]}>
-              <Text style={dStyles.utilPinText}>🍴 Restaurant · 300m</Text>
+            {/* Filter-driven utility pins — colored dot + label */}
+            {UTIL_PINS.filter((p) => utilOn[p.key]).map((p, i) => {
+              const u = UTILS.find((x) => x.key === p.key)!;
+              return (
+                <View
+                  key={`${p.key}-${i}`}
+                  style={[
+                    dStyles.utilPin,
+                    p.left ? { left: p.left as any } : null,
+                    p.right ? { right: p.right as any } : null,
+                    { top: p.top as any },
+                  ]}
+                >
+                  <View style={[dStyles.utilPinDot, { backgroundColor: u.color, shadowColor: u.color }]}>
+                    <Ionicons name={u.icon} size={10} color="#0A0604" />
+                  </View>
+                  <Text style={dStyles.utilPinText}>
+                    {u.label} · <Text style={{ color: "rgba(255,255,255,0.55)" }}>{p.dist}</Text>
+                  </Text>
+                </View>
+              );
+            })}
+
+            {/* Vertical utility filter column — sits on the LEFT edge of the map.
+                Positioned high enough to never overlap the W temple pin (which sits at
+                vertical centre). Rendered BEFORE the user dot so pin/dot taps win on
+                any narrow-device collision. */}
+            <View style={dStyles.utilColumn} pointerEvents="box-none">
+              {UTILS.map((u) => {
+                const on = utilOn[u.key];
+                return (
+                  <Pressable
+                    key={u.key}
+                    onPress={() => toggleUtil(u.key)}
+                    style={[
+                      dStyles.utilColumnBtn,
+                      on && { borderColor: u.color, backgroundColor: "rgba(0,0,0,0.55)" },
+                    ]}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={`${u.label} pins`}
+                  >
+                    <Ionicons
+                      name={u.icon}
+                      size={14}
+                      color={on ? u.color : "rgba(255,255,255,0.35)"}
+                    />
+                  </Pressable>
+                );
+              })}
             </View>
 
             {/* User location */}
@@ -984,14 +1049,6 @@ export default function RouteMapScreen() {
               active={walkOverlay === "utilities"}
               onPress={() => setWalkOverlay(walkOverlay === "utilities" ? null : "utilities")}
             />
-            <NavTabBtn
-              emoji="🈂️"
-              label="Translate"
-              active={walkOverlay === "translator"}
-              onPress={() =>
-                setWalkOverlay(walkOverlay === "translator" ? null : "translator")
-              }
-            />
           </View>
 
           {/* ── Overlays (always inside the session) ── */}
@@ -1084,27 +1141,49 @@ export default function RouteMapScreen() {
                   icon: "create-outline" as const,
                   title: "Quick Note",
                   sub: "Write your thoughts",
+                  go: () =>
+                    Alert.alert(
+                      "Quick Note",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
                 },
                 {
                   icon: "camera-outline" as const,
                   title: "Photo Capture",
                   sub: "Capture the moment",
+                  go: () =>
+                    Alert.alert(
+                      "Photo Capture",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
                 },
                 {
                   icon: "videocam-outline" as const,
                   title: "Video Capture",
                   sub: "Record your journey",
+                  go: () =>
+                    Alert.alert(
+                      "Video Capture",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
+                },
+                {
+                  icon: "language-outline" as const,
+                  title: "Translator",
+                  sub: "Tamil · Hindi · Telugu",
+                  go: () => setWalkOverlay("translator"),
                 },
               ].map((a) => (
                 <Pressable
                   key={a.title}
                   style={dStyles.actionRow}
                   onPress={() => {
-                    setWalkOverlay(null);
-                    Alert.alert(
-                      a.title,
-                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
-                    );
+                    if (a.title === "Translator") {
+                      a.go();
+                    } else {
+                      setWalkOverlay(null);
+                      a.go();
+                    }
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={a.title}
@@ -3133,14 +3212,49 @@ const dStyles = StyleSheet.create({
   },
   utilPin: {
     position: "absolute",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 10,
-    backgroundColor: "rgba(20,12,6,0.85)",
-    borderWidth: 1,
-    borderColor: HAIRLINE,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingLeft: 4,
+    paddingRight: 9,
+    paddingVertical: 4,
+    borderRadius: 14,
+    backgroundColor: "rgba(12,8,4,0.88)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  utilPinText: { fontFamily: "Inter_500Medium", fontSize: 10, color: "rgba(255,255,255,0.75)" },
+  utilPinDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  utilPinText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: "rgba(255,255,255,0.92)",
+    letterSpacing: 0.2,
+  },
+  utilColumn: {
+    position: "absolute",
+    left: 4,
+    top: 12,
+    gap: 6,
+  },
+  utilColumnBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(12,8,4,0.75)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   userDotWrap: { position: "absolute", width: 20, height: 20, alignItems: "center", justifyContent: "center" },
   userDotPulse: {
     position: "absolute",
