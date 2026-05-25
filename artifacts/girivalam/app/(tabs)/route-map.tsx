@@ -187,6 +187,45 @@ export default function RouteMapScreen() {
 
   // Edge panel (quick-access drawer during walk)
   const [edgePanelOpen, setEdgePanelOpen] = useState(false);
+
+  // Translator state — real translation via MyMemory free API
+  type TrLang = "ta" | "hi" | "te";
+  const TR_LANG_LABEL: Record<TrLang, string> = {
+    ta: "தமிழ் · Tamil",
+    hi: "हिन्दी · Hindi",
+    te: "తెలుగు · Telugu",
+  };
+  const [trLang, setTrLang] = useState<TrLang>("ta");
+  const [trInput, setTrInput] = useState("");
+  const [trOutput, setTrOutput] = useState<{ text: string; lang: TrLang } | null>(null);
+  const [trLoading, setTrLoading] = useState(false);
+  const [trError, setTrError] = useState<string | null>(null);
+  const [trCategory, setTrCategory] = useState<string>("All");
+
+  async function runTranslate(textRaw: string) {
+    const text = textRaw.trim();
+    if (!text) return;
+    setTrLoading(true);
+    setTrError(null);
+    setTrOutput(null);
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+        text
+      )}&langpair=en|${trLang}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      const out: string | undefined = json?.responseData?.translatedText;
+      if (out && typeof out === "string") {
+        setTrOutput({ text: out, lang: trLang });
+      } else {
+        setTrError("Could not translate. Try again.");
+      }
+    } catch {
+      setTrError("Network problem. Check your connection and try again.");
+    } finally {
+      setTrLoading(false);
+    }
+  }
   const edgeSlide = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const anim = Animated.timing(edgeSlide, {
@@ -713,13 +752,30 @@ export default function RouteMapScreen() {
                           !isDone && !isCurrent && dStyles.templeHaloUpcoming,
                         ]}
                       />
-                      <MaterialCommunityIcons
-                        name="temple-hindu"
-                        size={isCurrent ? 24 : 20}
-                        color={
-                          isCurrent ? "#FFD98A" : isDone ? GOLD : "rgba(196,122,30,0.55)"
+                      <Animated.View
+                        style={
+                          isCurrent
+                            ? {
+                                transform: [
+                                  {
+                                    scale: omPulse.interpolate({
+                                      inputRange: [0.4, 0.9],
+                                      outputRange: [1, 1.18],
+                                    }),
+                                  },
+                                ],
+                              }
+                            : undefined
                         }
-                      />
+                      >
+                        <MaterialCommunityIcons
+                          name="temple-hindu"
+                          size={isCurrent ? 24 : 20}
+                          color={
+                            isCurrent ? "#FFD98A" : isDone ? GOLD : "rgba(196,122,30,0.55)"
+                          }
+                        />
+                      </Animated.View>
                     </View>
                     <Text
                       style={[
@@ -1192,46 +1248,184 @@ export default function RouteMapScreen() {
             </View>
           )}
 
-          {walkOverlay === "translator" && (
-            <WalkSheet title="TRANSLATOR" onClose={() => setWalkOverlay(null)}>
-              <Text style={dStyles.trSub}>
-                Common phrases for pilgrims. Tap any phrase to hear and read it in Tamil.
-              </Text>
-              <View style={dStyles.trLangRow}>
-                <View style={dStyles.trLangPill}>
-                  <Text style={dStyles.trLangPillText}>English</Text>
+          {walkOverlay === "translator" && (() => {
+            const PHRASES: { cat: string; en: string }[] = [
+              { cat: "Basics", en: "Hello, namaskaram." },
+              { cat: "Basics", en: "Thank you." },
+              { cat: "Basics", en: "Yes." },
+              { cat: "Basics", en: "No." },
+              { cat: "Basics", en: "Please." },
+              { cat: "Basics", en: "Sorry." },
+              { cat: "Help", en: "Please help, I am lost." },
+              { cat: "Help", en: "Where am I right now?" },
+              { cat: "Help", en: "I am not feeling well." },
+              { cat: "Help", en: "Please call a doctor." },
+              { cat: "Help", en: "Is there a hospital nearby?" },
+              { cat: "Help", en: "I lost my phone." },
+              { cat: "Food", en: "Where can I get free food (Annaprasadam)?" },
+              { cat: "Food", en: "I am hungry." },
+              { cat: "Food", en: "Where is the nearest water?" },
+              { cat: "Food", en: "Is this food vegetarian?" },
+              { cat: "Food", en: "One plate, please." },
+              { cat: "Directions", en: "Where is the toilet?" },
+              { cat: "Directions", en: "How far is the next temple?" },
+              { cat: "Directions", en: "Where is the auto / cab stand?" },
+              { cat: "Directions", en: "How do I go to Ramana Ashram?" },
+              { cat: "Directions", en: "Which way is the main temple?" },
+              { cat: "Devotion", en: "Om Namah Shivaya." },
+              { cat: "Devotion", en: "I want to do darshan." },
+              { cat: "Devotion", en: "What time does the temple open?" },
+              { cat: "Devotion", en: "I want to light a lamp." },
+              { cat: "Money", en: "How much does this cost?" },
+              { cat: "Money", en: "I will pay by UPI." },
+              { cat: "Money", en: "Do you accept cash?" },
+              { cat: "Money", en: "Please give me change." },
+            ];
+            const CATS = ["All", "Basics", "Help", "Food", "Directions", "Devotion", "Money"];
+            const filtered =
+              trCategory === "All"
+                ? PHRASES
+                : PHRASES.filter((p) => p.cat === trCategory);
+            return (
+              <WalkSheet title="TRANSLATOR" onClose={() => setWalkOverlay(null)}>
+                {/* Language picker */}
+                <Text style={dStyles.trLabel}>Translate to</Text>
+                <View style={dStyles.trLangRow}>
+                  {(["ta", "hi", "te"] as TrLang[]).map((lang) => (
+                    <Pressable
+                      key={lang}
+                      onPress={() => {
+                        setTrLang(lang);
+                        if (trInput.trim()) runTranslate(trInput);
+                      }}
+                      style={[
+                        dStyles.trLangPill,
+                        trLang === lang && dStyles.trLangPillActive,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Translate to ${TR_LANG_LABEL[lang]}`}
+                    >
+                      <Text
+                        style={[
+                          dStyles.trLangPillText,
+                          trLang === lang && { color: GOLD },
+                        ]}
+                      >
+                        {TR_LANG_LABEL[lang]}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
-                <Ionicons name="arrow-forward" size={14} color={GOLD} />
-                <View style={[dStyles.trLangPill, dStyles.trLangPillActive]}>
-                  <Text style={[dStyles.trLangPillText, { color: GOLD }]}>தமிழ் · Tamil</Text>
-                </View>
-              </View>
 
-              {[
-                { en: "Where is the nearest water?", ta: "அருகில் தண்ணீர் எங்கே இருக்கிறது?", roman: "Arugil thanneer engay irukkirathu?" },
-                { en: "Where can I get free food (Annaprasadam)?", ta: "அன்னப்பிரசாதம் எங்கே கிடைக்கும்?", roman: "Annaprasadam engay kidaikkum?" },
-                { en: "How far is the next temple?", ta: "அடுத்த கோயில் எவ்வளவு தூரம்?", roman: "Aduththa kovil evvalavu thooram?" },
-                { en: "Please help, I am lost.", ta: "தயவு செய்து உதவுங்கள், நான் வழி தவறிவிட்டேன்.", roman: "Thayavu seidhu udhavungal, naan vazhi thavari vittaen." },
-                { en: "Where is the toilet?", ta: "கழிப்பறை எங்கே?", roman: "Kazhippari engay?" },
-                { en: "Om Namah Shivaya", ta: "ஓம் நமசிவாய", roman: "Om Namasivaya" },
-                { en: "Thank you", ta: "நன்றி", roman: "Nandri" },
-                { en: "Where is the auto / cab stand?", ta: "ஆட்டோ / டாக்ஸி எங்கே நிற்கிறது?", roman: "Auto / taxi engay nirkirathu?" },
-              ].map((p, i) => (
-                <View key={i} style={dStyles.trCard}>
-                  <Text style={dStyles.trEn}>{p.en}</Text>
-                  <Text style={dStyles.trTa}>{p.ta}</Text>
-                  <Text style={dStyles.trRoman}>{p.roman}</Text>
+                {/* Free text input */}
+                <Text style={dStyles.trLabel}>Type anything in English</Text>
+                <View style={dStyles.trInputRow}>
+                  <TextInput
+                    value={trInput}
+                    onChangeText={setTrInput}
+                    placeholder="e.g. Where can I rest for an hour?"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    style={dStyles.trInput}
+                    multiline
+                    onSubmitEditing={() => runTranslate(trInput)}
+                    returnKeyType="go"
+                  />
+                  <Pressable
+                    onPress={() => runTranslate(trInput)}
+                    disabled={!trInput.trim() || trLoading}
+                    style={[
+                      dStyles.trGoBtn,
+                      (!trInput.trim() || trLoading) && { opacity: 0.4 },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Translate"
+                  >
+                    {trLoading ? (
+                      <ActivityIndicator color="#0A0604" size="small" />
+                    ) : (
+                      <Ionicons name="arrow-forward" size={20} color="#0A0604" />
+                    )}
+                  </Pressable>
                 </View>
-              ))}
 
-              <View style={dStyles.trFooter}>
-                <Ionicons name="information-circle-outline" size={14} color={TEXT_DIM} />
-                <Text style={dStyles.trFooterText}>
-                  Voice translation coming in the next update.
+                {trError && (
+                  <Text style={dStyles.trErrorText}>{trError}</Text>
+                )}
+
+                {trOutput && (
+                  <View style={dStyles.trOutputCard}>
+                    <Text style={dStyles.trOutputLabel}>
+                      {TR_LANG_LABEL[trOutput.lang].toUpperCase()}
+                    </Text>
+                    <Text style={dStyles.trOutputText}>{trOutput.text}</Text>
+                  </View>
+                )}
+
+                {/* Category tabs */}
+                <Text style={[dStyles.trLabel, { marginTop: 22 }]}>
+                  Or pick a common phrase
                 </Text>
-              </View>
-            </WalkSheet>
-          )}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={dStyles.trCatRow}
+                  contentContainerStyle={{ gap: 8, paddingRight: 12 }}
+                >
+                  {CATS.map((c) => (
+                    <Pressable
+                      key={c}
+                      onPress={() => setTrCategory(c)}
+                      style={[
+                        dStyles.trCatChip,
+                        trCategory === c && dStyles.trCatChipActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          dStyles.trCatChipText,
+                          trCategory === c && { color: GOLD },
+                        ]}
+                      >
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                {filtered.map((p, i) => (
+                  <Pressable
+                    key={i}
+                    style={dStyles.trCard}
+                    onPress={() => {
+                      setTrInput(p.en);
+                      runTranslate(p.en);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Translate ${p.en}`}
+                  >
+                    <Text style={dStyles.trEn}>{p.en}</Text>
+                    <View style={dStyles.trCardFooter}>
+                      <Text style={dStyles.trCardCat}>{p.cat.toUpperCase()}</Text>
+                      <View style={dStyles.trCardArrow}>
+                        <Ionicons name="arrow-forward" size={12} color={GOLD} />
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+
+                <View style={dStyles.trFooter}>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={14}
+                    color={TEXT_DIM}
+                  />
+                  <Text style={dStyles.trFooterText}>
+                    Powered by MyMemory · works offline only for saved phrases.
+                  </Text>
+                </View>
+              </WalkSheet>
+            );
+          })()}
 
           {walkOverlay === "temple" && templeInfoIdx !== null && (() => {
             const t = LINGAMS[templeInfoIdx];
@@ -2713,35 +2907,118 @@ const dStyles = StyleSheet.create({
   },
 
   // Translator overlay
-  trSub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: TEXT_DIM,
-    lineHeight: 18,
-    marginBottom: 14,
+  trLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: GOLD,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+    marginTop: 2,
   },
   trLangRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    flexWrap: "wrap",
+    gap: 8,
     marginBottom: 18,
   },
   trLangPill: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 14,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: HAIRLINE,
   },
   trLangPillActive: {
-    backgroundColor: "rgba(196,122,30,0.12)",
-    borderColor: "rgba(196,122,30,0.5)",
+    backgroundColor: "rgba(196,122,30,0.14)",
+    borderColor: "rgba(196,122,30,0.55)",
   },
   trLangPillText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 11,
     color: "rgba(255,255,255,0.7)",
+    letterSpacing: 0.3,
+  },
+  trInputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    marginBottom: 10,
+  },
+  trInput: {
+    flex: 1,
+    minHeight: 48,
+    maxHeight: 120,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+    color: "#fff",
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  trGoBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: GOLD,
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  trErrorText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#FF806C",
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  trOutputCard: {
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: "rgba(196,122,30,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.35)",
+  },
+  trOutputLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 9,
+    color: GOLD,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  trOutputText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+    color: "#FFE9B0",
+    lineHeight: 26,
+  },
+  trCatRow: {
+    flexGrow: 0,
+    marginBottom: 12,
+  },
+  trCatChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+  },
+  trCatChipActive: {
+    backgroundColor: "rgba(196,122,30,0.14)",
+    borderColor: "rgba(196,122,30,0.55)",
+  },
+  trCatChipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.65)",
     letterSpacing: 0.3,
   },
   trCard: {
@@ -2750,32 +3027,39 @@ const dStyles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: HAIRLINE,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   trEn: {
     fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    color: TEXT_DIM,
-    marginBottom: 6,
+    fontSize: 13,
+    color: "#fff",
+    lineHeight: 18,
   },
-  trTa: {
+  trCardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  trCardCat: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-    color: GOLD,
-    lineHeight: 22,
+    fontSize: 9,
+    color: TEXT_DIM,
+    letterSpacing: 1.5,
   },
-  trRoman: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: "rgba(255,255,255,0.45)",
-    fontStyle: "italic",
-    marginTop: 4,
+  trCardArrow: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(196,122,30,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   trFooter: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 12,
+    marginTop: 16,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: HAIRLINE,
@@ -2784,6 +3068,7 @@ const dStyles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 11,
     color: TEXT_DIM,
+    flex: 1,
   },
   templeName: {
     fontFamily: "Inter_500Medium",
