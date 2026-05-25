@@ -169,22 +169,6 @@ export default function HomeScreen() {
         <Text style={styles.heroEnterBtnText}>Open the live walk →</Text>
       </Pressable>
 
-      {/* Hidden — feature list kept reachable via tab bar; the hero is the picture */}
-      <ScrollView
-        style={{ display: "none" }}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <SacredMomentCard />
-        {FEATURES.map((feature, index) => (
-          <FeatureCard key={feature.id} feature={feature} index={index} />
-        ))}
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>ॐ नमः शिवाय · Arunachala Shiva</Text>
-          <Text style={styles.footerCredit}>by Manikanta Nelluri</Text>
-        </View>
-      </ScrollView>
     </View>
   );
 }
