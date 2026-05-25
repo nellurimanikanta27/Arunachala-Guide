@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React, { useRef } from "react";
 import {
   Animated,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -167,6 +168,22 @@ export default function HomeScreen() {
       >
         <SacredMomentCard />
 
+        <Text style={styles.sectionLabel}>DESIGN VISION — THE WALK SCREEN</Text>
+        <View style={styles.visionCard}>
+          <Image
+            source={require("@/assets/images/walk-vision.png")}
+            style={styles.visionImage}
+            resizeMode="cover"
+            accessibilityLabel="Walk screen design vision"
+          />
+          <View style={styles.visionCaption}>
+            <Text style={styles.visionCaptionTitle}>What we're building toward</Text>
+            <Text style={styles.visionCaptionSub}>
+              Atmospheric map · color-coded utilities · live progress · memories along the route
+            </Text>
+          </View>
+        </View>
+
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
@@ -210,6 +227,41 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
+  visionCard: {
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: "#0A0604",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(196,122,30,0.35)",
+    marginBottom: 6,
+    shadowColor: "#C47A1E",
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  visionImage: {
+    width: "100%",
+    aspectRatio: 853 / 1280,
+    backgroundColor: "#0A0604",
+  },
+  visionCaption: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(255,255,255,0.06)",
+  },
+  visionCaptionTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#FFD98A",
+    marginBottom: 4,
+  },
+  visionCaptionSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.6)",
+    lineHeight: 16,
+  },
 
   sacredCard: {
     backgroundColor: Colors.white,
