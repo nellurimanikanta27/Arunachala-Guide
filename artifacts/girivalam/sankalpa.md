@@ -17,7 +17,7 @@ every word must serve at least one of these answers.
 1. **Who is your one pilgrim?** — *answered*
 2. **Business or offering?** — *answered*
 3. **Are you in Tiruvannamalai, or visiting?** — *answered*
-4. **What is your personal sankalpa for building this app?** — *open*
+4. **What is your personal sankalpa for building this app?** — *answered*
 5. *(reserved for the fifth principle question — to be named)*
 
 ---
@@ -138,7 +138,54 @@ built remotely.
 ---
 
 ## Q4 — What is your personal sankalpa for building this app?
-*Open. To be answered after Q3.*
+
+**Answered, in the founder's own words:**
+
+> "My sankalpa is to serve the nation, to save the temple.
+>
+> Arunachala is a place where you have to visit it multiple times. First
+> you visit it, and for a reason — you get clarity, you get mental peace,
+> stability in life. So if all the people find it very easy coming and
+> going to Arunachala, they travel more to Arunachala. That is why I am
+> building this.
+>
+> I want to make the people comfortable while they come to Arunachala
+> and while they leave. The thought of Arunachala in their mind should
+> be enough to come here. They should come here very peacefully —
+> without any travel problem, stay problem, experience problem, food
+> problem. Cleanliness in Arunachala — through this app I want to
+> spread that all over Arunachala.
+>
+> And not only Arunachala. As the founder, I also want to create more
+> apps for all the big temples in India, and add more comfort around
+> the temple."
+
+### What this means — translated into product law
+- This app is a **friction-remover for the pilgrim**, so that the call of
+  Arunachala is the only thing they have to feel. Everything mundane —
+  travel, stay, food, route, cleanliness — is the app's job to dissolve.
+- The success metric is not downloads. It is **return visits.** A pilgrim
+  who came once and came back is the only number that proves the app
+  worked.
+- The app is **Arunachala first, but not Arunachala only.** The
+  architecture — pillars, companion-style features, the three-depth
+  audience model — should be built so it can be lifted and re-applied
+  to other major Indian temples without being rebuilt from scratch.
+- "Save the temple" is not a small phrase. It implies the app also
+  carries some responsibility for cleanliness, respect, and the
+  sustained dignity of the place — not just the comfort of the visitor.
+  This may become a feature later (report cleanliness, volunteer
+  drives, donations to temple maintenance).
+
+### Implications we must hold
+- Architecture decisions should be checked twice: *"Could this also work
+  for Tirupati / Madurai / Kashi / Rameshwaram?"* If a decision locks us
+  to Arunachala-only, we're paying a future cost.
+- Branding: the long game is a family of temple apps, not one app. The
+  Girivalam app is the first born — and the proof.
+- The local-helper model (Q3) will need to be repeated per temple. So
+  the *system* for finding, paying, and trusting a local helper is itself
+  a thing worth designing well — not improvised once for Arunachala.
 
 ---
 
@@ -157,6 +204,9 @@ built remotely.
 - The Girivalam walk must work fully offline.
 - Audio content must come from real ashrams of Tiruvannamalai, not
   generic stock spirituality.
+- The success metric is **return visits to Arunachala**, not downloads.
+- Every architecture decision is checked against the question:
+  *"Could this work for any major Indian temple, not just Arunachala?"*
 
 ## Open questions to revisit
 - What is the app's **default voice** when it doesn't know who's holding it?
