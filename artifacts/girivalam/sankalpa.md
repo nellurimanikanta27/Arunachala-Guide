@@ -18,7 +18,7 @@ every word must serve at least one of these answers.
 2. **Business or offering?** — *answered*
 3. **Are you in Tiruvannamalai, or visiting?** — *answered*
 4. **What is your personal sankalpa for building this app?** — *answered*
-5. *(reserved for the fifth principle question — to be named)*
+5. **What is the shape of your commitment?** — *answered*
 
 ---
 
@@ -189,8 +189,32 @@ built remotely.
 
 ---
 
-## Q5 — *(reserved)*
-*Open.*
+## Q5 — What is the shape of your commitment?
+
+**Answered, in the founder's own words:**
+
+> "I really don't have any idea on the questions you asked me, but I
+> have only one thought — to really work hard, get it done successfully.
+> That's it."
+
+### What this means
+- The founder is not measuring this in hours per week, months until
+  break-even, or money spent. The commitment is **uncapped and
+  open-ended.** Work hard. Finish it. That's the whole rule.
+- This is rare and honest. Most people overthink their commitment to
+  protect themselves from disappointment. The founder is not protecting
+  himself. He is just walking.
+- For the working partnership: do not ask "how much time can you
+  give this week?" — ask "what's the next thing to get done?" The
+  commitment is assumed. The execution is the only conversation.
+
+### The risk we must respect
+- Open-ended commitment can become **burnout** if there are no checkpoints.
+- So even though the founder has not named limits, *we* — as the
+  working system around him — should quietly create natural pauses:
+  end of Prototype 1, end of Prototype 2, after each Pournami.
+  These are not "are you still committed?" moments. They are
+  *"come up for air, look at what you built, then keep walking"* moments.
 
 ---
 
