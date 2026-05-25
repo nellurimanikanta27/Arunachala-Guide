@@ -146,45 +146,36 @@ export default function HomeScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.primaryDark, Colors.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: topInset + 14 }]}
-      >
-        <View style={styles.headerTop}>
-          <MaterialCommunityIcons name="om" size={18} color="rgba(255,255,255,0.6)" />
-          <Text style={styles.headerTag}>Arunachala Pilgrimage Guide</Text>
-        </View>
-        <Text style={styles.headerTitle}>Girivalam</Text>
-        <Text style={styles.headerSub}>Tiruvannamalai, Tamil Nadu</Text>
-      </LinearGradient>
+    <View style={[styles.container, { backgroundColor: "#0A0604" }]}>
+      {/* The home screen IS the picture — full-bleed walk-vision image */}
+      <Image
+        source={require("@/assets/images/home-vision.png")}
+        style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
+        resizeMode="cover"
+        accessibilityLabel="Girivalam walk screen"
+      />
 
+      {/* Tap target on the bottom right re-uses the image's '+' button area
+          to take the user to the live walk screen */}
+      <Pressable
+        onPress={() => router.push("/route-map")}
+        style={[
+          styles.heroEnterBtn,
+          { bottom: bottomInset + 24 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="Begin Girivalam"
+      >
+        <Text style={styles.heroEnterBtnText}>Open the live walk →</Text>
+      </Pressable>
+
+      {/* Hidden — feature list kept reachable via tab bar; the hero is the picture */}
       <ScrollView
-        style={styles.scroll}
+        style={{ display: "none" }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         <SacredMomentCard />
-
-        <Text style={styles.sectionLabel}>DESIGN VISION — THE WALK SCREEN</Text>
-        <View style={styles.visionCard}>
-          <Image
-            source={require("@/assets/images/walk-vision.png")}
-            style={styles.visionImage}
-            resizeMode="cover"
-            accessibilityLabel="Walk screen design vision"
-          />
-          <View style={styles.visionCaption}>
-            <Text style={styles.visionCaptionTitle}>What we're building toward</Text>
-            <Text style={styles.visionCaptionSub}>
-              Atmospheric map · color-coded utilities · live progress · memories along the route
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
         ))}
@@ -227,6 +218,24 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
+  heroEnterBtn: {
+    position: "absolute",
+    alignSelf: "center",
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 22,
+    backgroundColor: "rgba(196,122,30,0.95)",
+    shadowColor: "#C47A1E",
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  heroEnterBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#0A0604",
+    letterSpacing: 0.4,
+  },
   visionCard: {
     borderRadius: 18,
     overflow: "hidden",
