@@ -8,7 +8,6 @@ import {
   Alert,
   Animated,
   Easing,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -699,59 +698,903 @@ export default function RouteMapScreen() {
     const distKm = (walkSeconds / 3600) * 3;
     const lingamIdx = Math.min(7, Math.floor(distKm / 1.75));
     const timeStr = formatTime(walkSeconds);
-    void distKm; void lingamIdx; void timeStr;
 
-    // Walk screen = the design picture, full-bleed. The End Session tap
-    // zone in the top-right is mapped to its location in the image.
     return (
-      <View style={[dStyles.root, { backgroundColor: "#0A0604" }]}>
-        <Image
-          source={require("@/assets/images/walk-vision-screen.png")}
-          style={StyleSheet.absoluteFillObject}
-          resizeMode="cover"
-          accessibilityLabel="Girivalam walk screen"
-        />
-        {/* End-Session tap zone — matches the red button in the picture */}
-        <Pressable
-          onPress={requestEndWalk}
-          style={[
-            dStyles.walkImgEndZone,
-            { top: topInset + 18 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="End session"
-        />
-
-        {/* End-of-walk ritual overlay */}
-        {endRitualOpen && (
-          <View style={dStyles.endRitualBackdrop}>
-            <View style={dStyles.endRitualCard}>
-              <MaterialCommunityIcons name="om" size={40} color="#C47A1E" />
-              <Text style={dStyles.endRitualTitle}>Pradakshina Complete</Text>
-              <Text style={dStyles.endRitualSub}>
-                ॐ अरुणाचलाय नमः{"\n"}
-                Distance walked · {((walkSeconds / 3600) * 3).toFixed(2)} km{"\n"}
-                Time · {formatTime(walkSeconds)}
+      <View style={dStyles.root}>
+        <LinearGradient
+          colors={["#0A0604", "#1A0F08", "#0A0604"]}
+          style={dStyles.gradient}
+        >
+          {/* ── Top header: KM · timer · End Session ── */}
+          <View style={[dStyles.topBar, { paddingTop: topInset + 14 }]}>
+            <View>
+              <Text style={dStyles.kmBig}>
+                {distKm.toFixed(1)}
+                <Text style={dStyles.kmUnit}> KM</Text>
               </Text>
+              <Text style={dStyles.kmLabel}>Covered</Text>
+            </View>
+            <View style={dStyles.topRight}>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={dStyles.timer}>{timeStr}</Text>
+                <View style={dStyles.liveRow}>
+                  <View style={dStyles.liveDot} />
+                  <Text style={dStyles.liveText}>Live Session</Text>
+                </View>
+              </View>
               <Pressable
-                onPress={endWalk}
-                style={dStyles.endRitualBtn}
+                onPress={() => setSilentMode((v) => !v)}
+                style={[dStyles.silentPill, silentMode && dStyles.silentPillOn]}
+                accessibilityRole="button"
+                accessibilityLabel={silentMode ? "Turn off silent mode" : "Turn on silent mode"}
+                hitSlop={6}
               >
-                <Text style={dStyles.endRitualBtnText}>Complete & Save</Text>
+                <Ionicons
+                  name={silentMode ? "moon" : "moon-outline"}
+                  size={14}
+                  color={silentMode ? "#0A0604" : GOLD}
+                />
               </Pressable>
               <Pressable
-                onPress={() => setEndRitualOpen(false)}
-                style={dStyles.endRitualBtnGhost}
+                onPress={requestEndWalk}
+                style={dStyles.endBtn}
+                accessibilityRole="button"
+                accessibilityLabel="End session"
               >
-                <Text style={dStyles.endRitualBtnGhostText}>Continue walking</Text>
+                <Text style={dStyles.endBtnText}>End Session</Text>
               </Pressable>
             </View>
           </View>
-        )}
+
+          {/* ── 8-temple progress strip ── */}
+          <View style={dStyles.progressRow}>
+            <View style={dStyles.progressStrip}>
+              {LINGAMS.map((l, i) => {
+                const isDone = i < lingamIdx;
+                const isCurrent = i === lingamIdx;
+                return (
+                  <Pressable
+                    key={l.number}
+                    style={dStyles.progressItem}
+                    onPress={() => {
+                      setTempleInfoIdx(i);
+                      setWalkOverlay("temple");
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${l.name} info`}
+                  >
+                    <View
+                      style={[
+                        dStyles.templeIconWrap,
+                        isDone && dStyles.templeIconDone,
+                        isCurrent && dStyles.templeIconCurrent,
+                      ]}
+                    >
+                      {/* soft golden halo behind every gopuram */}
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          dStyles.templeHalo,
+                          isCurrent && dStyles.templeHaloCurrent,
+                          !isDone && !isCurrent && dStyles.templeHaloUpcoming,
+                        ]}
+                      />
+                      <Animated.View
+                        style={
+                          isCurrent
+                            ? {
+                                transform: [
+                                  {
+                                    scale: omPulse.interpolate({
+                                      inputRange: [0.4, 0.9],
+                                      outputRange: [1, 1.18],
+                                    }),
+                                  },
+                                ],
+                              }
+                            : undefined
+                        }
+                      >
+                        <MaterialCommunityIcons
+                          name="temple-hindu"
+                          size={isCurrent ? 24 : 20}
+                          color={
+                            isCurrent ? "#FFD98A" : isDone ? GOLD : "rgba(196,122,30,0.55)"
+                          }
+                        />
+                      </Animated.View>
+                    </View>
+                    <Text
+                      style={[
+                        dStyles.templeName,
+                        (isDone || isCurrent) && dStyles.templeNameLit,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {l.name.replace(" Lingam", "")}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={dStyles.progressCounter}>{Math.min(8, lingamIdx + 1)}/8</Text>
+          </View>
+
+          {/* ── Faux dark map area ── */}
+          <View style={dStyles.mapArea}>
+            {[200, 160, 120, 80].map((r, i) => (
+              <View
+                key={i}
+                style={[
+                  dStyles.contour,
+                  { width: r * 2, height: r * 2, marginLeft: -r, marginTop: -r },
+                ]}
+              />
+            ))}
+            <Text style={dStyles.mountainLabel}>ARUNACHALA</Text>
+
+            {/* Glowing route — dots forming an oval ring */}
+            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+              {Array.from({ length: 40 }).map((_, i) => {
+                const a = (i / 40) * Math.PI * 2;
+                const rx = 130;
+                const ry = 170;
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      marginLeft: Math.cos(a) * rx - 2,
+                      marginTop: Math.sin(a) * ry - 2,
+                      width: 4,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: GOLD,
+                      opacity: 0.6,
+                      shadowColor: GOLD,
+                      shadowOpacity: 1,
+                      shadowRadius: 4,
+                      shadowOffset: { width: 0, height: 0 },
+                    }}
+                  />
+                );
+              })}
+            </View>
+
+            {/* Temple pins on the route */}
+            {LINGAMS.map((l, i) => {
+              const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+              const rx = 130;
+              const ry = 170;
+              const isDone = i < lingamIdx;
+              const isCurrent = i === lingamIdx;
+              return (
+                <Pressable
+                  key={l.number}
+                  onPress={() => {
+                    setTempleInfoIdx(i);
+                    setWalkOverlay("temple");
+                  }}
+                  style={[
+                    dStyles.templePin,
+                    isCurrent && dStyles.templePinCurrent,
+                    {
+                      left: "50%",
+                      top: "50%",
+                      marginLeft: Math.cos(a) * rx - 14,
+                      marginTop: Math.sin(a) * ry - 14,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={l.name}
+                >
+                  <MaterialCommunityIcons
+                    name="temple-hindu"
+                    size={isCurrent ? 18 : 14}
+                    color={isDone || isCurrent ? GOLD : "rgba(255,255,255,0.4)"}
+                  />
+                </Pressable>
+              );
+            })}
+
+            {/* Filter-driven utility pins — colored dot + label */}
+            {UTIL_PINS.filter((p) => utilOn[p.key]).map((p, i) => {
+              const u = UTILS.find((x) => x.key === p.key)!;
+              return (
+                <View
+                  key={`${p.key}-${i}`}
+                  style={[
+                    dStyles.utilPin,
+                    p.left ? { left: p.left as any } : null,
+                    p.right ? { right: p.right as any } : null,
+                    { top: p.top as any },
+                  ]}
+                >
+                  <View style={[dStyles.utilPinDot, { backgroundColor: u.color, shadowColor: u.color }]}>
+                    <Ionicons name={u.icon} size={10} color="#0A0604" />
+                  </View>
+                  <Text style={dStyles.utilPinText}>
+                    {u.label} · <Text style={{ color: "rgba(255,255,255,0.55)" }}>{p.dist}</Text>
+                  </Text>
+                </View>
+              );
+            })}
+
+            {/* Vertical utility filter column — sits on the LEFT edge of the map.
+                Positioned high enough to never overlap the W temple pin (which sits at
+                vertical centre). Rendered BEFORE the user dot so pin/dot taps win on
+                any narrow-device collision. */}
+            <View style={dStyles.utilColumn} pointerEvents="box-none">
+              {UTILS.map((u) => {
+                const on = utilOn[u.key];
+                return (
+                  <Pressable
+                    key={u.key}
+                    onPress={() => toggleUtil(u.key)}
+                    style={[
+                      dStyles.utilColumnBtn,
+                      on && { borderColor: u.color, backgroundColor: "rgba(0,0,0,0.55)" },
+                    ]}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={`${u.label} pins`}
+                  >
+                    <Ionicons
+                      name={u.icon}
+                      size={14}
+                      color={on ? u.color : "rgba(255,255,255,0.35)"}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* User location */}
+            <View style={[dStyles.userDotWrap, { left: "50%", top: "78%", marginLeft: -10 }]}>
+              <View style={dStyles.userDotPulse} />
+              <View style={dStyles.userDot} />
+            </View>
+
+            {/* Re-center FAB — requests a fresh GPS fix and triggers re-center */}
+            <Pressable
+              style={dStyles.recenterFab}
+              accessibilityRole="button"
+              accessibilityLabel="Re-center map on my location"
+              onPress={() => {
+                if (!tracking) {
+                  startTracking();
+                } else {
+                  Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+                    .then((p) =>
+                      setUserLocation({
+                        lat: p.coords.latitude,
+                        lng: p.coords.longitude,
+                        recenter: true,
+                      })
+                    )
+                    .catch(() => {
+                      Alert.alert("Re-center", "Couldn't get a fresh fix right now. Keep walking — it will retry.");
+                    });
+                }
+              }}
+            >
+              <Ionicons name="locate" size={18} color={GOLD} />
+            </Pressable>
+          </View>
+
+          {/* ── Geofence card (uses real AT logic) ── */}
+          {activeGeofenceIdx !== null && dismissedFor !== activeGeofenceIdx && (
+            <View style={dStyles.geofenceCard}>
+              <View style={dStyles.geofenceIcon}>
+                <MaterialCommunityIcons name="temple-hindu" size={20} color={GOLD} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={dStyles.geofenceApproach}>Approaching</Text>
+                <Text style={dStyles.geofenceName}>
+                  {LINGAMS[activeGeofenceIdx].name}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setTempleInfoIdx(activeGeofenceIdx);
+                    setWalkOverlay("temple");
+                  }}
+                  style={dStyles.geofenceCta}
+                  accessibilityRole="button"
+                  accessibilityLabel="Know about this temple"
+                >
+                  <Text style={dStyles.geofenceCtaText}>Know About This Temple</Text>
+                </Pressable>
+              </View>
+              <Pressable
+                onPress={() => setDismissedFor(activeGeofenceIdx)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss"
+              >
+                <Ionicons name="close" size={18} color="rgba(255,255,255,0.5)" />
+              </Pressable>
+            </View>
+          )}
+
+          {/* ── Bottom 4-button nav ── */}
+          <View style={[dStyles.bottomNav, { paddingBottom: bottomInset + 14 }]}>
+            <NavTabBtn
+              emoji="📿"
+              label="Japa"
+              active={walkOverlay === "japa"}
+              onPress={() => setWalkOverlay(walkOverlay === "japa" ? null : "japa")}
+            />
+            <NavTabBtn
+              emoji="🎵"
+              label="Audio"
+              active={walkOverlay === "audio"}
+              onPress={() => setWalkOverlay(walkOverlay === "audio" ? null : "audio")}
+            />
+            <Pressable
+              onPress={() => setWalkOverlay(walkOverlay === "plus" ? null : "plus")}
+              style={[
+                dStyles.plusBtn,
+                walkOverlay === "plus" && { transform: [{ rotate: "45deg" }] },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Quick actions"
+            >
+              <Ionicons name="add" size={32} color="#0A0604" />
+            </Pressable>
+            <NavTabBtn
+              emoji="🧭"
+              label="Utilities"
+              active={walkOverlay === "utilities"}
+              onPress={() => setWalkOverlay(walkOverlay === "utilities" ? null : "utilities")}
+            />
+          </View>
+
+          {/* ── Overlays (always inside the session) ── */}
+          {walkOverlay === "japa" && (
+            <WalkSheet title="JAPA COUNTER" onClose={() => setWalkOverlay(null)}>
+              <View style={dStyles.japaWrap}>
+                <View style={dStyles.japaMandala}>
+                  <Text style={dStyles.japaBig}>{japaCount}</Text>
+                  <Text style={dStyles.japaSub}>Mantras</Text>
+                </View>
+                <View style={dStyles.japaRow}>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => Math.max(0, c - 1))}
+                    style={dStyles.japaSideBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Decrease"
+                  >
+                    <Ionicons name="remove" size={22} color={GOLD} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => c + 1)}
+                    style={dStyles.japaTapBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Count one chant"
+                  >
+                    <Text style={dStyles.japaTapText}>Tap to count</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setJapaCount((c) => c + 1)}
+                    style={dStyles.japaSideBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add one"
+                  >
+                    <Ionicons name="add" size={22} color={GOLD} />
+                  </Pressable>
+                </View>
+                <Pressable
+                  onPress={() => setJapaCount(0)}
+                  style={dStyles.japaReset}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset count"
+                >
+                  <Ionicons name="refresh" size={13} color="rgba(255,255,255,0.5)" />
+                  <Text style={dStyles.japaResetText}>Reset</Text>
+                </Pressable>
+              </View>
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "audio" && (
+            <WalkSheet title="AUDIO" onClose={() => setWalkOverlay(null)}>
+              <View style={dStyles.audioTabs}>
+                {["Bhajans", "Audiobooks", "Ambient"].map((t, i) => (
+                  <Text
+                    key={t}
+                    style={[dStyles.audioTab, i === 0 && dStyles.audioTabActive]}
+                  >
+                    {t}
+                  </Text>
+                ))}
+              </View>
+              {[
+                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda" },
+                { title: "Arunachala Ashtakam", artist: "Traditional" },
+                { title: "Lingashtakam", artist: "Adi Shankaracharya" },
+                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda", playing: true },
+              ].map((t, i) => (
+                <View key={i} style={dStyles.audioRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.audioTitle}>{t.title}</Text>
+                    <Text style={dStyles.audioArtist}>{t.artist}</Text>
+                  </View>
+                  <Ionicons
+                    name={t.playing ? "pause-circle" : "play-circle"}
+                    size={30}
+                    color={GOLD}
+                  />
+                </View>
+              ))}
+              <Text style={dStyles.audioFoot}>
+                Plays under the map · mini-player stays on
+              </Text>
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "plus" && (
+            <WalkSheet title="ACTIONS" onClose={() => setWalkOverlay(null)}>
+              {[
+                {
+                  icon: "create-outline" as const,
+                  title: "Quick Note",
+                  sub: "Write your thoughts",
+                  go: () =>
+                    Alert.alert(
+                      "Quick Note",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
+                },
+                {
+                  icon: "camera-outline" as const,
+                  title: "Photo Capture",
+                  sub: "Capture the moment",
+                  go: () =>
+                    Alert.alert(
+                      "Photo Capture",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
+                },
+                {
+                  icon: "videocam-outline" as const,
+                  title: "Video Capture",
+                  sub: "Record your journey",
+                  go: () =>
+                    Alert.alert(
+                      "Video Capture",
+                      "Capture pipeline is being added next. Your moment will be saved with GPS + time + this session."
+                    ),
+                },
+                {
+                  icon: "language-outline" as const,
+                  title: "Translator",
+                  sub: "Tamil · Hindi · Telugu",
+                  go: () => setWalkOverlay("translator"),
+                },
+              ].map((a) => (
+                <Pressable
+                  key={a.title}
+                  style={dStyles.actionRow}
+                  onPress={() => {
+                    if (a.title === "Translator") {
+                      a.go();
+                    } else {
+                      setWalkOverlay(null);
+                      a.go();
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={a.title}
+                >
+                  <View style={dStyles.actionIcon}>
+                    <Ionicons name={a.icon} size={20} color={GOLD} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.actionTitle}>{a.title}</Text>
+                    <Text style={dStyles.actionSub}>{a.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.3)" />
+                </Pressable>
+              ))}
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "utilities" && (
+            <WalkSheet title="UTILITIES" onClose={() => setWalkOverlay(null)}>
+              {[
+                { emoji: "💧", label: "Water", sub: "Find water stations nearby" },
+                { emoji: "🚻", label: "Toilets", sub: "Find toilets nearby" },
+                { emoji: "🍛", label: "Annaprasadam", sub: "Free food locations" },
+                { emoji: "🍴", label: "Restaurants", sub: "Nearby restaurants" },
+                { emoji: "🏛️", label: "Ashramas", sub: "Nearby ashramas" },
+                { emoji: "✨", label: "Nearby Essentials", sub: "All essential services" },
+              ].map((u) => (
+                <Pressable
+                  key={u.label}
+                  style={dStyles.utilRow}
+                  onPress={() => {
+                    setWalkOverlay(null);
+                    Alert.alert(
+                      u.label,
+                      `Pins for ${u.label.toLowerCase()} will appear on your map. The session stays active.`
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={u.label}
+                >
+                  <Text style={dStyles.utilRowIcon}>{u.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={dStyles.utilLabel}>{u.label}</Text>
+                    <Text style={dStyles.utilSub}>{u.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
+                </Pressable>
+              ))}
+            </WalkSheet>
+          )}
+
+          {/* Silent walk mode: dim the whole screen — phone "goes quiet".
+              The pilgrim taps anywhere to wake briefly. Vibrates at each lingam. */}
+          {silentMode && !endRitualOpen && walkOverlay === null && (
+            <Pressable
+              style={dStyles.silentScrim}
+              onPress={() => setSilentMode(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Wake screen"
+            >
+              <View style={dStyles.silentInner}>
+                <Ionicons name="moon" size={28} color={GOLD} />
+                <Text style={dStyles.silentTitle}>Silent walk</Text>
+                <Text style={dStyles.silentSub}>
+                  Phone is resting. It will vibrate gently when you reach a lingam.
+                </Text>
+                <Text style={dStyles.silentTap}>Tap anywhere to wake</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {/* ── End-of-walk ritual ── */}
+          {endRitualOpen && (
+            <View style={dStyles.ritualRoot}>
+              <View style={dStyles.ritualInner}>
+                <Text style={dStyles.ritualKicker}>YOUR WALK IS COMPLETE</Text>
+                <Text style={dStyles.ritualKm}>
+                  {((walkSeconds / 3600) * 3).toFixed(1)}
+                  <Text style={dStyles.ritualKmUnit}> km</Text>
+                </Text>
+                <Text style={dStyles.ritualTime}>{formatTime(walkSeconds)}</Text>
+
+                {/* 8 lingams glow one by one */}
+                <View style={dStyles.ritualLingamRow}>
+                  {LINGAMS.map((l, i) => (
+                    <Animated.View
+                      key={l.number}
+                      style={[
+                        dStyles.ritualLingamDot,
+                        {
+                          opacity: lingamGlows[i],
+                          transform: [
+                            {
+                              scale: lingamGlows[i].interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.6, 1],
+                              }),
+                            },
+                          ],
+                          shadowOpacity: lingamGlows[i] as unknown as number,
+                        },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name="temple-hindu"
+                        size={18}
+                        color={GOLD}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+
+                {/* Sankalpa returned */}
+                {sankalpa.trim().length > 0 ? (
+                  <View style={dStyles.ritualSankalpaCard}>
+                    <Text style={dStyles.ritualSankalpaLabel}>
+                      YOU BEGAN WITH THIS IN YOUR HEART
+                    </Text>
+                    <Text style={dStyles.ritualSankalpaText}>
+                      &ldquo;{sankalpa.trim()}&rdquo;
+                    </Text>
+                    <Text style={dStyles.ritualSankalpaHand}>
+                      The mountain has heard it.
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={dStyles.ritualMessage}>
+                    You walked. That is enough.
+                  </Text>
+                )}
+
+                <Pressable
+                  onPress={endWalk}
+                  style={dStyles.ritualBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close walk"
+                >
+                  <Text style={dStyles.ritualBtnText}>Close</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          {walkOverlay === "translator" && (() => {
+            const PHRASES: { cat: string; en: string }[] = [
+              { cat: "Basics", en: "Hello, namaskaram." },
+              { cat: "Basics", en: "Thank you." },
+              { cat: "Basics", en: "Yes." },
+              { cat: "Basics", en: "No." },
+              { cat: "Basics", en: "Please." },
+              { cat: "Basics", en: "Sorry." },
+              { cat: "Help", en: "Please help, I am lost." },
+              { cat: "Help", en: "Where am I right now?" },
+              { cat: "Help", en: "I am not feeling well." },
+              { cat: "Help", en: "Please call a doctor." },
+              { cat: "Help", en: "Is there a hospital nearby?" },
+              { cat: "Help", en: "I lost my phone." },
+              { cat: "Food", en: "Where can I get free food (Annaprasadam)?" },
+              { cat: "Food", en: "I am hungry." },
+              { cat: "Food", en: "Where is the nearest water?" },
+              { cat: "Food", en: "Is this food vegetarian?" },
+              { cat: "Food", en: "One plate, please." },
+              { cat: "Directions", en: "Where is the toilet?" },
+              { cat: "Directions", en: "How far is the next temple?" },
+              { cat: "Directions", en: "Where is the auto / cab stand?" },
+              { cat: "Directions", en: "How do I go to Ramana Ashram?" },
+              { cat: "Directions", en: "Which way is the main temple?" },
+              { cat: "Devotion", en: "Om Namah Shivaya." },
+              { cat: "Devotion", en: "I want to do darshan." },
+              { cat: "Devotion", en: "What time does the temple open?" },
+              { cat: "Devotion", en: "I want to light a lamp." },
+              { cat: "Money", en: "How much does this cost?" },
+              { cat: "Money", en: "I will pay by UPI." },
+              { cat: "Money", en: "Do you accept cash?" },
+              { cat: "Money", en: "Please give me change." },
+            ];
+            const CATS = ["All", "Basics", "Help", "Food", "Directions", "Devotion", "Money"];
+            const filtered =
+              trCategory === "All"
+                ? PHRASES
+                : PHRASES.filter((p) => p.cat === trCategory);
+            return (
+              <WalkSheet title="TRANSLATOR" onClose={() => setWalkOverlay(null)}>
+                {/* Language picker */}
+                <Text style={dStyles.trLabel}>Translate to</Text>
+                <View style={dStyles.trLangRow}>
+                  {(["ta", "hi", "te"] as TrLang[]).map((lang) => (
+                    <Pressable
+                      key={lang}
+                      onPress={() => {
+                        setTrLang(lang);
+                        if (trInput.trim()) runTranslate(trInput);
+                      }}
+                      style={[
+                        dStyles.trLangPill,
+                        trLang === lang && dStyles.trLangPillActive,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Translate to ${TR_LANG_LABEL[lang]}`}
+                    >
+                      <Text
+                        style={[
+                          dStyles.trLangPillText,
+                          trLang === lang && { color: GOLD },
+                        ]}
+                      >
+                        {TR_LANG_LABEL[lang]}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Free text input */}
+                <Text style={dStyles.trLabel}>Type anything in English</Text>
+                <View style={dStyles.trInputRow}>
+                  <TextInput
+                    value={trInput}
+                    onChangeText={setTrInput}
+                    placeholder="e.g. Where can I rest for an hour?"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    style={dStyles.trInput}
+                    multiline
+                    onSubmitEditing={() => runTranslate(trInput)}
+                    returnKeyType="go"
+                  />
+                  <Pressable
+                    onPress={() => runTranslate(trInput)}
+                    disabled={!trInput.trim() || trLoading}
+                    style={[
+                      dStyles.trGoBtn,
+                      (!trInput.trim() || trLoading) && { opacity: 0.4 },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Translate"
+                  >
+                    {trLoading ? (
+                      <ActivityIndicator color="#0A0604" size="small" />
+                    ) : (
+                      <Ionicons name="arrow-forward" size={20} color="#0A0604" />
+                    )}
+                  </Pressable>
+                </View>
+
+                {trError && (
+                  <Text style={dStyles.trErrorText}>{trError}</Text>
+                )}
+
+                {trOutput && (
+                  <View style={dStyles.trOutputCard}>
+                    <Text style={dStyles.trOutputLabel}>
+                      {TR_LANG_LABEL[trOutput.lang].toUpperCase()}
+                    </Text>
+                    <Text style={dStyles.trOutputText}>{trOutput.text}</Text>
+                  </View>
+                )}
+
+                {/* Category tabs */}
+                <Text style={[dStyles.trLabel, { marginTop: 22 }]}>
+                  Or pick a common phrase
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={dStyles.trCatRow}
+                  contentContainerStyle={{ gap: 8, paddingRight: 12 }}
+                >
+                  {CATS.map((c) => (
+                    <Pressable
+                      key={c}
+                      onPress={() => setTrCategory(c)}
+                      style={[
+                        dStyles.trCatChip,
+                        trCategory === c && dStyles.trCatChipActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          dStyles.trCatChipText,
+                          trCategory === c && { color: GOLD },
+                        ]}
+                      >
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                {filtered.map((p, i) => (
+                  <Pressable
+                    key={i}
+                    style={dStyles.trCard}
+                    onPress={() => {
+                      setTrInput(p.en);
+                      runTranslate(p.en);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Translate ${p.en}`}
+                  >
+                    <Text style={dStyles.trEn}>{p.en}</Text>
+                    <View style={dStyles.trCardFooter}>
+                      <Text style={dStyles.trCardCat}>{p.cat.toUpperCase()}</Text>
+                      <View style={dStyles.trCardArrow}>
+                        <Ionicons name="arrow-forward" size={12} color={GOLD} />
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+
+                <View style={dStyles.trFooter}>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={14}
+                    color={TEXT_DIM}
+                  />
+                  <Text style={dStyles.trFooterText}>
+                    Powered by MyMemory · works offline only for saved phrases.
+                  </Text>
+                </View>
+              </WalkSheet>
+            );
+          })()}
+
+          {walkOverlay === "temple" && templeInfoIdx !== null && (() => {
+            const t = LINGAMS[templeInfoIdx];
+            const saved = savedMoments[templeInfoIdx] ?? [];
+            return (
+              <View style={dStyles.templeOverlay}>
+                <Pressable
+                  style={dStyles.templeBackdrop}
+                  onPress={() => setWalkOverlay(null)}
+                  accessibilityLabel="Close temple info"
+                />
+                <View style={dStyles.templeSheet}>
+                  <View style={dStyles.templeHero}>
+                    <Pressable
+                      onPress={() => setWalkOverlay(null)}
+                      style={dStyles.templeClose}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close"
+                    >
+                      <Ionicons name="close" size={18} color="white" />
+                    </Pressable>
+                    <Text style={dStyles.templeKicker}>
+                      LINGAM #{t.number} · {t.direction.toUpperCase()}
+                    </Text>
+                    <Text style={dStyles.templeHeadName}>{t.name}</Text>
+                  </View>
+                  <View style={dStyles.templeTabs}>
+                    {["History", "Significance", "Experiences", "Blog"].map((tab, i) => (
+                      <View
+                        key={tab}
+                        style={[dStyles.templeTabWrap, i === 0 && dStyles.templeTabWrapActive]}
+                      >
+                        <Text
+                          style={[dStyles.templeTab, i === 0 && dStyles.templeTabActive]}
+                        >
+                          {tab}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <Text style={dStyles.templeBody}>{t.meaning}</Text>
+                    <Text style={[dStyles.templeBody, { marginTop: 14 }]}>
+                      {t.description}
+                    </Text>
+                  </ScrollView>
+                  <View style={dStyles.templeFootRow}>
+                    {[
+                      { icon: "camera-outline" as const, label: "Add Memory", k: "photo" as const },
+                      { icon: "share-outline" as const, label: "Share" },
+                      { icon: "navigate-outline" as const, label: "Nav Guide" },
+                      { icon: "close-outline" as const, label: "Close" },
+                    ].map((f) => (
+                      <Pressable
+                        key={f.label}
+                        style={dStyles.templeFootBtn}
+                        onPress={() => {
+                          if (f.k && templeInfoIdx !== null) {
+                            saveMoment(templeInfoIdx, f.k);
+                          } else if (f.label === "Close") {
+                            setWalkOverlay(null);
+                          } else {
+                            Alert.alert(f.label, "Coming next.");
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={f.label}
+                      >
+                        <Ionicons name={f.icon} size={18} color={GOLD} />
+                        <Text style={dStyles.templeFootLabel}>{f.label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  <Text style={dStyles.templeFootNote}>
+                    Your walk is still active · {saved.length}{" "}
+                    {saved.length === 1 ? "memory" : "memories"} here
+                  </Text>
+                </View>
+              </View>
+            );
+          })()}
+
+        </LinearGradient>
       </View>
     );
   }
-
 
   // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
@@ -2395,66 +3238,6 @@ const dStyles = StyleSheet.create({
     fontSize: 10,
     color: "rgba(255,255,255,0.92)",
     letterSpacing: 0.2,
-  },
-  walkImgEndZone: {
-    position: "absolute",
-    right: 14,
-    width: 100,
-    height: 36,
-    borderRadius: 18,
-  },
-  endRitualBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10,6,4,0.92)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  endRitualCard: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: "#1A0F08",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(196,122,30,0.5)",
-    borderRadius: 20,
-    padding: 26,
-    alignItems: "center",
-    gap: 12,
-  },
-  endRitualTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
-    color: "#F4E5C2",
-    marginTop: 6,
-  },
-  endRitualSub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: "rgba(255,255,255,0.75)",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  endRitualBtn: {
-    marginTop: 14,
-    backgroundColor: "#C47A1E",
-    paddingHorizontal: 26,
-    paddingVertical: 12,
-    borderRadius: 22,
-  },
-  endRitualBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: "#0A0604",
-    letterSpacing: 0.4,
-  },
-  endRitualBtnGhost: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  endRitualBtnGhostText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: "rgba(255,255,255,0.6)",
   },
   utilColumn: {
     position: "absolute",
