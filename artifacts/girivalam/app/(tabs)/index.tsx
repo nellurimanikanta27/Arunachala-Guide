@@ -95,7 +95,7 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
                 <Ionicons name="map" size={28} color={Colors.primary} />
               </View>
               <View style={styles.heroText}>
-                <Text style={styles.heroTitle}>Girivalam Route</Text>
+                <Text style={styles.heroTitle}>{feature.title}</Text>
                 <Text style={styles.heroSubtitle}>{feature.subtitle}</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={Colors.textFaint} />
