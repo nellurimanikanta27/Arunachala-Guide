@@ -16,7 +16,7 @@ every word must serve at least one of these answers.
 
 1. **Who is your one pilgrim?** — *answered*
 2. **Business or offering?** — *answered*
-3. **Are you in Tiruvannamalai, or visiting?** — *open*
+3. **Are you in Tiruvannamalai, or visiting?** — *answered*
 4. **What is your personal sankalpa for building this app?** — *open*
 5. *(reserved for the fifth principle question — to be named)*
 
@@ -108,7 +108,32 @@ never *ask*). **This is open and not yet decided.**
 ---
 
 ## Q3 — Are you in Tiruvannamalai, or visiting?
-*Open. To be answered next.*
+
+**Answered:** The founder does **not** stay in Tiruvannamalai. The app is
+built remotely.
+
+### On the local helper
+- A local presence in Tiruvannamalai is understood as necessary — for
+  verifying annadhanam, recording real ashram audio, photographing the
+  route, holding relationships with priests and ashram people.
+- This person is **not a co-founder.** The founder is the sole runner of
+  the app.
+- The right framing is: a **trusted helper** — an employee, or a devotee
+  who helps out of concern and devotion for Arunachala, not for
+  ownership of the product.
+- Boundary is clean: the founder makes all product decisions. The local
+  helper does the on-ground work that cannot be done remotely.
+
+### What this means for how we build
+- Anything that needs a *human in Tiruvannamalai* (recording audio,
+  verifying free-food spots, photographing lingams, getting ashram
+  permissions) is **work that must be scheduled and paid for**, not
+  assumed to happen.
+- Until that helper exists, content from Tiruvannamalai is the
+  bottleneck — not code. We must not over-build features that depend on
+  content we don't yet have.
+- The first hire / helper should probably happen around the end of
+  Prototype 1, so Prototype 2 can ship with real Tiruvannamalai content.
 
 ---
 
@@ -135,6 +160,6 @@ never *ask*). **This is open and not yet decided.**
 
 ## Open questions to revisit
 - What is the app's **default voice** when it doesn't know who's holding it?
-- Who is the local co-founder / relationship-holder in Tiruvannamalai?
+- Who is the local **helper** (not co-founder) in Tiruvannamalai, and when do we bring them on?
 - Which ashram do we approach first for blessing?
 - When does Pillar 2's AI Saint launch — Prototype 1 or 2?
