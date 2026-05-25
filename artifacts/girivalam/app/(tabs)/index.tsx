@@ -138,11 +138,22 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
   );
 }
 
+function daysUntilNextFullMoon(now: Date): number {
+  const SYNODIC = 29.53058867;
+  const REF_FULL_MOON_MS = Date.UTC(2024, 0, 25, 17, 54, 0);
+  const nowMs = now.getTime();
+  const cycles = (nowMs - REF_FULL_MOON_MS) / (SYNODIC * 86400000);
+  const intoCycleDays = (cycles - Math.floor(cycles)) * SYNODIC;
+  const daysLeft = SYNODIC - intoCycleDays;
+  return Math.max(1, Math.ceil(daysLeft));
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const topInset = isWeb ? 67 : insets.top;
   const bottomInset = isWeb ? 34 : insets.bottom;
+  const daysToPournami = daysUntilNextFullMoon(new Date());
 
   return (
     <View style={styles.container}>
@@ -153,11 +164,21 @@ export default function HomeScreen() {
         style={[styles.header, { paddingTop: topInset + 14 }]}
       >
         <View style={styles.headerTop}>
-          <MaterialCommunityIcons name="om" size={18} color="rgba(255,255,255,0.6)" />
-          <Text style={styles.headerTag}>Arunachala Pilgrimage Guide</Text>
+          <MaterialCommunityIcons name="moon-waning-crescent" size={16} color="rgba(255,255,255,0.65)" />
+          <Text style={styles.headerTag}>NEXT POURNAMI</Text>
         </View>
-        <Text style={styles.headerTitle}>Girivalam</Text>
-        <Text style={styles.headerSub}>Tiruvannamalai, Tamil Nadu</Text>
+        <View style={styles.pournamiRow}>
+          <Text style={styles.pournamiCount}>{daysToPournami}</Text>
+          <View style={styles.pournamiLabelCol}>
+            <Text style={styles.pournamiLabelTop}>{daysToPournami === 1 ? "DAY" : "DAYS"}</Text>
+            <Text style={styles.pournamiLabelBot}>until full moon</Text>
+          </View>
+        </View>
+        <View style={styles.headerDivider} />
+        <Text style={styles.headerQuote}>
+          “Merely by thinking of Arunachala, one shall be granted liberation.”
+        </Text>
+        <Text style={styles.headerAttribution}>— Sri Ramana Maharshi</Text>
       </LinearGradient>
 
       <ScrollView
@@ -191,22 +212,59 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   headerTag: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 2,
+  },
+  pournamiRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 12,
+    marginTop: 2,
+  },
+  pournamiCount: {
+    fontSize: 64,
+    fontFamily: "Inter_700Bold",
+    color: "#FFD98A",
+    letterSpacing: -2,
+    lineHeight: 68,
+  },
+  pournamiLabelCol: {
+    paddingBottom: 10,
+  },
+  pournamiLabelTop: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+    letterSpacing: 1.5,
+  },
+  pournamiLabelBot: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.55)",
+    marginTop: 1,
+  },
+  headerDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255,217,138,0.35)",
+    marginTop: 18,
+    marginBottom: 14,
+  },
+  headerQuote: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    fontStyle: "italic",
+    color: "rgba(255,255,255,0.88)",
+    lineHeight: 22,
+    letterSpacing: 0.2,
+  },
+  headerAttribution: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.65)",
-    letterSpacing: 0.3,
-  },
-  headerTitle: {
-    fontSize: 36,
-    fontFamily: "Inter_700Bold",
-    color: Colors.white,
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.65)",
-    marginTop: 2,
+    color: "rgba(255,217,138,0.7)",
+    marginTop: 8,
+    letterSpacing: 0.5,
   },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
