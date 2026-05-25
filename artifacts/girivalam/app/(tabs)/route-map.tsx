@@ -166,7 +166,7 @@ export default function RouteMapScreen() {
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
   const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
   // Walk-screen overlay (japa / audio / plus / utilities / temple info)
-  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple";
+  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple" | "translator";
   const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
   const [templeInfoIdx, setTempleInfoIdx] = useState<number | null>(null);
   // Refs avoid stale-closure / concurrent-tap races on saveMoment.
@@ -700,18 +700,24 @@ export default function RouteMapScreen() {
                     <View
                       style={[
                         dStyles.templeIconWrap,
+                        isDone && dStyles.templeIconDone,
                         isCurrent && dStyles.templeIconCurrent,
                       ]}
                     >
+                      {/* soft golden halo behind every gopuram */}
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          dStyles.templeHalo,
+                          isCurrent && dStyles.templeHaloCurrent,
+                          !isDone && !isCurrent && dStyles.templeHaloUpcoming,
+                        ]}
+                      />
                       <MaterialCommunityIcons
                         name="temple-hindu"
-                        size={isCurrent ? 24 : 18}
+                        size={isCurrent ? 24 : 20}
                         color={
-                          isCurrent
-                            ? GOLD
-                            : isDone
-                            ? GOLD_DIM
-                            : "rgba(255,255,255,0.22)"
+                          isCurrent ? "#FFD98A" : isDone ? GOLD : "rgba(196,122,30,0.55)"
                         }
                       />
                     </View>
@@ -921,6 +927,14 @@ export default function RouteMapScreen() {
               label="Utilities"
               active={walkOverlay === "utilities"}
               onPress={() => setWalkOverlay(walkOverlay === "utilities" ? null : "utilities")}
+            />
+            <NavTabBtn
+              emoji="🈂️"
+              label="Translate"
+              active={walkOverlay === "translator"}
+              onPress={() =>
+                setWalkOverlay(walkOverlay === "translator" ? null : "translator")
+              }
             />
           </View>
 
@@ -1176,6 +1190,47 @@ export default function RouteMapScreen() {
                 </Pressable>
               </View>
             </View>
+          )}
+
+          {walkOverlay === "translator" && (
+            <WalkSheet title="TRANSLATOR" onClose={() => setWalkOverlay(null)}>
+              <Text style={dStyles.trSub}>
+                Common phrases for pilgrims. Tap any phrase to hear and read it in Tamil.
+              </Text>
+              <View style={dStyles.trLangRow}>
+                <View style={dStyles.trLangPill}>
+                  <Text style={dStyles.trLangPillText}>English</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={GOLD} />
+                <View style={[dStyles.trLangPill, dStyles.trLangPillActive]}>
+                  <Text style={[dStyles.trLangPillText, { color: GOLD }]}>தமிழ் · Tamil</Text>
+                </View>
+              </View>
+
+              {[
+                { en: "Where is the nearest water?", ta: "அருகில் தண்ணீர் எங்கே இருக்கிறது?", roman: "Arugil thanneer engay irukkirathu?" },
+                { en: "Where can I get free food (Annaprasadam)?", ta: "அன்னப்பிரசாதம் எங்கே கிடைக்கும்?", roman: "Annaprasadam engay kidaikkum?" },
+                { en: "How far is the next temple?", ta: "அடுத்த கோயில் எவ்வளவு தூரம்?", roman: "Aduththa kovil evvalavu thooram?" },
+                { en: "Please help, I am lost.", ta: "தயவு செய்து உதவுங்கள், நான் வழி தவறிவிட்டேன்.", roman: "Thayavu seidhu udhavungal, naan vazhi thavari vittaen." },
+                { en: "Where is the toilet?", ta: "கழிப்பறை எங்கே?", roman: "Kazhippari engay?" },
+                { en: "Om Namah Shivaya", ta: "ஓம் நமசிவாய", roman: "Om Namasivaya" },
+                { en: "Thank you", ta: "நன்றி", roman: "Nandri" },
+                { en: "Where is the auto / cab stand?", ta: "ஆட்டோ / டாக்ஸி எங்கே நிற்கிறது?", roman: "Auto / taxi engay nirkirathu?" },
+              ].map((p, i) => (
+                <View key={i} style={dStyles.trCard}>
+                  <Text style={dStyles.trEn}>{p.en}</Text>
+                  <Text style={dStyles.trTa}>{p.ta}</Text>
+                  <Text style={dStyles.trRoman}>{p.roman}</Text>
+                </View>
+              ))}
+
+              <View style={dStyles.trFooter}>
+                <Ionicons name="information-circle-outline" size={14} color={TEXT_DIM} />
+                <Text style={dStyles.trFooterText}>
+                  Voice translation coming in the next update.
+                </Text>
+              </View>
+            </WalkSheet>
           )}
 
           {walkOverlay === "temple" && templeInfoIdx !== null && (() => {
@@ -2620,18 +2675,115 @@ const dStyles = StyleSheet.create({
   progressStrip: { flex: 1, flexDirection: "row", justifyContent: "space-between" },
   progressItem: { alignItems: "center", paddingHorizontal: 2, flex: 1 },
   templeIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  templeIconDone: {
+    shadowColor: GOLD,
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
   templeIconCurrent: {
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(196,122,30,0.18)",
     shadowColor: GOLD,
-    shadowOpacity: 0.9,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 0 },
+  },
+  templeHalo: {
+    position: "absolute",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(196,122,30,0.18)",
+  },
+  templeHaloCurrent: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(196,122,30,0.32)",
+  },
+  templeHaloUpcoming: {
+    backgroundColor: "rgba(196,122,30,0.06)",
+  },
+
+  // Translator overlay
+  trSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: TEXT_DIM,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  trLangRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
+  },
+  trLangPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+  },
+  trLangPillActive: {
+    backgroundColor: "rgba(196,122,30,0.12)",
+    borderColor: "rgba(196,122,30,0.5)",
+  },
+  trLangPillText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 0.3,
+  },
+  trCard: {
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+    marginBottom: 10,
+  },
+  trEn: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: TEXT_DIM,
+    marginBottom: 6,
+  },
+  trTa: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    color: GOLD,
+    lineHeight: 22,
+  },
+  trRoman: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.45)",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+  trFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: HAIRLINE,
+  },
+  trFooterText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    color: TEXT_DIM,
   },
   templeName: {
     fontFamily: "Inter_500Medium",
