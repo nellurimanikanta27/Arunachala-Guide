@@ -157,13 +157,35 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[Colors.primaryDark, Colors.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: topInset + 14 }]}
+      >
+        <View style={styles.headerTop}>
+          <MaterialCommunityIcons name="moon-waning-crescent" size={16} color="rgba(255,255,255,0.65)" />
+          <Text style={styles.headerTag}>NEXT POURNAMI</Text>
+        </View>
+        <View style={styles.pournamiRow}>
+          <Text style={styles.pournamiCount}>{daysToPournami}</Text>
+          <View style={styles.pournamiLabelCol}>
+            <Text style={styles.pournamiLabelTop}>{daysToPournami === 1 ? "DAY" : "DAYS"}</Text>
+            <Text style={styles.pournamiLabelBot}>until full moon</Text>
+          </View>
+        </View>
+        <View style={styles.headerDivider} />
+        <Text style={styles.headerQuote}>
+          “Merely by thinking of Arunachala, one shall be granted liberation.”
+        </Text>
+        <Text style={styles.headerAttribution}>— Sri Ramana Maharshi</Text>
+      </LinearGradient>
+
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24, paddingTop: topInset + 14 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <SacredMomentCard />
-
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
