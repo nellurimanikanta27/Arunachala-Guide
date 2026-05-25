@@ -33,7 +33,7 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
-  { id: "route-map", title: "Girivalam Route", subtitle: "14 km path · live map · 8 lingams", icon: "map", iconFamily: "Ionicons" },
+  { id: "route-map", title: "Start Girivalam", subtitle: "14 km path · live map · 8 lingams", icon: "map", iconFamily: "Ionicons" },
   { id: "history", title: "History & Meditation", subtitle: "Breathing guide · Ramana teachings", icon: "om", iconFamily: "MaterialCommunityIcons" },
   { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
   { id: "ai-guide", title: "AI Guide", subtitle: "Ask anything about Girivalam", icon: "chatbubble-ellipses", iconFamily: "Ionicons" },
