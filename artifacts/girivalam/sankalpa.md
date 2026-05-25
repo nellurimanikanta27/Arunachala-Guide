@@ -233,7 +233,13 @@ built remotely.
   *"Could this work for any major Indian temple, not just Arunachala?"*
 
 ## Open questions to revisit
+> **Reminder for the companion (the AI):** The founder has chosen to
+> pause these questions and continue building. Bring them back up
+> *before launch* — not during day-to-day building. Do not nag.
+
 - What is the app's **default voice** when it doesn't know who's holding it?
 - Who is the local **helper** (not co-founder) in Tiruvannamalai, and when do we bring them on?
 - Which ashram do we approach first for blessing?
 - When does Pillar 2's AI Saint launch — Prototype 1 or 2?
+- The funding gap: how do we pay the local helper before ad/commission revenue starts?
+- Should ads be promised to **only ever appear in Pillar 3** (never in the walk or the inner-practice screens)?
