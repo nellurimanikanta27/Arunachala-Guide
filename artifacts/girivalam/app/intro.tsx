@@ -110,7 +110,7 @@ export default function IntroAnimation() {
     );
 
     seq.start(() => {
-      router.replace("/");
+      router.replace("/(tabs)");
     });
 
     // Start the pulse a bit after lingam appears
