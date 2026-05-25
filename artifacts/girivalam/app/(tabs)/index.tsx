@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import React, { useRef } from "react";
 import {
   Animated,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -167,22 +166,6 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <SacredMomentCard />
-
-        <Text style={styles.sectionLabel}>DESIGN VISION — THE WALK SCREEN</Text>
-        <View style={styles.visionCard}>
-          <Image
-            source={require("@/assets/images/walk-vision.png")}
-            style={styles.visionImage}
-            resizeMode="cover"
-            accessibilityLabel="Walk screen design vision"
-          />
-          <View style={styles.visionCaption}>
-            <Text style={styles.visionCaptionTitle}>What we're building toward</Text>
-            <Text style={styles.visionCaptionSub}>
-              Atmospheric map · color-coded utilities · live progress · memories along the route
-            </Text>
-          </View>
-        </View>
 
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
