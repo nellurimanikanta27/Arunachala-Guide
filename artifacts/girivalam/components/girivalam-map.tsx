@@ -150,11 +150,21 @@ function buildMapHtml(zoom = 14): string {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
+    // CINEMATIC-V1: layered gold glow — wide soft underlay + bright top line.
     L.polyline(${polylineCoords}, {
-      color: '#E8620A',
-      weight: 4,
-      opacity: 0.85,
-      dashArray: '8, 6'
+      color: '#FFD98A',
+      weight: 14,
+      opacity: 0.18
+    }).addTo(map);
+    L.polyline(${polylineCoords}, {
+      color: '#FFC76B',
+      weight: 8,
+      opacity: 0.32
+    }).addTo(map);
+    L.polyline(${polylineCoords}, {
+      color: '#FFE7AE',
+      weight: 3,
+      opacity: 0.95
     }).addTo(map);
 
     L.circle([${ARUNACHALA_CENTER[0]}, ${ARUNACHALA_CENTER[1]}], {

@@ -23,8 +23,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BlurView } from "expo-blur";
+
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
+// CINEMATIC-V1
+import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
 import { addMoment, finishWalk, getWalkProgress, startWalk, updateWalk } from "@/lib/pilgrimage-store";
 
 const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
@@ -740,9 +744,13 @@ export default function RouteMapScreen() {
           colors={["#0A0604", "#1A0F08", "#0A0604"]}
           style={dStyles.gradient}
         >
+          {/* CINEMATIC-V1: ambient gold particles drifting upward */}
+          {CINEMATIC_V1 && <AmbientParticles count={14} />}
           {/* ── Top header: KM · timer · End Session ── */}
           <View style={[dStyles.topBar, { paddingTop: topInset + 14 }]}>
             <View>
+              {/* CINEMATIC-V1: halo behind the hero KM number */}
+              {CINEMATIC_V1 && <HaloPulse size={150} />}
               <Text style={dStyles.kmBig}>
                 {distKm.toFixed(1)}
                 <Text style={dStyles.kmUnit}> KM</Text>
@@ -1602,6 +1610,15 @@ export default function RouteMapScreen() {
                   accessibilityLabel="Close temple info"
                 />
                 <View style={dStyles.templeSheet}>
+                  {/* CINEMATIC-V1: glassmorphism wash behind the temple sheet */}
+                  {CINEMATIC_V1 && (
+                    <BlurView
+                      intensity={40}
+                      tint="dark"
+                      style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }]}
+                      pointerEvents="none"
+                    />
+                  )}
                   <View style={dStyles.templeHero}>
                     <Pressable
                       onPress={() => setWalkOverlay(null)}
@@ -3041,11 +3058,16 @@ const dStyles = StyleSheet.create({
     paddingBottom: 12,
   },
   kmBig: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 32,
-    color: "white",
+    // CINEMATIC-V1: serif display + gold glow
+    fontFamily: CINEMATIC_V1 ? SERIF_DISPLAY : "Inter_700Bold",
+    fontWeight: CINEMATIC_V1 ? ("700" as const) : ("400" as const),
+    fontSize: CINEMATIC_V1 ? 38 : 32,
+    color: CINEMATIC_V1 ? "#FFE7AE" : "white",
     letterSpacing: -0.5,
-    lineHeight: 36,
+    lineHeight: CINEMATIC_V1 ? 44 : 36,
+    textShadowColor: CINEMATIC_V1 ? "rgba(255,217,138,0.55)" : "transparent",
+    textShadowRadius: CINEMATIC_V1 ? 12 : 0,
+    textShadowOffset: { width: 0, height: 0 },
   },
   kmUnit: { fontFamily: "Inter_500Medium", fontSize: 14, color: TEXT_DIM, letterSpacing: 1 },
   kmLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, marginTop: 2 },
@@ -3819,11 +3841,16 @@ const dStyles = StyleSheet.create({
     letterSpacing: 2.5,
   },
   ritualKm: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 56,
-    color: "white",
+    // CINEMATIC-V1: serif + soft gold glow on completion number
+    fontFamily: CINEMATIC_V1 ? SERIF_DISPLAY : "Inter_700Bold",
+    fontWeight: CINEMATIC_V1 ? ("700" as const) : ("400" as const),
+    fontSize: 60,
+    color: CINEMATIC_V1 ? "#FFE7AE" : "white",
     marginTop: 6,
     letterSpacing: -1,
+    textShadowColor: CINEMATIC_V1 ? "rgba(255,217,138,0.55)" : "transparent",
+    textShadowRadius: CINEMATIC_V1 ? 18 : 0,
+    textShadowOffset: { width: 0, height: 0 },
   },
   ritualKmUnit: {
     fontFamily: "Inter_500Medium",
