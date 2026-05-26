@@ -29,7 +29,7 @@ import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
 // CINEMATIC-V1
 import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
-import { addMoment, finishWalk, getWalkProgress, startWalk, updateWalk } from "@/lib/pilgrimage-store";
+import { addBookmark, addMoment, type Bookmark, finishWalk, getBookmarks, getWalkProgress, removeBookmark, startWalk, updateWalk } from "@/lib/pilgrimage-store";
 
 const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
 
@@ -181,9 +181,11 @@ export default function RouteMapScreen() {
   const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
   const [walkNumber, setWalkNumber] = useState<number | null>(null);
   // Walk-screen overlay (japa / audio / plus / utilities / temple info)
-  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple" | "translator";
+  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple" | "translator" | "spots";
   const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
   const [templeInfoIdx, setTempleInfoIdx] = useState<number | null>(null);
+  // Bookmarked sacred spots — loaded on demand for the list overlay.
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   // Refs avoid stale-closure / concurrent-tap races on saveMoment.
   const currentWalkIdRef = useRef<string | null>(null);
   const walkInFlightRef = useRef<Promise<string> | null>(null);
@@ -1257,6 +1259,57 @@ export default function RouteMapScreen() {
 
           {walkOverlay === "utilities" && (
             <WalkSheet title="UTILITIES" onClose={() => setWalkOverlay(null)}>
+              {/* Sacred-spots: bookmark current GPS, or view saved list */}
+              <Pressable
+                style={dStyles.utilRow}
+                onPress={async () => {
+                  if (!userLocation) {
+                    Alert.alert("No location yet", "Waiting for GPS — try again in a moment.");
+                    return;
+                  }
+                  const stamp = new Date().toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  await addBookmark({
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                    note: `Sacred spot · ${stamp}`,
+                  });
+                  setBookmarks(await getBookmarks());
+                  setWalkOverlay(null);
+                  Alert.alert("Bookmarked", "This spot is saved. See it under My Sacred Spots.");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Bookmark this spot"
+              >
+                <Text style={dStyles.utilRowIcon}>⭐</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={dStyles.utilLabel}>Bookmark this spot</Text>
+                  <Text style={dStyles.utilSub}>Save where you are right now</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
+              </Pressable>
+              <Pressable
+                style={dStyles.utilRow}
+                onPress={async () => {
+                  const list = await getBookmarks();
+                  setBookmarks(list);
+                  setWalkOverlay("spots");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="My sacred spots"
+              >
+                <Text style={dStyles.utilRowIcon}>🪷</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={dStyles.utilLabel}>My Sacred Spots</Text>
+                  <Text style={dStyles.utilSub}>Bookmarks you've saved</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
+              </Pressable>
+
               {[
                 { emoji: "💧", label: "Water", sub: "Find water stations nearby" },
                 { emoji: "🚻", label: "Toilets", sub: "Find toilets nearby" },
@@ -1286,6 +1339,52 @@ export default function RouteMapScreen() {
                   <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.3)" />
                 </Pressable>
               ))}
+            </WalkSheet>
+          )}
+
+          {walkOverlay === "spots" && (
+            <WalkSheet title="MY SACRED SPOTS" onClose={() => setWalkOverlay(null)}>
+              {bookmarks.length === 0 ? (
+                <Text style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingVertical: 24 }}>
+                  No spots yet. Tap &ldquo;Bookmark this spot&rdquo; in Utilities to save where you are.
+                </Text>
+              ) : (
+                bookmarks
+                  .slice()
+                  .sort((a, b) => b.createdAt - a.createdAt)
+                  .map((b) => (
+                    <View key={b.id} style={dStyles.utilRow}>
+                      <Text style={dStyles.utilRowIcon}>⭐</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={dStyles.utilLabel} numberOfLines={1}>{b.note}</Text>
+                        <Text style={dStyles.utilSub}>
+                          {b.lat.toFixed(4)}, {b.lng.toFixed(4)}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => {
+                          Alert.alert("Remove spot?", b.note, [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                              text: "Remove",
+                              style: "destructive",
+                              onPress: async () => {
+                                await removeBookmark(b.id);
+                                const list = await getBookmarks();
+                                setBookmarks(list);
+                              },
+                            },
+                          ]);
+                        }}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${b.note}`}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="rgba(255,255,255,0.4)" />
+                      </Pressable>
+                    </View>
+                  ))
+              )}
             </WalkSheet>
           )}
 

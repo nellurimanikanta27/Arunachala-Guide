@@ -20,6 +20,7 @@ const K = {
   moments: `${NS}/moments`,
   stories: `${NS}/stories`,
   settings: `${NS}/settings`,
+  bookmarks: `${NS}/bookmarks`,
 };
 
 export type MomentKind = "photo" | "voice" | "note" | "feeling";
@@ -163,6 +164,35 @@ export async function addStory(input: Omit<Story, "id" | "createdAt">): Promise<
   });
 }
 
+// ── Bookmarks (sacred spots saved by the pilgrim) ───────────────────────
+export interface Bookmark {
+  id: string;
+  lat: number;
+  lng: number;
+  note: string;
+  createdAt: number;
+}
+
+export async function getBookmarks(): Promise<Bookmark[]> {
+  return load<Bookmark[]>(K.bookmarks, []);
+}
+
+export async function addBookmark(input: Omit<Bookmark, "id" | "createdAt">): Promise<Bookmark> {
+  return withKeyLock(K.bookmarks, async () => {
+    const list = await getBookmarks();
+    const b: Bookmark = { ...input, id: makeId("b"), createdAt: Date.now() };
+    await save(K.bookmarks, [...list, b]);
+    return b;
+  });
+}
+
+export async function removeBookmark(id: string): Promise<void> {
+  return withKeyLock(K.bookmarks, async () => {
+    const list = await getBookmarks();
+    await save(K.bookmarks, list.filter((b) => b.id !== id));
+  });
+}
+
 // ── Settings ────────────────────────────────────────────────────────────
 export async function getSettings(): Promise<Settings> {
   const s = await load<Partial<Settings> | null>(K.settings, null);
@@ -184,7 +214,7 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
 
 // ── Wipe everything ─────────────────────────────────────────────────────
 export async function clearAllPilgrimageData(): Promise<void> {
-  await AsyncStorage.multiRemove([K.walks, K.moments, K.stories, K.settings]);
+  await AsyncStorage.multiRemove([K.walks, K.moments, K.stories, K.settings, K.bookmarks]);
 }
 
 // ── Derived stats ───────────────────────────────────────────────────────
