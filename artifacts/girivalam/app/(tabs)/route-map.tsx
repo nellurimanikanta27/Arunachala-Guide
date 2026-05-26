@@ -749,8 +749,6 @@ export default function RouteMapScreen() {
           {/* ── Top header: KM · timer · End Session ── */}
           <View style={[dStyles.topBar, { paddingTop: topInset + 14 }]}>
             <View>
-              {/* CINEMATIC-V1: halo behind the hero KM number */}
-              {CINEMATIC_V1 && <HaloPulse size={150} />}
               <Text style={dStyles.kmBig}>
                 {distKm.toFixed(1)}
                 <Text style={dStyles.kmUnit}> KM</Text>
@@ -3058,16 +3056,13 @@ const dStyles = StyleSheet.create({
     paddingBottom: 12,
   },
   kmBig: {
-    // CINEMATIC-V1: serif display + gold glow
+    // CINEMATIC-V1: serif display (glow removed per user request)
     fontFamily: CINEMATIC_V1 ? SERIF_DISPLAY : "Inter_700Bold",
     fontWeight: CINEMATIC_V1 ? ("700" as const) : ("400" as const),
     fontSize: CINEMATIC_V1 ? 38 : 32,
     color: CINEMATIC_V1 ? "#FFE7AE" : "white",
     letterSpacing: -0.5,
     lineHeight: CINEMATIC_V1 ? 44 : 36,
-    textShadowColor: CINEMATIC_V1 ? "rgba(255,217,138,0.55)" : "transparent",
-    textShadowRadius: CINEMATIC_V1 ? 12 : 0,
-    textShadowOffset: { width: 0, height: 0 },
   },
   kmUnit: { fontFamily: "Inter_500Medium", fontSize: 14, color: TEXT_DIM, letterSpacing: 1 },
   kmLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, marginTop: 2 },
