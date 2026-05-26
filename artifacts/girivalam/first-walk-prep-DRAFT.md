@@ -17,8 +17,8 @@ A few things to know — shown only this once.
 What to carry
 
 ### Bullets
-- Water bottle (1 L is enough — taps along the path)
-- Walk barefoot — most pilgrims do. Keep slippers in a bag.
+- Water bottle (0.5 L is enough — taps along the path)
+- Walk barefoot — most pilgrims do. Keep Padded socks in a bag.
 - Light cotton clothes, a small towel
 - Pace: 14 km · 3.5 to 4.5 hours · walk slow, no rush
 
@@ -39,7 +39,7 @@ Best time to start
 Stay safe
 
 ### Bullets
-- At night use a small torch — watch for snakes near the hill side
+- At night use a small torch 
 - Don't feed or tease monkeys; hold bags close
 - Walk on the inside edge, away from traffic
 - Carry a phone with you for emergencies

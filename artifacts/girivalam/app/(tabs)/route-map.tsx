@@ -1640,8 +1640,8 @@ export default function RouteMapScreen() {
                   <Ionicons name="checkmark-circle-outline" size={18} color={GOLD} />
                   <Text style={dStyles.prepCardTitle}>What to carry</Text>
                 </View>
-                <Text style={dStyles.prepItem}>• Water bottle (1 L is enough — taps along the path)</Text>
-                <Text style={dStyles.prepItem}>• Walk barefoot — most pilgrims do. Keep slippers in a bag.</Text>
+                <Text style={dStyles.prepItem}>• Water bottle (0.5 L is enough — taps along the path)</Text>
+                <Text style={dStyles.prepItem}>• Walk barefoot — most pilgrims do. Keep padded socks in a bag.</Text>
                 <Text style={dStyles.prepItem}>• Light cotton clothes, a small towel</Text>
                 <Text style={dStyles.prepItem}>• Pace: 14 km · 3.5 to 4.5 hours · walk slow, no rush</Text>
               </View>
@@ -1662,7 +1662,7 @@ export default function RouteMapScreen() {
                   <Ionicons name="shield-checkmark-outline" size={18} color={GOLD} />
                   <Text style={dStyles.prepCardTitle}>Stay safe</Text>
                 </View>
-                <Text style={dStyles.prepItem}>• At night use a small torch — watch for snakes near the hill side</Text>
+                <Text style={dStyles.prepItem}>• At night use a small torch</Text>
                 <Text style={dStyles.prepItem}>• Don't feed or tease monkeys; hold bags close</Text>
                 <Text style={dStyles.prepItem}>• Walk on the inside edge, away from traffic</Text>
                 <Text style={dStyles.prepItem}>• Carry a phone with you for emergencies</Text>
