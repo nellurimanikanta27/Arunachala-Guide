@@ -1,0 +1,243 @@
+Create a premium cinematic onboarding and walkthrough experience for my spiritual Girivalam companion app inspired exactly by the uploaded reference image.
+
+The onboarding should NOT feel like a normal app intro. It should feel like entering a sacred spiritual experience around Arunachala.
+
+Overall design direction:
+
+Dark spiritual luxury UI
+
+Black + deep brown + glowing gold color palette
+
+Sacred atmosphere with cinematic lighting
+
+Temple-inspired premium interface
+
+Modern iPhone-quality visuals
+
+High-end meditation app aesthetic
+
+Gold neon route glow effects
+
+Elegant typography
+
+Glassmorphism cards
+
+Smooth shadows and layered depth
+
+Floating ambient particles and subtle sacred animations
+
+The visual mood should feel:
+
+Divine
+
+Calm
+
+Immersive
+
+Sacred
+
+Premium
+
+Emotional
+
+Spiritual-tech fusion
+
+Create 4 onboarding/walkthrough screens with smooth horizontal transitions.
+
+SCREEN 1 — SACRED JOURNEY
+Purpose:
+Introduce Girivalam as a divine spiritual journey.
+
+UI:
+
+Large glowing Arunachala hill visualization in dark mode
+
+Golden Girivalam route glowing around the hill
+
+Small glowing Lingam/temple icons around the route
+
+Floating light particles
+
+Soft animated golden energy moving through the path
+
+Text:
+Heading:
+“Begin Your Sacred Girivalam Journey”
+
+Subtext:
+“Walk the holy Arunachala path with spiritual guidance, sacred stories, and mindful experiences.”
+
+Button:
+Large glowing golden button:
+“Continue”
+
+Animation:
+
+Slow glowing pulse around the mountain
+
+Route lighting animation
+
+Fade-in temple icons
+
+SCREEN 2 — LIVE SPIRITUAL NAVIGATION
+
+Purpose:
+Show real-time pilgrimage assistance.
+
+UI inspired directly from the uploaded image:
+
+Top progress strip showing all 8 Lingams
+
+Current Lingam highlighted with golden glow
+
+Distance covered display
+
+Live session timer
+
+Dark map with glowing route
+
+Floating nearby utility tags:
+Water
+Toilets
+Annaprasadam
+Ashrams
+Restaurants
+
+Floating temple popup card
+
+Temple approach alert design
+
+Text:
+Heading:
+“Real-Time Spiritual Guidance”
+
+Subtext:
+“Receive live temple alerts, sacred stories, navigation, and nearby essentials while walking.”
+
+Animation:
+
+Live glowing map movement
+
+Temple indicator pulse
+
+Floating UI transitions
+
+SCREEN 3 — MEMORIES & DEVOTION
+
+Purpose:
+Show emotional and spiritual memory capture features.
+
+UI:
+
+Spiritual memories timeline
+
+Photo capture cards
+
+Voice journal recording UI
+
+Japa counter with glowing circular sacred design
+
+Bhajan/audio player
+
+Meditation ambience section
+
+Divine memory cards with warm lighting
+
+Text:
+Heading:
+“Capture Your Divine Moments”
+
+Subtext:
+“Save prayers, emotions, voice notes, photos, and sacred memories from every temple.”
+
+Animation:
+
+Circular mantra counter animation
+
+Audio equalizer movement
+
+Floating memory cards
+
+SCREEN 4 — YOUR SPIRITUAL COMPANION
+
+Purpose:
+Show the app as a complete sacred companion.
+
+UI:
+Combine all premium spiritual features:
+
+Live route tracking
+
+Temple history cards
+
+Meditation tools
+
+Bhajans/audio
+
+Japa counter
+
+Spiritual journal
+
+Sacred quote section
+
+Ambient dark background with golden particles
+
+Main CTA:
+Large glowing gold button:
+“Start Girivalam”
+
+Additional small text:
+“May Arunachala guide your journey.”
+
+Animation:
+
+Golden pulse around CTA button
+
+Smooth cinematic fade effects
+
+Sacred ambient lighting
+
+VERY IMPORTANT DESIGN REQUIREMENTS
+
+The onboarding must visually match the uploaded reference image:
+
+Similar spacing
+
+Similar premium feel
+
+Similar gold-dark atmosphere
+
+Similar cinematic lighting
+
+Similar map glow effects
+
+Similar luxury mobile UI quality
+
+Do NOT create:
+
+Generic onboarding screens
+
+Flat modern UI
+
+Bright colors
+
+Cartoonish elements
+
+Simple minimal onboarding
+
+The app should feel like:
+“A sacred digital companion for pilgrims walking around Arunachala.”
+
+Use premium micro-interactions throughout:
+
+Smooth fade animations
+
+Gold glow hover effects
+
+Floating ambient motion
+
+Soft transitions
+
+Sacred energy movement
+
+Make the experience emotionally immersive and visually unforgettable.

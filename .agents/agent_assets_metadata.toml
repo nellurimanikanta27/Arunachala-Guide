@@ -1,5 +1,28 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "W1gN-F2QdAMKV47_u0LFS"
+uri = "file://attached_assets/girivalam-onboarding-1-sacred-journey.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "cFjAmgsgyJ4V62QyJx3rT"
+uri = "file://attached_assets/girivalam-onboarding-2-live-navigation.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "HjVzy2SyISafv2qP7pq1k"
+uri = "file://attached_assets/girivalam-onboarding-3-memories.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "WgkNrgpAdWndS7_WwD_iQ"
+uri = "file://attached_assets/girivalam-onboarding-4-companion.png"
+type = "image"
+title = "generated_image"
 
 [[outputs]]
 id = "k6aofL8CMlU04PCk7kwam"
