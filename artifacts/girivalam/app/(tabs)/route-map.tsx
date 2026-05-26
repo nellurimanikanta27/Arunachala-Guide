@@ -13,6 +13,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -465,10 +466,14 @@ export default function RouteMapScreen() {
     setWalkOverlay(null);
     setTempleInfoIdx(null);
     savedKindsRef.current = new Set();
+    setWalkNumber(null);
+    try {
+      const p = await getWalkProgress();
+      setWalkNumber(p.completedWalks + 1);
+    } catch {
+      // Fall back to unknown; pill will simply hide.
+    }
     setWalkMode(true);
-    getWalkProgress()
-      .then((p) => setWalkNumber(p.completedWalks + 1))
-      .catch(() => {});
     try {
       const id = await ensureWalkId();
       // Persist sankalpa + silent-mode flag on the walk record.
@@ -519,6 +524,7 @@ export default function RouteMapScreen() {
     setWalkOverlay(null);
     setTempleInfoIdx(null);
     setEndRitualOpen(false);
+    setWalkNumber(null);
     const id = currentWalkIdRef.current;
     if (id) {
       try {
@@ -1351,14 +1357,57 @@ export default function RouteMapScreen() {
                   </Text>
                 )}
 
-                <Pressable
-                  onPress={endWalk}
-                  style={dStyles.ritualBtn}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close walk"
-                >
-                  <Text style={dStyles.ritualBtnText}>Close</Text>
-                </Pressable>
+                <View style={dStyles.ritualBtnRow}>
+                  <Pressable
+                    onPress={async () => {
+                      const distKm = ((walkSeconds / 3600) * 3).toFixed(1);
+                      const timeStr = formatTime(walkSeconds);
+                      const which = walkNumber != null ? `${ordinal(walkNumber)} ` : "";
+                      const sk = sankalpa.trim();
+                      const lines = [
+                        `My ${which}Girivalam — complete.`,
+                        `${distKm} km · ${timeStr}`,
+                      ];
+                      if (sk.length > 0) lines.push(`Sankalpa: "${sk}"`);
+                      lines.push("Om Namah Shivaya 🕉️");
+                      const summary = lines.join("\n");
+                      try {
+                        const result = await Share.share({ message: summary });
+                        if (result.action === Share.dismissedAction && Platform.OS === "web") {
+                          throw new Error("dismissed");
+                        }
+                      } catch {
+                        // Web fallback: copy to clipboard if available, else show alert.
+                        try {
+                          if (
+                            Platform.OS === "web" &&
+                            typeof navigator !== "undefined" &&
+                            navigator.clipboard
+                          ) {
+                            await navigator.clipboard.writeText(summary);
+                            Alert.alert("Copied", "Walk summary copied to clipboard.");
+                            return;
+                          }
+                        } catch {}
+                        Alert.alert("Share your walk", summary);
+                      }
+                    }}
+                    style={dStyles.ritualShareBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Share this walk"
+                  >
+                    <Ionicons name="share-outline" size={16} color={GOLD} />
+                    <Text style={dStyles.ritualShareBtnText}>Share</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={endWalk}
+                    style={dStyles.ritualBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close walk"
+                  >
+                    <Text style={dStyles.ritualBtnText}>Close</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           )}
@@ -3849,8 +3898,13 @@ const dStyles = StyleSheet.create({
     marginTop: 12,
     fontStyle: "italic",
   },
-  ritualBtn: {
+  ritualBtnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginTop: 32,
+  },
+  ritualBtn: {
     paddingHorizontal: 36,
     paddingVertical: 14,
     borderRadius: 24,
@@ -3860,6 +3914,22 @@ const dStyles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
     color: "#0A0604",
+    letterSpacing: 0.5,
+  },
+  ritualShareBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 22,
+    paddingVertical: 13,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: GOLD,
+  },
+  ritualShareBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: GOLD,
     letterSpacing: 0.5,
   },
 
