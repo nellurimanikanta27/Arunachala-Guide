@@ -23,7 +23,7 @@ import {
 } from "@/lib/sacred-time";
 import { getWalkProgress, type WalkProgress } from "@/lib/pilgrimage-store";
 
-type FeatureRoute = "route-map" | "history" | "sadhana" | "local-guide" | "ai-guide" | "translator" | "me";
+type FeatureRoute = "route-map" | "history" | "sadhana" | "local-guide";
 
 interface Feature {
   id: FeatureRoute;
@@ -38,9 +38,6 @@ const FEATURES: Feature[] = [
   { id: "history", title: "History", subtitle: "Arunachala, Ramana & the temple", icon: "book", iconFamily: "Ionicons" },
   { id: "sadhana", title: "Sadhana", subtitle: "Breathing, self-enquiry & mantras", icon: "om", iconFamily: "MaterialCommunityIcons" },
   { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
-  { id: "ai-guide", title: "AI Guide", subtitle: "Ask anything about Girivalam", icon: "chatbubble-ellipses", iconFamily: "Ionicons" },
-  { id: "translator", title: "Translator", subtitle: "Translate across pilgrim languages", icon: "language", iconFamily: "Ionicons" },
-  { id: "me", title: "My Pilgrimage", subtitle: "Your moments, walks & reflections", icon: "foot-print", iconFamily: "MaterialCommunityIcons" },
 ];
 
 function SacredMomentCard() {
