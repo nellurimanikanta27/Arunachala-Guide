@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
@@ -24,6 +25,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
 import { addMoment, finishWalk, startWalk, updateWalk } from "@/lib/pilgrimage-store";
+
+const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
 
 interface UserLoc {
   lat: number;
@@ -180,6 +183,18 @@ export default function RouteMapScreen() {
 
   // Silent walk mode — phone stays dark, only vibrates at each lingam
   const [silentMode, setSilentMode] = useState(false);
+
+  // First-time prep — show checklist / best time / safety only on the very
+  // first opening of the Sankalpa prompt. After the first "Begin the walk",
+  // never shown again on this device.
+  const [showFirstWalkPrep, setShowFirstWalkPrep] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(PREP_SEEN_KEY)
+      .then((v) => {
+        if (v == null) setShowFirstWalkPrep(true);
+      })
+      .catch(() => {});
+  }, []);
 
   // End-of-walk ritual overlay (animated lingam glow + sankalpa return)
   const [endRitualOpen, setEndRitualOpen] = useState(false);
@@ -432,6 +447,10 @@ export default function RouteMapScreen() {
     if (startingWalkRef.current) return;
     startingWalkRef.current = true;
     setSankalpaPromptOpen(false);
+    if (showFirstWalkPrep) {
+      setShowFirstWalkPrep(false);
+      AsyncStorage.setItem(PREP_SEEN_KEY, "1").catch(() => {});
+    }
     setJapaCount(0);
     setWalkSeconds(0);
     setSavedMoments({});
@@ -1609,6 +1628,50 @@ export default function RouteMapScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {showFirstWalkPrep && (
+            <View style={dStyles.prepWrap}>
+              <Text style={dStyles.prepKicker}>BEFORE YOUR FIRST WALK</Text>
+              <Text style={dStyles.prepIntro}>
+                A few things to know — shown only this once.
+              </Text>
+
+              <View style={dStyles.prepCard}>
+                <View style={dStyles.prepCardHead}>
+                  <Ionicons name="checkmark-circle-outline" size={18} color={GOLD} />
+                  <Text style={dStyles.prepCardTitle}>What to carry</Text>
+                </View>
+                <Text style={dStyles.prepItem}>• Water bottle (1 L is enough — taps along the path)</Text>
+                <Text style={dStyles.prepItem}>• Walk barefoot — most pilgrims do. Keep slippers in a bag.</Text>
+                <Text style={dStyles.prepItem}>• Light cotton clothes, a small towel</Text>
+                <Text style={dStyles.prepItem}>• Pace: 14 km · 3.5 to 4.5 hours · walk slow, no rush</Text>
+              </View>
+
+              <View style={dStyles.prepCard}>
+                <View style={dStyles.prepCardHead}>
+                  <Ionicons name="time-outline" size={18} color={GOLD} />
+                  <Text style={dStyles.prepCardTitle}>Best time to start</Text>
+                </View>
+                <Text style={dStyles.prepItem}>• Pre-dawn (4–5 AM): coolest, most silent — classic</Text>
+                <Text style={dStyles.prepItem}>• Sunset (5–6 PM): beautiful light, busy on Pournami</Text>
+                <Text style={dStyles.prepItem}>• Avoid midday (11 AM–3 PM): heat & hard tar road</Text>
+                <Text style={dStyles.prepItem}>• Pournami nights: huge crowd — go early or wait a day</Text>
+              </View>
+
+              <View style={dStyles.prepCard}>
+                <View style={dStyles.prepCardHead}>
+                  <Ionicons name="shield-checkmark-outline" size={18} color={GOLD} />
+                  <Text style={dStyles.prepCardTitle}>Stay safe</Text>
+                </View>
+                <Text style={dStyles.prepItem}>• At night use a small torch — watch for snakes near the hill side</Text>
+                <Text style={dStyles.prepItem}>• Don't feed or tease monkeys; hold bags close</Text>
+                <Text style={dStyles.prepItem}>• Walk on the inside edge, away from traffic</Text>
+                <Text style={dStyles.prepItem}>• Carry a phone with you for emergencies</Text>
+              </View>
+
+              <View style={dStyles.prepDivider} />
+            </View>
+          )}
+
           <Text style={dStyles.sankalpaKicker}>SANKALPA · YOUR INTENTION</Text>
           <Text style={dStyles.sankalpaTitle}>
             Why are you walking today?
@@ -3869,5 +3932,59 @@ const dStyles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 13,
     color: TEXT_DIM,
+  },
+
+  // First-walk prep (shown only on first open) ────────────────────────────
+  prepWrap: {
+    marginBottom: 24,
+  },
+  prepKicker: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: GOLD,
+    letterSpacing: 2.5,
+    textAlign: "center",
+  },
+  prepIntro: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: TEXT_DIM,
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 16,
+    fontStyle: "italic",
+  },
+  prepCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+  },
+  prepCardHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  prepCardTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "white",
+    letterSpacing: 0.3,
+  },
+  prepItem: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12.5,
+    color: "rgba(255,255,255,0.78)",
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  prepDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255,217,138,0.25)",
+    marginTop: 18,
+    marginBottom: 6,
   },
 });
