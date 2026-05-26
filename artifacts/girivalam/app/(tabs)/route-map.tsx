@@ -1097,6 +1097,12 @@ export default function RouteMapScreen() {
               active={walkOverlay === "utilities"}
               onPress={() => setWalkOverlay(walkOverlay === "utilities" ? null : "utilities")}
             />
+            <NavTabBtn
+              emoji="🗣️"
+              label="Translate"
+              active={walkOverlay === "translator"}
+              onPress={() => setWalkOverlay(walkOverlay === "translator" ? null : "translator")}
+            />
           </View>
 
           {/* ── Overlays (always inside the session) ── */}
