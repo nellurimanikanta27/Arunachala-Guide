@@ -207,10 +207,12 @@ export async function getWalkProgress(now: Date = new Date()): Promise<WalkProgr
   const completed = walks.filter((w) => w.endedAt != null);
   if (completed.length === 0) return { completedWalks: 0, currentStreak: 0 };
 
-  // Set of "YYYY-M" keys for months containing a completed walk.
+  // Set of "YYYY-M" keys for months in which a walk was completed.
+  // Bucket by endedAt (when the walk was finished), not startedAt — a walk
+  // that crosses midnight at month-end should count toward the finishing month.
   const monthKeys = new Set<string>();
   for (const w of completed) {
-    const d = new Date(w.startedAt);
+    const d = new Date(w.endedAt!);
     monthKeys.add(`${d.getFullYear()}-${d.getMonth()}`);
   }
 

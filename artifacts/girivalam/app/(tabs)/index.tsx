@@ -159,7 +159,9 @@ export default function HomeScreen() {
   const [progress, setProgress] = useState<WalkProgress | null>(null);
   useFocusEffect(
     useCallback(() => {
-      getWalkProgress().then(setProgress).catch(() => {});
+      getWalkProgress()
+        .then(setProgress)
+        .catch((e) => console.warn("Failed to load walk progress", e));
     }, [])
   );
 
