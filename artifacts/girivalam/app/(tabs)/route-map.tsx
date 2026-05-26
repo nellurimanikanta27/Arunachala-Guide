@@ -24,9 +24,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GirivalamMap } from "@/components/girivalam-map";
 import Colors from "@/constants/colors";
-import { addMoment, finishWalk, startWalk, updateWalk } from "@/lib/pilgrimage-store";
+import { addMoment, finishWalk, getWalkProgress, startWalk, updateWalk } from "@/lib/pilgrimage-store";
 
 const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
+
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
 
 interface UserLoc {
   lat: number;
@@ -168,6 +174,7 @@ export default function RouteMapScreen() {
   const [savedMoments, setSavedMoments] = useState<Record<number, string[]>>({});
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
   const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
+  const [walkNumber, setWalkNumber] = useState<number | null>(null);
   // Walk-screen overlay (japa / audio / plus / utilities / temple info)
   type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple" | "translator";
   const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
@@ -459,6 +466,9 @@ export default function RouteMapScreen() {
     setTempleInfoIdx(null);
     savedKindsRef.current = new Set();
     setWalkMode(true);
+    getWalkProgress()
+      .then((p) => setWalkNumber(p.completedWalks + 1))
+      .catch(() => {});
     try {
       const id = await ensureWalkId();
       // Persist sankalpa + silent-mode flag on the walk record.
@@ -731,7 +741,14 @@ export default function RouteMapScreen() {
                 {distKm.toFixed(1)}
                 <Text style={dStyles.kmUnit}> KM</Text>
               </Text>
-              <Text style={dStyles.kmLabel}>Covered</Text>
+              <View style={dStyles.kmLabelRow}>
+                <Text style={dStyles.kmLabel}>Covered</Text>
+                {walkNumber != null && (
+                  <View style={dStyles.walkNumPill}>
+                    <Text style={dStyles.walkNumPillText}>{ordinal(walkNumber)} walk</Text>
+                  </View>
+                )}
+              </View>
             </View>
             <View style={dStyles.topRight}>
               <View style={{ alignItems: "flex-end" }}>
@@ -2983,6 +3000,21 @@ const dStyles = StyleSheet.create({
   },
   kmUnit: { fontFamily: "Inter_500Medium", fontSize: 14, color: TEXT_DIM, letterSpacing: 1 },
   kmLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, marginTop: 2 },
+  kmLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
+  walkNumPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,217,138,0.12)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,217,138,0.4)",
+  },
+  walkNumPillText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10.5,
+    color: "#FFD98A",
+    letterSpacing: 0.3,
+  },
   topRight: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   timer: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: GOLD },
   liveRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 },

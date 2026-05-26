@@ -187,10 +187,7 @@ export default function HomeScreen() {
             <View style={styles.headerStreakPill}>
               <MaterialCommunityIcons name="foot-print" size={11} color="#FFD98A" />
               <Text style={styles.headerStreakText}>
-                {progress.completedWalks === 1
-                  ? "1st walk"
-                  : `${ordinal(progress.completedWalks)} walk`}
-                {progress.currentStreak > 1 ? ` · ${progress.currentStreak} mo` : ""}
+                {progress.completedWalks} walk{progress.completedWalks === 1 ? "" : "s"} done
               </Text>
             </View>
           )}
