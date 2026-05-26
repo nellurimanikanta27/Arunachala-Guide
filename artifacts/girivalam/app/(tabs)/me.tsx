@@ -58,6 +58,14 @@ function formatTime(ms: number): string {
   });
 }
 
+function formatDuration(ms: number): string {
+  const mins = Math.max(1, Math.round(ms / 60000));
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+}
+
 function StatBlock({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.statBlock}>
@@ -260,6 +268,60 @@ export default function MeScreen() {
               : "No moments saved yet"}
           </Text>
         </View>
+
+        {/* ── WALK HISTORY ────────────────────────────────── */}
+        {walks.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>WALKS</Text>
+            {[...walks]
+              .sort((a, b) => b.startedAt - a.startedAt)
+              .map((w) => {
+                const momentCount = moments.filter((m) => m.walkId === w.id).length;
+                const ongoing = w.endedAt == null;
+                return (
+                  <View key={w.id} style={styles.walkHistoryCard}>
+                    <View style={styles.walkHistoryHead}>
+                      <Text style={styles.walkHistoryDate}>{formatDate(w.startedAt)}</Text>
+                      <Text style={styles.walkHistoryTime}>{formatTime(w.startedAt)}</Text>
+                    </View>
+                    <View style={styles.walkHistoryMetaRow}>
+                      <View style={styles.walkHistoryMetaItem}>
+                        <Ionicons name="time-outline" size={12} color={Colors.textLight} />
+                        <Text style={styles.walkHistoryMetaText}>
+                          {ongoing
+                            ? "In progress"
+                            : w.endedAt
+                              ? formatDuration(w.endedAt - w.startedAt)
+                              : "—"}
+                        </Text>
+                      </View>
+                      {w.silent ? (
+                        <View style={styles.walkHistoryMetaItem}>
+                          <Ionicons name="moon-outline" size={12} color={Colors.textLight} />
+                          <Text style={styles.walkHistoryMetaText}>Silent</Text>
+                        </View>
+                      ) : null}
+                      {w.label ? (
+                        <View style={styles.walkHistoryMetaItem}>
+                          <Ionicons name="bookmark-outline" size={12} color={Colors.textLight} />
+                          <Text style={styles.walkHistoryMetaText}>{w.label}</Text>
+                        </View>
+                      ) : null}
+                      <View style={styles.walkHistoryMetaItem}>
+                        <Ionicons name="ellipse" size={6} color={Colors.primary} />
+                        <Text style={styles.walkHistoryMetaText}>
+                          {momentCount} moment{momentCount === 1 ? "" : "s"}
+                        </Text>
+                      </View>
+                    </View>
+                    {w.sankalpa ? (
+                      <Text style={styles.walkHistorySankalpa}>"{w.sankalpa}"</Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+          </>
+        )}
 
         {/* ── EMPTY STATE or TIMELINE ─────────────────────── */}
         {loaded && !hasAnyData ? (
@@ -507,6 +569,39 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     marginTop: 14,
     marginBottom: 2,
+  },
+
+  walkHistoryCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginBottom: 6,
+  },
+  walkHistoryHead: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  walkHistoryDate: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  walkHistoryTime: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textFaint },
+  walkHistoryMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  walkHistoryMetaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  walkHistoryMetaText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textLight },
+  walkHistorySankalpa: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    fontStyle: "italic",
+    marginTop: 8,
+    lineHeight: 17,
   },
 
   walkCard: {
