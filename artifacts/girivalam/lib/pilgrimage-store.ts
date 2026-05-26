@@ -197,6 +197,34 @@ export interface Stats {
   totalMoments: number;
 }
 
+export interface WalkProgress {
+  completedWalks: number;
+  currentStreak: number; // consecutive calendar months ending now with ≥1 completed walk
+}
+
+export async function getWalkProgress(now: Date = new Date()): Promise<WalkProgress> {
+  const walks = await getWalks();
+  const completed = walks.filter((w) => w.endedAt != null);
+  if (completed.length === 0) return { completedWalks: 0, currentStreak: 0 };
+
+  // Set of "YYYY-M" keys for months containing a completed walk.
+  const monthKeys = new Set<string>();
+  for (const w of completed) {
+    const d = new Date(w.startedAt);
+    monthKeys.add(`${d.getFullYear()}-${d.getMonth()}`);
+  }
+
+  // Walk backward from the current month while each month is present.
+  let streak = 0;
+  const cursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  while (monthKeys.has(`${cursor.getFullYear()}-${cursor.getMonth()}`)) {
+    streak += 1;
+    cursor.setMonth(cursor.getMonth() - 1);
+  }
+
+  return { completedWalks: completed.length, currentStreak: streak };
+}
+
 export async function getStats(): Promise<Stats> {
   const [walks, moments] = await Promise.all([getWalks(), getMoments()]);
   const completed = walks.filter((w) => w.endedAt != null);

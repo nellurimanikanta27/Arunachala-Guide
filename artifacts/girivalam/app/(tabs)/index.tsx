@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useRef } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -21,6 +21,7 @@ import {
   getPournamiDate,
   getTithi,
 } from "@/lib/sacred-time";
+import { getWalkProgress, type WalkProgress } from "@/lib/pilgrimage-store";
 
 type FeatureRoute = "route-map" | "history" | "local-guide" | "ai-guide" | "translator" | "me";
 
@@ -155,6 +156,13 @@ export default function HomeScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
   const daysToPournami = daysUntilNextFullMoon(new Date());
 
+  const [progress, setProgress] = useState<WalkProgress | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      getWalkProgress().then(setProgress).catch(() => {});
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -186,6 +194,31 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {progress != null && (
+          progress.completedWalks === 0 ? (
+            <View style={styles.progressEmpty}>
+              <MaterialCommunityIcons name="foot-print" size={14} color={Colors.primary} />
+              <Text style={styles.progressEmptyText}>Your first walk awaits</Text>
+            </View>
+          ) : (
+            <View style={styles.progressStrip}>
+              <View style={styles.progressItem}>
+                <Text style={styles.progressValue}>{progress.completedWalks}</Text>
+                <Text style={styles.progressLabel}>
+                  Walk{progress.completedWalks === 1 ? "" : "s"} completed
+                </Text>
+              </View>
+              <View style={styles.progressDivider} />
+              <View style={styles.progressItem}>
+                <Text style={styles.progressValue}>{progress.currentStreak}</Text>
+                <Text style={styles.progressLabel}>
+                  Month{progress.currentStreak === 1 ? "" : "s"} in a row
+                </Text>
+              </View>
+            </View>
+          )
+        )}
+
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
@@ -384,6 +417,50 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginLeft: 2,
     marginBottom: 2,
+    marginTop: 6,
+  },
+  progressStrip: {
+    flexDirection: "row",
+    backgroundColor: "#0A0604",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(196,122,30,0.35)",
+    marginBottom: 4,
+  },
+  progressItem: { flex: 1, alignItems: "center" },
+  progressValue: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 22,
+    color: "#FFD98A",
+    letterSpacing: -0.5,
+  },
+  progressLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10.5,
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 3,
+    letterSpacing: 0.3,
+  },
+  progressDivider: {
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255,217,138,0.25)",
+    marginVertical: 4,
+  },
+  progressEmpty: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingVertical: 10,
+    marginBottom: 2,
+  },
+  progressEmptyText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: Colors.textLight,
+    fontStyle: "italic",
   },
   heroCard: {
     backgroundColor: Colors.white,
