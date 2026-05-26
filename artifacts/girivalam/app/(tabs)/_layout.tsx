@@ -19,10 +19,8 @@ export default function TabLayout() {
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="route-map" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="history"
-        options={{ title: "History & Meditation" }}
-      />
+      <Stack.Screen name="history" options={{ title: "History" }} />
+      <Stack.Screen name="sadhana" options={{ title: "Sadhana" }} />
       <Stack.Screen name="local-guide" options={{ title: "Local Guide" }} />
       <Stack.Screen name="ai-guide" options={{ title: "AI Guide" }} />
       <Stack.Screen

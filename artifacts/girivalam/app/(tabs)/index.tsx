@@ -23,7 +23,7 @@ import {
 } from "@/lib/sacred-time";
 import { getWalkProgress, type WalkProgress } from "@/lib/pilgrimage-store";
 
-type FeatureRoute = "route-map" | "history" | "local-guide" | "ai-guide" | "translator" | "me";
+type FeatureRoute = "route-map" | "history" | "sadhana" | "local-guide" | "ai-guide" | "translator" | "me";
 
 interface Feature {
   id: FeatureRoute;
@@ -35,7 +35,8 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   { id: "route-map", title: "Start Girivalam", subtitle: "Begin your sacred walk around the hill", icon: "map", iconFamily: "Ionicons" },
-  { id: "history", title: "History & Meditation", subtitle: "Breathing guide · Ramana teachings", icon: "om", iconFamily: "MaterialCommunityIcons" },
+  { id: "history", title: "History", subtitle: "Arunachala, Ramana & the temple", icon: "book", iconFamily: "Ionicons" },
+  { id: "sadhana", title: "Sadhana", subtitle: "Breathing, self-enquiry & mantras", icon: "om", iconFamily: "MaterialCommunityIcons" },
   { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
   { id: "ai-guide", title: "AI Guide", subtitle: "Ask anything about Girivalam", icon: "chatbubble-ellipses", iconFamily: "Ionicons" },
   { id: "translator", title: "Translator", subtitle: "Translate across pilgrim languages", icon: "language", iconFamily: "Ionicons" },
