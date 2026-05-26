@@ -139,6 +139,12 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
   );
 }
 
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
 function daysUntilNextFullMoon(now: Date): number {
   const SYNODIC = 29.53058867;
   const REF_FULL_MOON_MS = Date.UTC(2024, 0, 25, 17, 54, 0);
@@ -199,24 +205,23 @@ export default function HomeScreen() {
         {progress != null && (
           progress.completedWalks === 0 ? (
             <View style={styles.progressEmpty}>
-              <MaterialCommunityIcons name="foot-print" size={14} color={Colors.primary} />
+              <MaterialCommunityIcons name="foot-print" size={13} color={Colors.primary} />
               <Text style={styles.progressEmptyText}>Your first walk awaits</Text>
             </View>
           ) : (
-            <View style={styles.progressStrip}>
-              <View style={styles.progressItem}>
-                <Text style={styles.progressValue}>{progress.completedWalks}</Text>
-                <Text style={styles.progressLabel}>
-                  Walk{progress.completedWalks === 1 ? "" : "s"} completed
+            <View style={styles.progressPill}>
+              <MaterialCommunityIcons name="foot-print" size={13} color={Colors.amber} />
+              <Text style={styles.progressPillText}>
+                <Text style={styles.progressPillStrong}>
+                  {progress.completedWalks === 1
+                    ? "Your first Girivalam"
+                    : `${ordinal(progress.completedWalks)} Girivalam`}
                 </Text>
-              </View>
-              <View style={styles.progressDivider} />
-              <View style={styles.progressItem}>
-                <Text style={styles.progressValue}>{progress.currentStreak}</Text>
-                <Text style={styles.progressLabel}>
-                  Month{progress.currentStreak === 1 ? "" : "s"} in a row
-                </Text>
-              </View>
+                <Text style={styles.progressPillDot}>  ·  </Text>
+                {progress.currentStreak <= 1
+                  ? "walking this month"
+                  : `${progress.currentStreak}-month streak`}
+              </Text>
             </View>
           )
         )}
