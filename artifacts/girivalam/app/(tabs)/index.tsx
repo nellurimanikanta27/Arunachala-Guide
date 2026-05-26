@@ -182,6 +182,18 @@ export default function HomeScreen() {
         <View style={styles.headerTop}>
           <MaterialCommunityIcons name="moon-waning-crescent" size={16} color="rgba(255,255,255,0.65)" />
           <Text style={styles.headerTag}>NEXT POURNAMI</Text>
+          <View style={{ flex: 1 }} />
+          {progress != null && progress.completedWalks > 0 && (
+            <View style={styles.headerStreakPill}>
+              <MaterialCommunityIcons name="foot-print" size={11} color="#FFD98A" />
+              <Text style={styles.headerStreakText}>
+                {progress.completedWalks === 1
+                  ? "1st walk"
+                  : `${ordinal(progress.completedWalks)} walk`}
+                {progress.currentStreak > 1 ? ` · ${progress.currentStreak} mo` : ""}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={styles.pournamiRow}>
           <Text style={styles.pournamiCount}>{daysToPournami}</Text>
@@ -202,30 +214,6 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {progress != null && (
-          progress.completedWalks === 0 ? (
-            <View style={styles.progressEmpty}>
-              <MaterialCommunityIcons name="foot-print" size={13} color={Colors.primary} />
-              <Text style={styles.progressEmptyText}>Your first walk awaits</Text>
-            </View>
-          ) : (
-            <View style={styles.progressPill}>
-              <MaterialCommunityIcons name="foot-print" size={13} color={Colors.amber} />
-              <Text style={styles.progressPillText}>
-                <Text style={styles.progressPillStrong}>
-                  {progress.completedWalks === 1
-                    ? "Your first Girivalam"
-                    : `${ordinal(progress.completedWalks)} Girivalam`}
-                </Text>
-                <Text style={styles.progressPillDot}>  ·  </Text>
-                {progress.currentStreak <= 1
-                  ? "walking this month"
-                  : `${progress.currentStreak}-month streak`}
-              </Text>
-            </View>
-          )
-        )}
-
         <Text style={styles.sectionLabel}>FEATURES</Text>
         {FEATURES.map((feature, index) => (
           <FeatureCard key={feature.id} feature={feature} index={index} />
@@ -254,6 +242,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     color: "rgba(255,255,255,0.7)",
     letterSpacing: 2,
+  },
+  headerStreakPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.22)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,217,138,0.4)",
+  },
+  headerStreakText: {
+    fontSize: 10.5,
+    fontFamily: "Inter_500Medium",
+    color: "#FFD98A",
+    letterSpacing: 0.3,
   },
   pournamiRow: {
     flexDirection: "row",
