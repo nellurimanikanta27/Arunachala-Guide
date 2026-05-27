@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -1490,225 +1491,102 @@ export default function RouteMapScreen() {
             return (
               <View style={dStyles.ritualRoot}>
                 <ScrollView contentContainerStyle={cardStyles.scrollPad} showsVerticalScrollIndicator={false}>
-                  {/* The card itself — designed to be screenshotted & shared */}
+                  {/* The card itself — uses the reference design as the background image */}
                   <View style={cardStyles.card}>
-                    <LinearGradient
-                      colors={["#0A0604", "#15090A", "#1E0F0A", "#0A0604"]}
-                      locations={[0, 0.35, 0.7, 1]}
-                      style={cardStyles.cardBg}
+                    <ImageBackground
+                      source={require("../../assets/images/girivalam-card-template.png")}
+                      style={cardStyles.cardTemplate}
+                      resizeMode="cover"
                     >
-                      {/* Ornate gold border + corners */}
-                      <View pointerEvents="none" style={cardStyles.borderOuter} />
-                      <View pointerEvents="none" style={cardStyles.borderInner} />
-                      <View pointerEvents="none" style={[cardStyles.corner, cardStyles.cornerTL]}>
-                        <MaterialCommunityIcons name="flower-tulip-outline" size={22} color="#C47A1E" />
-                      </View>
-                      <View pointerEvents="none" style={[cardStyles.corner, cardStyles.cornerTR]}>
-                        <MaterialCommunityIcons name="flower-tulip-outline" size={22} color="#C47A1E" style={{ transform: [{ scaleX: -1 }] }} />
-                      </View>
-                      <View pointerEvents="none" style={[cardStyles.corner, cardStyles.cornerBL]}>
-                        <MaterialCommunityIcons name="flower-tulip-outline" size={22} color="#C47A1E" style={{ transform: [{ scaleY: -1 }] }} />
-                      </View>
-                      <View pointerEvents="none" style={[cardStyles.corner, cardStyles.cornerBR]}>
-                        <MaterialCommunityIcons name="flower-tulip-outline" size={22} color="#C47A1E" style={{ transform: [{ scaleX: -1 }, { scaleY: -1 }] }} />
-                      </View>
-
-                      {/* Header row: small triangle + ARUNACHALA + moon */}
-                      <View style={cardStyles.headerRow}>
-                        <MaterialCommunityIcons name="triangle-outline" size={14} color="#FFD98A" />
-                        <View style={{ flex: 1, alignItems: "center" }}>
-                          <Text style={cardStyles.headerTitle}>ARUNACHALA</Text>
-                          <Text style={cardStyles.headerSub}>— THE HILL THAT CALLS —</Text>
-                        </View>
-                        <MaterialCommunityIcons name="moon-full" size={20} color="#FFEAB3" />
-                      </View>
-
-                      {/* Hero hill */}
-                      <View style={cardStyles.hillWrap}>
-                        <Image
-                          source={require("../../assets/images/girivalam-hill-overview.png")}
-                          style={cardStyles.hillImage}
-                          resizeMode="cover"
-                          accessibilityLabel="Arunachala Hill at dusk with the girivalam path glowing"
-                        />
-                        <LinearGradient
-                          colors={["transparent", "rgba(10,6,4,0.7)", "#0A0604"]}
-                          locations={[0.55, 0.85, 1]}
-                          style={StyleSheet.absoluteFill}
-                          pointerEvents="none"
+                      {/* ── Dynamic overlays positioned over the template ── */}
+                      {/* Name (covers "Arun Kumar") */}
+                      <View style={cardStyles.overlayName}>
+                        <View style={cardStyles.overlayNameBg} />
+                        <TextInput
+                          value={pilgrimName}
+                          onChangeText={savePilgrimName}
+                          placeholder="Your name"
+                          placeholderTextColor="rgba(244,229,194,0.4)"
+                          style={cardStyles.overlayNameText}
+                          maxLength={28}
+                          autoCapitalize="words"
+                          accessibilityLabel="Your name"
                         />
                       </View>
 
-                      {/* Completed banner */}
-                      <View style={cardStyles.completedRow}>
-                        <View style={cardStyles.thinLine} />
-                        <Text style={cardStyles.completedText}>COMPLETED</Text>
-                        <View style={cardStyles.thinLine} />
-                      </View>
-                      <Text style={cardStyles.bigTitle}>GIRIVALAM</Text>
-                      <View style={cardStyles.sharanamRow}>
-                        <Ionicons name="chevron-back" size={10} color="#C47A1E" />
-                        <Text style={cardStyles.sharanam}>ARUNACHALA SHARANAM</Text>
-                        <Ionicons name="chevron-forward" size={10} color="#C47A1E" />
-                      </View>
-                      <View style={cardStyles.lingamIconWrap}>
-                        <MaterialCommunityIcons name="temple-hindu" size={20} color="#FFD98A" />
-                      </View>
-
-                      {/* Sacred quote */}
-                      <Text style={cardStyles.openQuote}>“</Text>
-                      <Text style={cardStyles.quoteText}>
-                        Around the Hill we walk,{"\n"}Within the Self we rest.
-                      </Text>
-                      <Text style={cardStyles.quoteAttribution}>~ Bhagavan Sri Ramana Maharshi</Text>
-
-                      {/* Pilgrim name (cursive) */}
-                      <TextInput
-                        value={pilgrimName}
-                        onChangeText={savePilgrimName}
-                        placeholder="Your name"
-                        placeholderTextColor="rgba(255,234,179,0.35)"
-                        style={cardStyles.nameCursive}
-                        maxLength={40}
-                        autoCapitalize="words"
-                        accessibilityLabel="Your name for the share card"
-                      />
-                      <Text style={cardStyles.embracedText}>
-                        You have walked. You have offered.{"\n"}
-                        You have been embraced by{" "}
-                        <Text style={{ color: "#FFD98A", fontStyle: "italic" }}>Arunachala</Text>.
-                      </Text>
-
-                      {/* Stats row */}
-                      <View style={cardStyles.statsRow}>
-                        <View style={cardStyles.statBox}>
-                          <View style={cardStyles.statHead}>
-                            <Ionicons name="calendar-outline" size={11} color="#C47A1E" />
-                            <Text style={cardStyles.statLabel}>DATE</Text>
-                          </View>
-                          <Text style={cardStyles.statValue}>{dateStr}</Text>
-                        </View>
-                        <View style={cardStyles.statDivider} />
-                        <View style={cardStyles.statBox}>
-                          <View style={cardStyles.statHead}>
-                            <Ionicons name="time-outline" size={11} color="#C47A1E" />
-                            <Text style={cardStyles.statLabel}>TIME</Text>
-                          </View>
-                          <Text style={cardStyles.statValue}>{timeStr}</Text>
-                        </View>
-                        <View style={cardStyles.statDivider} />
-                        <View style={cardStyles.statBox}>
-                          <View style={cardStyles.statHead}>
-                            <MaterialCommunityIcons name="walk" size={11} color="#C47A1E" />
-                            <Text style={cardStyles.statLabel}>DISTANCE</Text>
-                          </View>
-                          <Text style={cardStyles.statValue}>{distKm} km</Text>
-                        </View>
-                        <View style={cardStyles.statDivider} />
-                        <View style={cardStyles.statBox}>
-                          <View style={cardStyles.statHead}>
-                            <Ionicons name="moon-outline" size={11} color="#C47A1E" />
-                            <Text style={cardStyles.statLabel}>WALK NO.</Text>
-                          </View>
-                          <Text style={cardStyles.statValue}>{walkNumber ?? "—"}</Text>
+                      {/* Stats row (covers DATE / TIME / DISTANCE / MOON PHASE values) */}
+                      <View style={cardStyles.overlayStats}>
+                        <View style={cardStyles.overlayStatsBg} />
+                        <View style={cardStyles.overlayStatsInner}>
+                          <Text style={cardStyles.overlayStatVal}>{dateStr}</Text>
+                          <Text style={cardStyles.overlayStatVal}>{timeStr}</Text>
+                          <Text style={cardStyles.overlayStatVal}>{distKm} km</Text>
+                          <Text style={cardStyles.overlayStatVal}>Walk #{walkNumber ?? "—"}</Text>
                         </View>
                       </View>
 
-                      {/* Polaroid filmstrip — user's walk photos */}
-                      {walkPhotos.length > 0 ? (
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          contentContainerStyle={cardStyles.polaroidStripPad}
-                          style={cardStyles.polaroidStrip}
-                        >
-                          {walkPhotos.map((p, i) => (
-                            <View
-                              key={`${p.uri}-${i}`}
-                              style={[
-                                cardStyles.polaroid,
-                                { transform: [{ rotate: `${tilts[i % tilts.length]}deg` }] },
-                              ]}
-                            >
-                              <Image source={{ uri: p.uri }} style={cardStyles.polaroidImage} resizeMode="cover" />
-                              <Text style={cardStyles.polaroidCaption} numberOfLines={1}>
-                                {p.lingamName}
-                              </Text>
-                            </View>
-                          ))}
-                        </ScrollView>
-                      ) : (
-                        <View style={cardStyles.noPhotosBox}>
-                          <Ionicons name="camera-outline" size={18} color="rgba(255,234,179,0.5)" />
-                          <Text style={cardStyles.noPhotosText}>
-                            Capture photos at each lingam to weave them into your card.
+                      {/* Polaroid strip overlay (covers baked-in polaroids) */}
+                      <View style={cardStyles.overlayPolaroids}>
+                        <View style={cardStyles.overlayPolaroidsBg} />
+                        {walkPhotos.length > 0 ? (
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={cardStyles.polaroidStripPad}
+                          >
+                            {walkPhotos.map((p, i) => (
+                              <View
+                                key={`${p.uri}-${i}`}
+                                style={[
+                                  cardStyles.polaroid,
+                                  { transform: [{ rotate: `${tilts[i % tilts.length]}deg` }] },
+                                ]}
+                              >
+                                <Image source={{ uri: p.uri }} style={cardStyles.polaroidImage} resizeMode="cover" />
+                              </View>
+                            ))}
+                          </ScrollView>
+                        ) : (
+                          <Text style={cardStyles.overlayNoPhotos}>
+                            Tap the camera at each lingam to add your photos here.
                           </Text>
-                        </View>
-                      )}
+                        )}
+                      </View>
 
-                      {/* Sankalpa returned (if set) */}
+                      {/* Sankalpa (subtle overlay near the quote area if set) */}
                       {sk.length > 0 && (
-                        <View style={cardStyles.sankalpaBox}>
-                          <Text style={cardStyles.sankalpaLabel}>SANKALPA</Text>
-                          <Text style={cardStyles.sankalpaText}>“{sk}”</Text>
+                        <View style={cardStyles.overlaySankalpa}>
+                          <Text style={cardStyles.overlaySankalpaLabel}>YOUR SANKALPA</Text>
+                          <Text style={cardStyles.overlaySankalpaText} numberOfLines={2}>“{sk}”</Text>
                         </View>
                       )}
 
-                      {/* Closing blessing */}
-                      <Text style={cardStyles.closingQuote}>
-                        May Arunachala&apos;s Grace{"\n"}stay with you always.
-                      </Text>
-                      <View style={cardStyles.diyaWrap}>
-                        <MaterialCommunityIcons name="lamp" size={26} color="#FFB347" />
-                      </View>
-
-                      {/* Share row */}
-                      <View style={cardStyles.shareDivider}>
-                        <View style={cardStyles.thinLine} />
-                        <Text style={cardStyles.shareLabel}>SHARE YOUR JOURNEY</Text>
-                        <View style={cardStyles.thinLine} />
-                      </View>
-                      <View style={cardStyles.socialRow}>
-                        <Pressable
-                          onPress={() => openSocial("whatsapp")}
-                          style={cardStyles.socialBtn}
-                          accessibilityRole="button"
-                          accessibilityLabel="Share on WhatsApp"
-                        >
-                          <Ionicons name="logo-whatsapp" size={20} color="#FFD98A" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => openSocial("instagram")}
-                          style={cardStyles.socialBtn}
-                          accessibilityRole="button"
-                          accessibilityLabel="Share on Instagram"
-                        >
-                          <Ionicons name="logo-instagram" size={20} color="#FFD98A" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => openSocial("facebook")}
-                          style={cardStyles.socialBtn}
-                          accessibilityRole="button"
-                          accessibilityLabel="Share on Facebook"
-                        >
-                          <Ionicons name="logo-facebook" size={20} color="#FFD98A" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => openSocial("share")}
-                          style={cardStyles.socialBtn}
-                          accessibilityRole="button"
-                          accessibilityLabel="More share options"
-                        >
-                          <Ionicons name="share-social-outline" size={20} color="#FFD98A" />
-                        </Pressable>
-                      </View>
-
-                      {/* Hashtag footer */}
-                      <View style={cardStyles.hashRow}>
-                        <Text style={cardStyles.hashText}>#Girivalam</Text>
-                        <Text style={cardStyles.hashText}>#Arunachala</Text>
-                      </View>
-                    </LinearGradient>
+                      {/* Invisible tappable overlays for the baked-in share buttons */}
+                      <Pressable
+                        onPress={() => openSocial("whatsapp")}
+                        style={[cardStyles.shareHit, { left: "30%" }]}
+                        accessibilityRole="button"
+                        accessibilityLabel="Share on WhatsApp"
+                      />
+                      <Pressable
+                        onPress={() => openSocial("instagram")}
+                        style={[cardStyles.shareHit, { left: "42%" }]}
+                        accessibilityRole="button"
+                        accessibilityLabel="Share on Instagram"
+                      />
+                      <Pressable
+                        onPress={() => openSocial("facebook")}
+                        style={[cardStyles.shareHit, { left: "54%" }]}
+                        accessibilityRole="button"
+                        accessibilityLabel="Share on Facebook"
+                      />
+                      <Pressable
+                        onPress={() => openSocial("share")}
+                        style={[cardStyles.shareHit, { left: "66%" }]}
+                        accessibilityRole="button"
+                        accessibilityLabel="More share options"
+                      />
+                    </ImageBackground>
                   </View>
 
                   {/* Close button below the card */}
@@ -4614,5 +4492,108 @@ const cardStyles = StyleSheet.create({
     marginTop: 14,
     paddingHorizontal: 24,
     lineHeight: 16,
+  },
+
+  // ── Template-based card overlays ──
+  cardTemplate: {
+    width: "100%",
+    aspectRatio: 683 / 1024,
+    position: "relative",
+  },
+  overlayName: {
+    position: "absolute",
+    top: "50.5%",
+    left: "12%",
+    right: "12%",
+    height: "5.5%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  overlayNameBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#0E0805",
+  },
+  overlayNameText: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 26,
+    fontStyle: "italic",
+    color: "#F4E5C2",
+    textAlign: "center",
+    minWidth: "60%",
+  },
+  overlayStats: {
+    position: "absolute",
+    top: "62%",
+    left: "8%",
+    right: "8%",
+    height: "5%",
+    justifyContent: "center",
+  },
+  overlayStatsBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#0E0805",
+  },
+  overlayStatsInner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  overlayStatVal: {
+    flex: 1,
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 12,
+    color: "#F4E5C2",
+    textAlign: "center",
+  },
+  overlayPolaroids: {
+    position: "absolute",
+    top: "70%",
+    left: 0,
+    right: 0,
+    height: "16%",
+    justifyContent: "center",
+  },
+  overlayPolaroidsBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#0E0805",
+  },
+  overlayNoPhotos: {
+    color: "rgba(244,229,194,0.6)",
+    fontSize: 11,
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingHorizontal: 24,
+  },
+  overlaySankalpa: {
+    position: "absolute",
+    top: "40%",
+    left: "12%",
+    right: "12%",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(14,8,5,0.85)",
+    borderRadius: 6,
+    borderLeftWidth: 2,
+    borderLeftColor: "#C97A1E",
+  },
+  overlaySankalpaLabel: {
+    fontSize: 8,
+    letterSpacing: 2,
+    color: "#C97A1E",
+    fontWeight: "700",
+  },
+  overlaySankalpaText: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 12,
+    color: "#F4E5C2",
+    fontStyle: "italic",
+    marginTop: 2,
+  },
+  shareHit: {
+    position: "absolute",
+    bottom: "5%",
+    width: "9%",
+    aspectRatio: 1,
   },
 });
