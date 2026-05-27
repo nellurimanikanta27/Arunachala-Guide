@@ -58,6 +58,7 @@ export interface Settings {
   units: "km" | "mi";
   backupOptIn: boolean;
   firstOpenedAt: number;
+  pilgrimName?: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {

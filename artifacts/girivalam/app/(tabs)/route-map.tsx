@@ -31,7 +31,7 @@ import ScreenBadge from "@/components/ScreenBadge";
 import Colors from "@/constants/colors";
 // CINEMATIC-V1
 import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
-import { addBookmark, addMoment, type Bookmark, finishWalk, getBookmarks, getWalkProgress, removeBookmark, startWalk, updateWalk } from "@/lib/pilgrimage-store";
+import { addBookmark, addMoment, type Bookmark, finishWalk, getBookmarks, getSettings, getWalkProgress, removeBookmark, startWalk, updateSettings, updateWalk } from "@/lib/pilgrimage-store";
 
 const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
 
@@ -186,6 +186,20 @@ export default function RouteMapScreen() {
   const [showStops, setShowStops] = useState(true);
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
+
+  // Pilgrim name for the share card (persisted in Settings)
+  const [pilgrimName, setPilgrimName] = useState<string>("");
+  useEffect(() => {
+    getSettings()
+      .then((s) => {
+        if (s.pilgrimName) setPilgrimName(s.pilgrimName);
+      })
+      .catch(() => {});
+  }, []);
+  const savePilgrimName = (n: string) => {
+    setPilgrimName(n);
+    updateSettings({ pilgrimName: n.trim() || undefined }).catch(() => {});
+  };
 
   // Expanded lingam detail rows (collapsed by default)
   const [expandedLingams, setExpandedLingams] = useState<Set<number>>(new Set());
@@ -1336,119 +1350,144 @@ export default function RouteMapScreen() {
           )}
 
           {/* ── End-of-walk ritual ── */}
-          {endRitualOpen && (
-            <View style={dStyles.ritualRoot}>
-              <View style={dStyles.ritualInner}>
-                <Text style={dStyles.ritualKicker}>YOUR WALK IS COMPLETE</Text>
-                <Text style={dStyles.ritualKm}>
-                  {((walkSeconds / 3600) * 3).toFixed(1)}
-                  <Text style={dStyles.ritualKmUnit}> km</Text>
-                </Text>
-                <Text style={dStyles.ritualTime}>{formatTime(walkSeconds)}</Text>
+          {endRitualOpen && (() => {
+            const distKm = ((walkSeconds / 3600) * 3).toFixed(1);
+            const timeStr = formatTime(walkSeconds);
+            const which = walkNumber != null ? `${ordinal(walkNumber)} Girivalam` : "Girivalam";
+            const dateStr = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+            const sk = sankalpa.trim();
+            const momentCount = Object.values(savedMoments).reduce((acc, arr) => acc + (arr?.length ?? 0), 0);
+            const displayName = pilgrimName.trim() || "A devoted pilgrim";
 
-                {/* 8 lingams glow one by one */}
-                <View style={dStyles.ritualLingamRow}>
-                  {LINGAMS.map((l, i) => (
-                    <Animated.View
-                      key={l.number}
-                      style={[
-                        dStyles.ritualLingamDot,
-                        {
-                          opacity: lingamGlows[i],
-                          transform: [
-                            {
-                              scale: lingamGlows[i].interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [0.6, 1],
-                              }),
-                            },
-                          ],
-                          shadowOpacity: lingamGlows[i] as unknown as number,
-                        },
-                      ]}
+            const onShare = async () => {
+              const lines = [
+                `${displayName} completed their ${which} 🕉️`,
+                `Around Arunachala · ${dateStr}`,
+                `${distKm} km · ${timeStr}`,
+              ];
+              if (sk.length > 0) lines.push(`Sankalpa: "${sk}"`);
+              if (momentCount > 0) lines.push(`${momentCount} sacred moments captured along the path.`);
+              lines.push("Om Namah Shivaya 🔥");
+              lines.push("Arunachala calls — Tiruvannamalai.");
+              const summary = lines.join("\n");
+              try {
+                const result = await Share.share({ message: summary });
+                if (result.action === Share.dismissedAction && Platform.OS === "web") throw new Error("dismissed");
+              } catch {
+                try {
+                  if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.clipboard) {
+                    await navigator.clipboard.writeText(summary);
+                    Alert.alert("Copied", "Your card text is copied — paste it on WhatsApp with the screenshot.");
+                    return;
+                  }
+                } catch {}
+                Alert.alert("Share your Girivalam", summary);
+              }
+            };
+
+            return (
+              <View style={dStyles.ritualRoot}>
+                <ScrollView contentContainerStyle={cardStyles.scrollPad} showsVerticalScrollIndicator={false}>
+                  {/* The card itself — designed to be screenshotted & shared */}
+                  <View style={cardStyles.card}>
+                    <LinearGradient
+                      colors={["#FFF6E8", "#FBE6CC", "#F3CFA2"]}
+                      style={cardStyles.cardBg}
                     >
-                      <MaterialCommunityIcons
-                        name="temple-hindu"
-                        size={18}
-                        color={GOLD}
+                      <Text style={cardStyles.kicker}>I COMPLETED MY GIRIVALAM</Text>
+                      <Text style={cardStyles.title}>Arunachala</Text>
+                      <Text style={cardStyles.subtitle}>Tiruvannamalai · {dateStr}</Text>
+
+                      <Image
+                        source={require("../../assets/images/girivalam-hill-overview.png")}
+                        style={cardStyles.hillImage}
+                        resizeMode="cover"
+                        accessibilityLabel="Illustration of Arunachala Hill"
                       />
-                    </Animated.View>
-                  ))}
-                </View>
 
-                {/* Sankalpa returned */}
-                {sankalpa.trim().length > 0 ? (
-                  <View style={dStyles.ritualSankalpaCard}>
-                    <Text style={dStyles.ritualSankalpaLabel}>
-                      YOU BEGAN WITH THIS IN YOUR HEART
-                    </Text>
-                    <Text style={dStyles.ritualSankalpaText}>
-                      &ldquo;{sankalpa.trim()}&rdquo;
-                    </Text>
-                    <Text style={dStyles.ritualSankalpaHand}>
-                      The mountain has heard it.
-                    </Text>
+                      <View style={cardStyles.nameWrap}>
+                        <Text style={cardStyles.nameLabel}>WALKED BY</Text>
+                        <TextInput
+                          value={pilgrimName}
+                          onChangeText={savePilgrimName}
+                          placeholder="Tap to add your name"
+                          placeholderTextColor="rgba(122, 64, 18, 0.4)"
+                          style={cardStyles.nameInput}
+                          maxLength={40}
+                          accessibilityLabel="Your name for the share card"
+                        />
+                      </View>
+
+                      <View style={cardStyles.statsRow}>
+                        <View style={cardStyles.statBox}>
+                          <Text style={cardStyles.statValue}>{distKm}</Text>
+                          <Text style={cardStyles.statLabel}>km walked</Text>
+                        </View>
+                        <View style={cardStyles.statDivider} />
+                        <View style={cardStyles.statBox}>
+                          <Text style={cardStyles.statValue}>{timeStr}</Text>
+                          <Text style={cardStyles.statLabel}>on the path</Text>
+                        </View>
+                        <View style={cardStyles.statDivider} />
+                        <View style={cardStyles.statBox}>
+                          <Text style={cardStyles.statValue}>{walkNumber ?? "—"}</Text>
+                          <Text style={cardStyles.statLabel}>walk no.</Text>
+                        </View>
+                      </View>
+
+                      {sk.length > 0 && (
+                        <View style={cardStyles.sankalpaBox}>
+                          <Text style={cardStyles.sankalpaLabel}>SANKALPA</Text>
+                          <Text style={cardStyles.sankalpaText}>“{sk}”</Text>
+                          <Text style={cardStyles.sankalpaHand}>The mountain has heard it.</Text>
+                        </View>
+                      )}
+
+                      {momentCount > 0 && (
+                        <View style={cardStyles.momentsBadge}>
+                          <Ionicons name="images-outline" size={14} color="#7A4012" />
+                          <Text style={cardStyles.momentsText}>
+                            {momentCount} sacred moment{momentCount === 1 ? "" : "s"} captured along the path
+                          </Text>
+                        </View>
+                      )}
+
+                      <View style={cardStyles.mantraStripe}>
+                        <Text style={cardStyles.mantraText}>🕉  Om Namah Shivaya  🔥</Text>
+                      </View>
+
+                      <Text style={cardStyles.footer}>
+                        Arunachala — the fire that is light itself.
+                      </Text>
+                    </LinearGradient>
                   </View>
-                ) : (
-                  <Text style={dStyles.ritualMessage}>
-                    You walked. That is enough.
-                  </Text>
-                )}
 
-                <View style={dStyles.ritualBtnRow}>
-                  <Pressable
-                    onPress={async () => {
-                      const distKm = ((walkSeconds / 3600) * 3).toFixed(1);
-                      const timeStr = formatTime(walkSeconds);
-                      const which = walkNumber != null ? `${ordinal(walkNumber)} ` : "";
-                      const sk = sankalpa.trim();
-                      const lines = [
-                        `My ${which}Girivalam — complete.`,
-                        `${distKm} km · ${timeStr}`,
-                      ];
-                      if (sk.length > 0) lines.push(`Sankalpa: "${sk}"`);
-                      lines.push("Om Namah Shivaya 🕉️");
-                      const summary = lines.join("\n");
-                      try {
-                        const result = await Share.share({ message: summary });
-                        if (result.action === Share.dismissedAction && Platform.OS === "web") {
-                          throw new Error("dismissed");
-                        }
-                      } catch {
-                        // Web fallback: copy to clipboard if available, else show alert.
-                        try {
-                          if (
-                            Platform.OS === "web" &&
-                            typeof navigator !== "undefined" &&
-                            navigator.clipboard
-                          ) {
-                            await navigator.clipboard.writeText(summary);
-                            Alert.alert("Copied", "Walk summary copied to clipboard.");
-                            return;
-                          }
-                        } catch {}
-                        Alert.alert("Share your walk", summary);
-                      }
-                    }}
-                    style={dStyles.ritualShareBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Share this walk"
-                  >
-                    <Ionicons name="share-outline" size={16} color={GOLD} />
-                    <Text style={dStyles.ritualShareBtnText}>Share</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={endWalk}
-                    style={dStyles.ritualBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close walk"
-                  >
-                    <Text style={dStyles.ritualBtnText}>Close</Text>
-                  </Pressable>
-                </View>
+                  <View style={dStyles.ritualBtnRow}>
+                    <Pressable
+                      onPress={onShare}
+                      style={dStyles.ritualShareBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel="Share this Girivalam"
+                    >
+                      <Ionicons name="share-social-outline" size={16} color={GOLD} />
+                      <Text style={dStyles.ritualShareBtnText}>Share</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={endWalk}
+                      style={dStyles.ritualBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close walk"
+                    >
+                      <Text style={dStyles.ritualBtnText}>Close</Text>
+                    </Pressable>
+                  </View>
+                  <Text style={cardStyles.helperText}>
+                    Take a screenshot of this card to share on WhatsApp status or Instagram. Tap Share to send the text caption.
+                  </Text>
+                </ScrollView>
               </View>
-            </View>
-          )}
+            );
+          })()}
 
           {walkOverlay === "translator" && (() => {
             const PHRASES: { cat: string; en: string }[] = [
@@ -3954,5 +3993,184 @@ const dStyles = StyleSheet.create({
     backgroundColor: "rgba(255,217,138,0.25)",
     marginTop: 18,
     marginBottom: 6,
+  },
+});
+
+// ── End-of-walk greeting / share card ─────────────────────────────────
+const cardStyles = StyleSheet.create({
+  scrollPad: {
+    paddingHorizontal: 16,
+    paddingTop: 32,
+    paddingBottom: 48,
+    alignItems: "center",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 22,
+    overflow: "hidden",
+    shadowColor: "#3a1a00",
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "rgba(212,140,56,0.55)",
+  },
+  cardBg: {
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 26,
+    alignItems: "center",
+  },
+  kicker: {
+    fontSize: 11,
+    letterSpacing: 3,
+    color: "#A85A14",
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  title: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 38,
+    color: "#5A2A00",
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: "#7A4012",
+    marginTop: 2,
+    letterSpacing: 1.2,
+  },
+  hillImage: {
+    width: "100%",
+    height: 190,
+    borderRadius: 14,
+    marginTop: 16,
+    backgroundColor: "#E9C994",
+  },
+  nameWrap: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  nameLabel: {
+    fontSize: 10,
+    letterSpacing: 2.5,
+    color: "#A85A14",
+    fontWeight: "700",
+  },
+  nameInput: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 24,
+    color: "#5A2A00",
+    textAlign: "center",
+    minWidth: 220,
+    marginTop: 4,
+    paddingVertical: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(122,64,18,0.35)",
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    marginTop: 20,
+    backgroundColor: "rgba(255,255,255,0.35)",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    width: "100%",
+  },
+  statBox: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 20,
+    color: "#5A2A00",
+  },
+  statLabel: {
+    fontSize: 10,
+    color: "#7A4012",
+    letterSpacing: 0.8,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "rgba(122,64,18,0.25)",
+    marginVertical: 4,
+  },
+  sankalpaBox: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(255,255,255,0.4)",
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#C97A1E",
+    width: "100%",
+  },
+  sankalpaLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: "#A85A14",
+    fontWeight: "700",
+  },
+  sankalpaText: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 16,
+    color: "#5A2A00",
+    marginTop: 4,
+    lineHeight: 22,
+  },
+  sankalpaHand: {
+    fontSize: 11,
+    color: "#7A4012",
+    marginTop: 6,
+    fontStyle: "italic",
+  },
+  momentsBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.45)",
+    borderRadius: 999,
+  },
+  momentsText: {
+    fontSize: 11,
+    color: "#7A4012",
+  },
+  mantraStripe: {
+    marginTop: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(90,42,0,0.08)",
+    borderRadius: 999,
+  },
+  mantraText: {
+    fontSize: 13,
+    color: "#5A2A00",
+    letterSpacing: 1.5,
+    fontWeight: "600",
+  },
+  footer: {
+    fontFamily: SERIF_DISPLAY,
+    fontSize: 12,
+    color: "#7A4012",
+    marginTop: 10,
+    fontStyle: "italic",
+    textAlign: "center",
+  },
+  helperText: {
+    fontSize: 11,
+    color: "rgba(255,217,138,0.7)",
+    textAlign: "center",
+    marginTop: 14,
+    paddingHorizontal: 24,
+    lineHeight: 16,
   },
 });
