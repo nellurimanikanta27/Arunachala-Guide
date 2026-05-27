@@ -30,8 +30,20 @@ uri = "file://artifacts/girivalam/assets/images/girivalam-hill-overview.png"
 type = "image"
 title = "arunachala hill overview"
 
+[[generated]]
+id = "7lp9eugi3mzXg2IQAz_wi"
+uri = "file://attached_assets/generated_images/girivalam-completion-card.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "k6aofL8CMlU04PCk7kwam"
 uri = "file://screenshots/girivalam-route-map-redesign.jpg"
 type = "image"
 title = "Girivalam Route Map — redesigned hub"
+
+[[outputs]]
+id = "047VZtJreCLhN-ym7Dvxp"
+uri = "file://attached_assets/generated_images/girivalam-completion-card.png"
+type = "image"
+title = "Sacred Girivalam Completion Card"
