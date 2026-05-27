@@ -25,19 +25,19 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ── Cinematic dark/gold palette (local override) ───────────────────────────
+// ── Temple parchment palette — sandstone walls, brass lamps, ghee light ───
 const W = {
-  bg: "#0A0604",
-  bgSoft: "#140A05",
-  card: "rgba(40, 22, 10, 0.55)",
-  cardBorder: "rgba(196, 122, 30, 0.18)",
-  gold: "#C47A1E",
-  goldLight: "#FFD98A",
-  goldFaint: "rgba(255, 217, 138, 0.08)",
-  text: "#F5E6CC",
-  textMid: "#C9B190",
-  textFaint: "#8A745A",
-  accent: "#E09A2A",
+  bg: "#FBF1DC",                          // warm parchment / temple wall
+  bgSoft: "#F5E6C4",                      // deeper cream, like turmeric-stained cloth
+  card: "#FFFAEC",                        // ghee-lamp glow
+  cardBorder: "rgba(155, 92, 20, 0.22)",  // dark brass outline
+  gold: "#9B5C14",                        // burnished brass (readable on cream)
+  goldLight: "#B8761C",                   // brighter brass for accents
+  goldFaint: "rgba(196, 122, 30, 0.10)",  // soft saffron wash
+  text: "#3D1F08",                        // sandalwood-dark sacred ink
+  textMid: "#6B3A14",                     // ochre brown
+  textFaint: "#A07A50",                   // faded copper
+  accent: "#C8501C",                      // sindoor / kumkum red-orange
 };
 
 // ── Content seeds ──────────────────────────────────────────────────────────
@@ -648,9 +648,8 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold", marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 38, color: W.goldLight, fontFamily: "Inter_700Bold",
-    letterSpacing: 1.5, textShadowColor: "rgba(196, 122, 30, 0.4)",
-    textShadowRadius: 18,
+    fontSize: 38, color: W.gold, fontFamily: "Inter_700Bold",
+    letterSpacing: 1.5,
   },
   headerSub: {
     fontSize: 13, color: W.textMid, fontFamily: "Inter_400Regular",
@@ -723,7 +722,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: W.gold, borderColor: W.gold },
   chipText: { fontSize: 12, color: W.textMid, fontFamily: "Inter_500Medium" },
-  chipTextActive: { color: W.bg, fontFamily: "Inter_600SemiBold" },
+  chipTextActive: { color: "#FFFAEC", fontFamily: "Inter_600SemiBold" },
   teachingBox: {
     marginTop: 16, padding: 14, borderRadius: 12,
     backgroundColor: W.goldFaint, borderLeftWidth: 2, borderLeftColor: W.gold,
@@ -854,7 +853,7 @@ const styles = StyleSheet.create({
     alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 100, backgroundColor: W.gold,
   },
-  noteSaveText: { fontSize: 13, color: W.bg, fontFamily: "Inter_600SemiBold" },
+  noteSaveText: { fontSize: 13, color: "#FFFAEC", fontFamily: "Inter_600SemiBold" },
   notesEmpty: {
     fontSize: 12, color: W.textFaint, fontFamily: "Inter_400Regular",
     fontStyle: "italic", marginTop: 18, textAlign: "center",
