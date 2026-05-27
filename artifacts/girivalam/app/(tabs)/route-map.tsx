@@ -9,6 +9,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -1832,6 +1833,22 @@ export default function RouteMapScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
       showsVerticalScrollIndicator={false}
     >
+      {/* Hill overview illustration — single-glance view of the path & 8 lingams */}
+      <View style={styles.hillCard}>
+        <Image
+          source={require("../../assets/images/girivalam-hill-overview.png")}
+          style={styles.hillImage}
+          resizeMode="cover"
+          accessibilityLabel="Illustration of Arunachala Hill with the 14 km Girivalam path and the 8 sacred lingam shrines around it"
+        />
+        <View style={styles.hillCaption}>
+          <Text style={styles.hillCaptionTitle}>Arunachala — the Hill of Fire</Text>
+          <Text style={styles.hillCaptionText}>
+            Shiva is said to have appeared here as an endless column of light. The 14 km path circles the hill clockwise, passing through 8 directional shrines — one for each of the 8 cardinal directions.
+          </Text>
+        </View>
+      </View>
+
       {/* Begin Walk CTA */}
       <Pressable
         style={styles.beginWalkBtn}
@@ -1857,107 +1874,6 @@ export default function RouteMapScreen() {
           <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
         </LinearGradient>
       </Pressable>
-
-      {/* Map card */}
-      <View style={styles.mapCard}>
-        <View style={styles.mapHeader}>
-          <MaterialCommunityIcons name="map-marker-path" size={22} color={Colors.saffron} />
-          <View style={styles.mapHeaderText}>
-            <Text style={styles.mapTitle}>Girivalam Path</Text>
-            <Text style={styles.mapSubtitle}>14 km around Arunachala Hill</Text>
-          </View>
-        </View>
-
-        <GirivalamMap userLocation={userLocation} showStops={showStops} />
-
-        <View style={styles.stopsToggleRow}>
-          <Pressable
-            style={[styles.stopsChip, showStops && styles.stopsChipActive]}
-            onPress={() => setShowStops((v) => !v)}
-            accessibilityRole="button"
-          >
-            <Ionicons name={showStops ? "eye" : "eye-off"} size={14} color={showStops ? Colors.white : Colors.saffron} />
-            <Text style={[styles.stopsChipText, showStops && styles.stopsChipTextActive]}>
-              {showStops ? "Hide Stops" : "Show Stops"}
-            </Text>
-          </Pressable>
-          <Text style={styles.stopsHint}>
-            {showStops ? "Showing 16 stops on path" : "Tap to see helpful stops"}
-          </Text>
-        </View>
-
-        <View style={styles.mapLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: "#B8410E" }]} />
-            <Text style={styles.legendText}>Main Temple</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.saffron }]} />
-            <Text style={styles.legendText}>8 Lingams</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={styles.legendDash} />
-            <Text style={styles.legendText}>Walk Path</Text>
-          </View>
-          {tracking && (
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#1E88E5" }]} />
-              <Text style={styles.legendText}>You</Text>
-            </View>
-          )}
-        </View>
-
-        {showStops && (
-          <View style={styles.iconGuide}>
-            <Text style={styles.iconGuideTitle}>Stop Icons</Text>
-            <View style={styles.iconGuideRow}>
-              <Text style={styles.iconGuideItem}>🕉️ Ashram</Text>
-              <Text style={styles.iconGuideItem}>🛕 Temple</Text>
-              <Text style={styles.iconGuideItem}>🛖 Cave</Text>
-              <Text style={styles.iconGuideItem}>🍛 Free Food</Text>
-              <Text style={styles.iconGuideItem}>💧 Theertham</Text>
-              <Text style={styles.iconGuideItem}>🚻 Rest Stop</Text>
-              <Text style={styles.iconGuideItem}>🏥 Medical</Text>
-              <Text style={styles.iconGuideItem}>🅿️ Parking</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.mapButtonRow}>
-          <Pressable
-            style={[styles.mapBtn, tracking ? styles.mapBtnTracking : styles.mapBtnPrimary]}
-            onPress={startTracking}
-            disabled={requesting}
-            accessibilityRole="button"
-          >
-            {requesting ? (
-              <ActivityIndicator color={Colors.white} size="small" />
-            ) : (
-              <Ionicons name={tracking ? "radio-button-on" : "locate"} size={20} color={Colors.white} />
-            )}
-            <Text style={styles.mapBtnText}>
-              {tracking ? "Stop Tracking" : "Track My Location"}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.mapBtn, styles.mapBtnSecondary]}
-            onPress={openNavMode}
-            accessibilityRole="button"
-          >
-            <Ionicons name="navigate" size={20} color={Colors.saffron} />
-            <Text style={[styles.mapBtnText, styles.mapBtnTextSecondary]}>Navigate</Text>
-          </Pressable>
-        </View>
-
-        {tracking && (
-          <View style={styles.trackingBanner}>
-            <View style={styles.trackingDot} />
-            <Text style={styles.trackingText}>
-              Live tracking active — your position updates as you walk
-            </Text>
-          </View>
-        )}
-      </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
       <Text style={styles.sectionDesc}>
@@ -2735,6 +2651,11 @@ const styles = StyleSheet.create({
   lingamDistance: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.saffron, backgroundColor: Colors.overlayLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2, marginBottom: 4 },
   lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
+  hillCard: { backgroundColor: Colors.white, borderRadius: 16, overflow: "hidden", marginBottom: 14, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.9, shadowRadius: 8, elevation: 3 },
+  hillImage: { width: "100%", height: 260, backgroundColor: Colors.overlayLight },
+  hillCaption: { padding: 16 },
+  hillCaptionTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.brown, marginBottom: 6 },
+  hillCaptionText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 19 },
   lingamDetailGrid: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.overlayLight, gap: 6 },
   lingamDetailRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   lingamDetailLabel: { width: 58, fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textLight, letterSpacing: 0.5, textTransform: "uppercase", paddingTop: 1 },
