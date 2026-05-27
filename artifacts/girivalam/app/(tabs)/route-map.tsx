@@ -2016,6 +2016,14 @@ export default function RouteMapScreen() {
         </View>
       </View>
 
+      {/* Eight Lingams overview image — placed exactly as provided */}
+      <Image
+        source={require("../../assets/images/girivalam-eight-lingams.png")}
+        style={styles.eightLingamsImage}
+        resizeMode="contain"
+        accessibilityLabel="Aerial view of Arunachala with the 8 Lingams"
+      />
+
       {/* Begin Walk CTA */}
       <Pressable
         style={styles.beginWalkBtn}
@@ -2710,6 +2718,13 @@ const wStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.warmWhite },
   content: { padding: 16 },
+
+  eightLingamsImage: {
+    width: "100%",
+    aspectRatio: 935 / 1024,
+    marginBottom: 16,
+    borderRadius: 14,
+  },
 
   beginWalkBtn: {
     borderRadius: 18,
