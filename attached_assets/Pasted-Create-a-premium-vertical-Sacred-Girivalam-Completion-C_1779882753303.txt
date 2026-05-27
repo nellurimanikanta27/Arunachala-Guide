@@ -1,0 +1,95 @@
+Create a premium vertical “Sacred Girivalam Completion Card” screen for the Arunachala spiritual companion app.
+
+This is NOT a fitness summary card.
+
+This should feel like:
+
+* a sacred memory card,
+* a spiritual completion greeting,
+* a divine souvenir from Arunachala,
+* an emotional share-worthy experience.
+
+The moment someone sees this card on WhatsApp Status or Instagram Story, they should instantly recognize:
+“This person completed Girivalam around Arunachala.”
+
+DESIGN STYLE:
+
+* Cinematic
+* Sacred
+* Spiritual
+* Premium
+* Deep black + warm gold palette
+* Soft glowing effects
+* Temple ambience
+* Mist/fog atmosphere
+* Golden lighting
+* Elegant typography
+* Minimal but emotional
+* Calm and timeless
+
+MAIN VISUAL:
+
+* Arunachala hill should dominate the card visually
+* Show glowing Girivalam route around the hill
+* Sacred atmosphere around mountain
+* Lamps/temple lights/stars subtly visible
+* Slight spiritual glow around hill silhouette
+
+CARD CONTENT:
+
+1. Completion title
+   Examples:
+
+* “Sacred Girivalam Completed”
+* “Blessed by Arunachala”
+* “Walked the Holy Path”
+
+2. User details
+
+* User name
+* Date
+* Distance walked
+* Walk duration
+* Moon phase/Pournami optionally
+
+3. User journey memories
+
+* Merge photos captured during walk
+* Blend them elegantly into card
+* Use soft rounded frames or faded collage style
+* Keep emotional and premium
+* Avoid clutter
+
+4. Sacred quote section
+   Example:
+   “The hill calls only those who are ready.”
+
+5. Share button
+
+* Beautiful glowing share CTA
+* Optimized for WhatsApp Status and Instagram Story
+
+IMPORTANT:
+
+* Avoid fitness-app feeling
+* No calorie stats
+* No performance feeling
+* No harsh colors
+* No clutter
+
+The card should emotionally feel:
+peaceful,
+fulfilling,
+spiritual,
+worthy of saving forever.
+
+Use smooth animations:
+
+* slow fade-ins
+* floating particles
+* gentle glow pulse
+* cinematic transitions
+
+Format:
+Mobile-first vertical layout (9:16)
+Optimized for social sharing.
