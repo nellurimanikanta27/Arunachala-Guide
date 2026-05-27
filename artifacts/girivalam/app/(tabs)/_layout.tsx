@@ -72,7 +72,7 @@ export default function TabLayout() {
 
       {/* Hidden from tab bar, still routable from the home grid */}
       <Tabs.Screen name="route-map" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="history" options={{ href: null, title: "History" }} />
+      <Tabs.Screen name="history" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="sadhana" options={{ href: null, title: "Sadhana" }} />
       <Tabs.Screen name="local-guide" options={{ href: null, title: "Local Guide" }} />
     </Tabs>

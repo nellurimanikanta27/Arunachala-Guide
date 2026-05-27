@@ -1,0 +1,402 @@
+Create a deeply immersive “Wisdom Pillar” for my Arunachala spiritual companion app. This should NOT feel like a normal History section or content library. It should feel like entering a sacred digital ashram, ancient spiritual library, and living wisdom sanctuary around Arunachala and Ramana Maharshi.
+
+This pillar must become one of the strongest emotional and intellectual pillars of the app alongside Girivalam, Sadhana, and Local Guide.
+
+The core purpose of this pillar:
+
+Make people develop a habit of reading
+
+Help users spend meaningful time inside the app
+
+Emotionally heal and guide users
+
+Create introspection and awakening
+
+Make users journal and reflect
+
+Help users discover answers to deep life questions
+
+Make wisdom feel approachable, modern, immersive, and transformative
+
+This section should feel:
+
+Sacred
+
+Calm
+
+Deep
+
+Intelligent
+
+Emotionally healing
+
+Spiritually immersive
+
+Slow and mindful
+
+Premium and cinematic
+
+The UI should feel like:
+
+a sacred library
+
+a digital ashram
+
+a silent wisdom sanctuary
+
+a premium spiritual reading experience
+
+DESIGN STYLE:
+
+Dark mode with warm golden reading light
+
+Deep black + brown + gold color palette
+
+Soft glowing effects
+
+Glassmorphism cards
+
+Smooth ambient animations
+
+Floating dust/light particles
+
+Minimal distractions
+
+Elegant typography optimized for long reading
+
+Cinematic transitions
+
+Calm sacred ambience
+
+This pillar should NOT feel like:
+
+Wikipedia
+
+a static history page
+
+a PDF collection
+
+an educational app
+
+a generic ebook reader
+
+It should feel alive and emotionally intelligent.
+
+MAIN STRUCTURE OF THE WISDOM PILLAR
+
+DAILY WISDOM HOME
+
+This is the main landing screen.
+
+Every day dynamically show:
+
+Daily Ramana Maharshi quote
+
+Daily spiritual reflection
+
+Question of the day
+
+Recommended reading
+
+Short wisdom passage
+
+Audio reflection
+
+“Today’s Inner Practice”
+
+Sacred silence timer shortcut
+
+Example questions:
+
+“Who am I?”
+
+“What is suffering?”
+
+“Who is the observer?”
+
+“What is peace?”
+
+This section should create a daily return habit.
+
+RAMANA MAHARSHI KNOWLEDGE SPACE
+
+Create a premium immersive knowledge experience around Ramana Maharshi.
+
+Include:
+
+Interactive biography timeline
+
+Life journey
+
+Arunachala connection
+
+Rare stories and teachings
+
+Ashram history
+
+Self-enquiry teachings explained simply
+
+Important spiritual moments
+
+Teachings categorized by emotions and life situations
+
+The experience should feel sacred and cinematic.
+
+DIGITAL SACRED LIBRARY
+
+Create a modern spiritual reading ecosystem.
+
+Include:
+
+Books by Ramana Maharshi
+
+Books about Arunachala
+
+Teachings of sages
+
+Spiritual philosophy
+
+Devotional literature
+
+Beginner-friendly summaries
+
+Audiobooks
+
+Wisdom audio snippets
+
+Sacred music and ambience
+
+DO NOT make this feel like a normal library.
+
+Transform books into experiences.
+
+MICRO READING EXPERIENCE
+
+Many people are not habitual readers.
+
+Create:
+
+2-minute reads
+
+Short teachings
+
+Highlighted passages
+
+“One Insight Today”
+
+Swipeable wisdom cards
+
+Emotion-based reading recommendations
+
+This should reduce reading resistance.
+
+PERSONALIZED WISDOM RECOMMENDATION SYSTEM
+
+The app should emotionally understand the user.
+
+Ask users:
+“What are you feeling today?”
+
+Options:
+
+Anxiety
+
+Confusion
+
+Fear
+
+Loneliness
+
+Overthinking
+
+Emotional pain
+
+Lack of purpose
+
+Seeking peace
+
+Curiosity
+
+Self-discovery
+
+Based on their emotional state, recommend:
+
+Quotes
+
+Book passages
+
+Audio teachings
+
+Reflection prompts
+
+Journaling prompts
+
+Guided readings
+
+The app should feel like:
+“A wise spiritual companion that understands the user.”
+
+AUDIO + READING EXPERIENCE
+
+Create immersive reading modes:
+
+Audiobook + synchronized text
+
+Calm narration
+
+Temple ambience
+
+Cave ambience
+
+Rain and silence ambience
+
+Slow reading mode
+
+Focus reading mode
+
+This should gradually build reading habits naturally.
+
+REFLECTION & JOURNALING SYSTEM
+
+After reading, encourage reflection naturally.
+
+Ask:
+
+“What did you feel?”
+
+“Did this teaching relate to your life?”
+
+“Write one realization.”
+
+Create:
+“My Inner Notes”
+
+Users can save:
+
+favorite passages
+
+quotes
+
+reflections
+
+realizations
+
+spiritual notes
+
+This should become emotionally valuable over time.
+
+QUESTION-BASED DISCOVERY SYSTEM
+
+Allow users to ask life questions.
+
+Examples:
+
+“Why do I suffer?”
+
+“How do I stop overthinking?”
+
+“What is ego?”
+
+“How do I find peace?”
+
+“What is self-enquiry?”
+
+“Who am I?”
+
+The app should intelligently recommend:
+
+teachings
+
+book passages
+
+audio
+
+reflections
+
+wisdom cards
+
+This makes the pillar feel alive and intelligent.
+
+SACRED AUDIO EXPERIENCE
+
+Include:
+
+Ramana Maharshi teachings narration
+
+Chanting
+
+Temple bells
+
+Cave ambience
+
+Arunachala nature sounds
+
+Guided silence
+
+Meditation ambience
+
+Sacred instrumental music
+
+This should increase session time and emotional immersion.
+
+DIGITAL ASHRAM EXPERIENCE
+
+Create special immersive sections:
+
+Cave stories
+
+Ashram life
+
+Devotee experiences
+
+Pournami significance
+
+Girivalam philosophy
+
+Silent teachings
+
+Sacred locations
+
+Arunachala mysteries
+
+This should emotionally connect users to Arunachala even from home.
+
+VERY IMPORTANT PRODUCT PHILOSOPHY
+
+This pillar is NOT about content consumption.
+
+It is about:
+
+transformation
+
+introspection
+
+emotional healing
+
+awakening
+
+silence
+
+wisdom
+
+inner clarity
+
+The app should psychologically slow the user down and create mindful engagement.
+
+People should feel:
+
+calmer,
+
+lighter,
+
+more aware,
+
+emotionally understood,
+
+spiritually connected,
+after spending time here.
+
+The ultimate goal:
+People who normally never read books should slowly develop a genuine love for spiritual reading, reflection, journaling, and self-discovery through this pillar.
+
+This should become one of the most emotionally powerful and habit-forming parts of the entire app.

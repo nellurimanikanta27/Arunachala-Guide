@@ -21,6 +21,7 @@ const K = {
   stories: `${NS}/stories`,
   settings: `${NS}/settings`,
   bookmarks: `${NS}/bookmarks`,
+  innerNotes: `${NS}/inner-notes`,
 };
 
 export type MomentKind = "photo" | "voice" | "note" | "feeling";
@@ -193,6 +194,36 @@ export async function removeBookmark(id: string): Promise<void> {
   });
 }
 
+// ── Inner Notes (Wisdom pillar journaling) ──────────────────────────────
+export interface InnerNote {
+  id: string;
+  body: string;
+  source?: string;   // e.g. book or teaching that prompted the reflection
+  feeling?: string;  // optional emotion tag
+  createdAt: number;
+}
+
+export async function getInnerNotes(): Promise<InnerNote[]> {
+  const list = await load<InnerNote[]>(K.innerNotes, []);
+  return [...list].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function addInnerNote(input: Omit<InnerNote, "id" | "createdAt">): Promise<InnerNote> {
+  return withKeyLock(K.innerNotes, async () => {
+    const list = await load<InnerNote[]>(K.innerNotes, []);
+    const n: InnerNote = { ...input, id: makeId("n"), createdAt: Date.now() };
+    await save(K.innerNotes, [...list, n]);
+    return n;
+  });
+}
+
+export async function removeInnerNote(id: string): Promise<void> {
+  return withKeyLock(K.innerNotes, async () => {
+    const list = await load<InnerNote[]>(K.innerNotes, []);
+    await save(K.innerNotes, list.filter((n) => n.id !== id));
+  });
+}
+
 // ── Settings ────────────────────────────────────────────────────────────
 export async function getSettings(): Promise<Settings> {
   const s = await load<Partial<Settings> | null>(K.settings, null);
@@ -214,7 +245,7 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
 
 // ── Wipe everything ─────────────────────────────────────────────────────
 export async function clearAllPilgrimageData(): Promise<void> {
-  await AsyncStorage.multiRemove([K.walks, K.moments, K.stories, K.settings, K.bookmarks]);
+  await AsyncStorage.multiRemove([K.walks, K.moments, K.stories, K.settings, K.bookmarks, K.innerNotes]);
 }
 
 // ── Derived stats ───────────────────────────────────────────────────────

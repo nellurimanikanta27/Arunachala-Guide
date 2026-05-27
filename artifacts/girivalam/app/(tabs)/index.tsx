@@ -35,7 +35,7 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   { id: "route-map", title: "Start Girivalam", subtitle: "Begin your sacred walk around the hill", icon: "map", iconFamily: "Ionicons" },
-  { id: "history", title: "History", subtitle: "Arunachala, Ramana & the temple", icon: "book", iconFamily: "Ionicons" },
+  { id: "history", title: "Wisdom", subtitle: "Ramana, books, reflections & sacred audio", icon: "book", iconFamily: "Ionicons" },
   { id: "sadhana", title: "Sadhana", subtitle: "Breathing, self-enquiry & mantras", icon: "om", iconFamily: "MaterialCommunityIcons" },
   { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
 ];
