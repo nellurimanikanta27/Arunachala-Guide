@@ -5,6 +5,7 @@ import React, { useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  KeyboardAvoidingView,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
@@ -12,12 +13,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ScreenBadge from "@/components/ScreenBadge";
-import { markOnboarded } from "@/lib/pilgrimage-store";
+import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-store";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -63,6 +65,15 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [page, setPage] = useState(0);
+  const [name, setName] = useState("");
+
+  React.useEffect(() => {
+    getSettings().then((s) => {
+      if (s.pilgrimName) setName(s.pilgrimName);
+    }).catch(() => {});
+  }, []);
+
+  const TOTAL_PAGES = SLIDES.length + 1; // + name slide
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
@@ -70,20 +81,30 @@ export default function WelcomeScreen() {
   };
 
   const next = async () => {
-    if (page < SLIDES.length - 1) {
+    if (page < TOTAL_PAGES - 1) {
       scrollRef.current?.scrollTo({ x: (page + 1) * SCREEN_W, animated: true });
     } else {
+      const trimmed = name.trim();
+      if (trimmed.length > 0) {
+        try { await updateSettings({ pilgrimName: trimmed }); } catch {}
+      }
       await markOnboarded();
       router.replace("/(tabs)" as any);
     }
   };
 
   const skip = async () => {
+    const trimmed = name.trim();
+    if (trimmed.length > 0) {
+      try { await updateSettings({ pilgrimName: trimmed }); } catch {}
+    }
     await markOnboarded();
     router.replace("/(tabs)" as any);
   };
 
-  const isLast = page === SLIDES.length - 1;
+  const isLast = page === TOTAL_PAGES - 1;
+  const isNameSlide = page === TOTAL_PAGES - 1;
+  const canContinue = !isNameSlide || name.trim().length > 0;
 
   return (
     <View style={styles.root}>
@@ -106,33 +127,72 @@ export default function WelcomeScreen() {
       </View>
 
       {/* Slides */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        {SLIDES.map((s, i) => (
-          <SlideView key={i} slide={s} />
-        ))}
-      </ScrollView>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          style={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {SLIDES.map((s, i) => (
+            <SlideView key={i} slide={s} />
+          ))}
+          <NameSlide name={name} onChangeName={setName} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Pagination + Continue */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
+          {Array.from({ length: TOTAL_PAGES }).map((_, i) => (
             <View key={i} style={[styles.dot, i === page && styles.dotActive]} />
           ))}
         </View>
 
-        <Pressable onPress={next} style={styles.btn} accessibilityRole="button">
+        <Pressable
+          onPress={next}
+          style={[styles.btn, !canContinue && styles.btnDisabled]}
+          accessibilityRole="button"
+          disabled={!canContinue}
+        >
           <Text style={styles.btnText}>{isLast ? "Enter the path" : "Continue"}</Text>
           <Ionicons name="arrow-forward" size={16} color={BG} />
         </Pressable>
       </View>
+    </View>
+  );
+}
+
+function NameSlide({ name, onChangeName }: { name: string; onChangeName: (s: string) => void }) {
+  return (
+    <View style={[styles.slide, { width: SCREEN_W }]}>
+      <View style={styles.iconHalo}>
+        <View style={styles.iconHaloRing} />
+        <MaterialCommunityIcons name="hand-heart-outline" size={56} color={GOLD_LIGHT} />
+      </View>
+      <Text style={styles.kicker}>YOUR NAME</Text>
+      <Text style={styles.title}>How shall Arunachala know you?</Text>
+      <Text style={styles.body}>
+        This name will appear on your Girivalam completion card, the one you share with loved ones. You can change it anytime.
+      </Text>
+      <TextInput
+        value={name}
+        onChangeText={onChangeName}
+        placeholder="Your name"
+        placeholderTextColor={FAINT}
+        style={styles.nameInput}
+        maxLength={40}
+        autoCapitalize="words"
+        accessibilityLabel="Your pilgrim name"
+        returnKeyType="done"
+      />
     </View>
   );
 }
@@ -257,6 +317,24 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
     color: BG,
+    letterSpacing: 0.5,
+  },
+  btnDisabled: {
+    opacity: 0.4,
+  },
+  nameInput: {
+    marginTop: 18,
+    minWidth: 260,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(244,229,194,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(196,122,30,0.45)",
+    color: CREAM,
+    fontFamily: "Inter_500Medium",
+    fontSize: 18,
+    textAlign: "center",
     letterSpacing: 0.5,
   },
 });

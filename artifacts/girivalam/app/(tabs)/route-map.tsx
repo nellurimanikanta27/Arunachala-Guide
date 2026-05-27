@@ -1410,10 +1410,11 @@ export default function RouteMapScreen() {
                         <TextInput
                           value={pilgrimName}
                           onChangeText={savePilgrimName}
-                          placeholder="Tap to add your name"
+                          placeholder="Your name"
                           placeholderTextColor="rgba(122, 64, 18, 0.4)"
                           style={cardStyles.nameInput}
                           maxLength={40}
+                          autoCapitalize="words"
                           accessibilityLabel="Your name for the share card"
                         />
                       </View>
