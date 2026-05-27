@@ -2,6 +2,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
+
+import { hasOnboarded } from "@/lib/pilgrimage-store";
 import {
   Animated,
   Easing,
@@ -110,7 +112,11 @@ export default function IntroAnimation() {
     );
 
     seq.start(() => {
-      router.replace("/(tabs)");
+      hasOnboarded()
+        .then((done) => {
+          router.replace((done ? "/(tabs)" : "/welcome") as any);
+        })
+        .catch(() => router.replace("/(tabs)" as any));
     });
 
     // Start the pulse a bit after lingam appears

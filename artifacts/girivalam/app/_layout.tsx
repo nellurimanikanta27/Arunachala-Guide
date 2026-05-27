@@ -44,6 +44,7 @@ export default function RootLayout() {
               initialRouteName="intro"
             >
               <Stack.Screen name="intro" options={{ headerShown: false, animation: "fade" }} />
+              <Stack.Screen name="welcome" options={{ headerShown: false, animation: "fade" }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "fade" }} />
             </Stack>
           </GestureHandlerRootView>

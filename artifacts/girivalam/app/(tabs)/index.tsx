@@ -34,10 +34,10 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
-  { id: "route-map", title: "Start Girivalam", subtitle: "Begin your sacred walk around the hill", icon: "map", iconFamily: "Ionicons" },
+  { id: "route-map", title: "Begin Girivalam", subtitle: "Walk the sacred path around the hill", icon: "map", iconFamily: "Ionicons" },
   { id: "history", title: "Wisdom", subtitle: "Ramana, books, reflections & sacred audio", icon: "book", iconFamily: "Ionicons" },
-  { id: "sadhana", title: "Sadhana", subtitle: "Breathing, self-enquiry & mantras", icon: "om", iconFamily: "MaterialCommunityIcons" },
-  { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & stay", icon: "compass", iconFamily: "Ionicons" },
+  { id: "sadhana", title: "Sadhana", subtitle: "Breath, self-enquiry & mantra", icon: "om", iconFamily: "MaterialCommunityIcons" },
+  { id: "local-guide", title: "Local Guide", subtitle: "Temples, ashrams, food & rest", icon: "compass", iconFamily: "Ionicons" },
 ];
 
 function SacredMomentCard() {

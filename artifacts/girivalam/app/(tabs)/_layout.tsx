@@ -9,6 +9,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        animation: "fade",
+        lazy: true,
         headerStyle: { backgroundColor: Colors.saffron },
         headerTintColor: Colors.white,
         headerTitleStyle: {

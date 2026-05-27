@@ -67,6 +67,22 @@ const DEFAULT_SETTINGS: Settings = {
   firstOpenedAt: Date.now(),
 };
 
+const ONBOARDED_KEY = `${NS}/onboarded`;
+export async function hasOnboarded(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(ONBOARDED_KEY)) === "1";
+  } catch {
+    return false;
+  }
+}
+export async function markOnboarded(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ONBOARDED_KEY, "1");
+  } catch {
+    /* non-fatal */
+  }
+}
+
 // ── Generic helpers ─────────────────────────────────────────────────────
 async function load<T>(key: string, fallback: T): Promise<T> {
   try {
