@@ -43,6 +43,12 @@ export interface Moment {
   kind: MomentKind;
   savedAt: number;
   note?: string;
+  uri?: string; // for photo moments — local image URI on device
+}
+
+export async function getMomentsForWalk(walkId: string): Promise<Moment[]> {
+  const all = await getMoments();
+  return all.filter((m) => m.walkId === walkId);
 }
 
 export interface Story {
