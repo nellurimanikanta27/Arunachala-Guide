@@ -2000,22 +2000,6 @@ export default function RouteMapScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hill overview illustration — single-glance view of the path & 8 lingams */}
-      <View style={styles.hillCard}>
-        <Image
-          source={require("../../assets/images/girivalam-hill-overview.png")}
-          style={styles.hillImage}
-          resizeMode="cover"
-          accessibilityLabel="Illustration of Arunachala Hill with the 14 km Girivalam path and the 8 sacred lingam shrines around it"
-        />
-        <View style={styles.hillCaption}>
-          <Text style={styles.hillCaptionTitle}>Arunachala — the Hill of Fire</Text>
-          <Text style={styles.hillCaptionText}>
-            Shiva is said to have appeared here as an endless column of light. The 14 km path circles the hill clockwise, passing through 8 directional shrines — one for each of the 8 cardinal directions.
-          </Text>
-        </View>
-      </View>
-
       {/* Eight Lingams overview image — placed exactly as provided */}
       <Image
         source={require("../../assets/images/girivalam-eight-lingams.png")}
