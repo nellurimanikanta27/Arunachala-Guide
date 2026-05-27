@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
 
+import ScreenBadge from "@/components/ScreenBadge";
 import { hasOnboarded } from "@/lib/pilgrimage-store";
 import {
   Animated,
@@ -154,6 +155,7 @@ export default function IntroAnimation() {
 
   return (
     <View style={styles.root}>
+      <ScreenBadge n={1} label="Intro" />
       {/* Pre-dawn sky → dawn gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: skyFade }]}>
         <LinearGradient

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import ScreenBadge from "@/components/ScreenBadge";
 import * as Linking from "expo-linking";
 import React, { useState } from "react";
 import {
@@ -457,6 +458,7 @@ export default function LocalGuideScreen() {
 
   return (
     <View style={styles.container}>
+      <ScreenBadge n={10} label="Local Guide" />
       <View style={styles.tabBar}>
         {CATEGORIES.map((cat) => (
           <Pressable

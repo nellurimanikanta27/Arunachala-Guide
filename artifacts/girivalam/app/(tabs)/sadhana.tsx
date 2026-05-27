@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import ScreenBadge from "@/components/ScreenBadge";
 import * as Linking from "expo-linking";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -141,6 +142,8 @@ export default function SadhanaScreen() {
   const quote = getDailyQuote();
 
   return (
+    <>
+    <ScreenBadge n={9} label="Sadhana" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
@@ -185,6 +188,7 @@ export default function SadhanaScreen() {
         <Ionicons name="open-outline" size={16} color="rgba(255,255,255,0.65)" />
       </Pressable>
     </ScrollView>
+    </>
   );
 }
 

@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 
 import { GirivalamMap } from "@/components/girivalam-map";
+import ScreenBadge from "@/components/ScreenBadge";
 import Colors from "@/constants/colors";
 // CINEMATIC-V1
 import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
@@ -1804,6 +1805,7 @@ export default function RouteMapScreen() {
   // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
     <>
+    <ScreenBadge n={7} label="Girivalam (Route Map)" />
     {sankalpaPromptOpen && (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}

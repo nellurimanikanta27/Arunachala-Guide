@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import ScreenBadge from "@/components/ScreenBadge";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LayoutAnimation,
@@ -500,6 +501,8 @@ export default function WisdomScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
 
   return (
+    <>
+    <ScreenBadge n={8} label="Wisdom" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 40 }]}
@@ -625,6 +628,7 @@ export default function WisdomScreen() {
         </Text>
       </View>
     </ScrollView>
+    </>
   );
 }
 
