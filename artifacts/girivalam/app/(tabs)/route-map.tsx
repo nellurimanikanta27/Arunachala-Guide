@@ -187,6 +187,17 @@ export default function RouteMapScreen() {
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
 
+  // Expanded lingam detail rows (collapsed by default)
+  const [expandedLingams, setExpandedLingams] = useState<Set<number>>(new Set());
+  const toggleLingam = (n: number) => {
+    setExpandedLingams((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+  };
+
   // Walk mode
   const [walkMode, setWalkMode] = useState(false);
   const [walkSeconds, setWalkSeconds] = useState(0);
@@ -1880,46 +1891,67 @@ export default function RouteMapScreen() {
         The Girivalam path passes through 8 directional shrines representing the 8 cardinal directions
       </Text>
 
-      {LINGAMS.map((lingam) => (
-        <View key={lingam.number} style={styles.lingamRow}>
-          <View style={styles.lingamNumber}>
-            <Text style={styles.lingamNumberText}>{lingam.number}</Text>
-          </View>
-          <View style={styles.lingamContent}>
-            <View style={styles.lingamHeader}>
-              <Text style={styles.lingamName}>{lingam.name}</Text>
-              <Text style={styles.lingamDistance}>{lingam.distance}</Text>
+      {LINGAMS.map((lingam) => {
+        const isOpen = expandedLingams.has(lingam.number);
+        return (
+          <Pressable
+            key={lingam.number}
+            style={styles.lingamRow}
+            onPress={() => toggleLingam(lingam.number)}
+            accessibilityRole="button"
+            accessibilityLabel={`${lingam.name}, ${isOpen ? "tap to collapse" : "tap to read more"}`}
+          >
+            <View style={styles.lingamNumber}>
+              <Text style={styles.lingamNumberText}>{lingam.number}</Text>
             </View>
-            <Text style={styles.lingamDirection}>{lingam.direction} · {lingam.element}</Text>
-            <Text style={styles.lingamDesc}>{lingam.description}</Text>
+            <View style={styles.lingamContent}>
+              <View style={styles.lingamHeader}>
+                <Text style={styles.lingamName}>{lingam.name}</Text>
+                <Text style={styles.lingamDistance}>{lingam.distance}</Text>
+              </View>
+              <View style={styles.lingamSubRow}>
+                <Text style={styles.lingamDirection}>{lingam.direction} · {lingam.element}</Text>
+                <Ionicons
+                  name={isOpen ? "chevron-up" : "chevron-down"}
+                  size={16}
+                  color={Colors.textLight}
+                />
+              </View>
 
-            <View style={styles.lingamDetailGrid}>
-              <View style={styles.lingamDetailRow}>
-                <Text style={styles.lingamDetailLabel}>Deity</Text>
-                <Text style={styles.lingamDetailValue}>{lingam.deity}</Text>
-              </View>
-              <View style={styles.lingamDetailRow}>
-                <Text style={styles.lingamDetailLabel}>Planet</Text>
-                <Text style={styles.lingamDetailValue}>{lingam.planet}</Text>
-              </View>
-              <View style={styles.lingamDetailRow}>
-                <Text style={styles.lingamDetailLabel}>Mantra</Text>
-                <Text style={[styles.lingamDetailValue, styles.lingamMantraValue]}>{lingam.mantra}</Text>
-              </View>
+              {isOpen && (
+                <View style={styles.lingamExpanded}>
+                  <Text style={styles.lingamDesc}>{lingam.description}</Text>
+
+                  <View style={styles.lingamDetailGrid}>
+                    <View style={styles.lingamDetailRow}>
+                      <Text style={styles.lingamDetailLabel}>Deity</Text>
+                      <Text style={styles.lingamDetailValue}>{lingam.deity}</Text>
+                    </View>
+                    <View style={styles.lingamDetailRow}>
+                      <Text style={styles.lingamDetailLabel}>Planet</Text>
+                      <Text style={styles.lingamDetailValue}>{lingam.planet}</Text>
+                    </View>
+                    <View style={styles.lingamDetailRow}>
+                      <Text style={styles.lingamDetailLabel}>Mantra</Text>
+                      <Text style={[styles.lingamDetailValue, styles.lingamMantraValue]}>{lingam.mantra}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.lingamBlessingLabel}>Blessing</Text>
+                  <Text style={styles.lingamBlessingText}>{lingam.benefit}</Text>
+
+                  <Text style={styles.lingamBlessingLabel}>Specialty</Text>
+                  <Text style={styles.lingamBlessingText}>{lingam.specialty}</Text>
+
+                  <View style={styles.lingamMeaningStripe}>
+                    <Text style={styles.lingamMeaningText}>“{lingam.meaning}”</Text>
+                  </View>
+                </View>
+              )}
             </View>
-
-            <Text style={styles.lingamBlessingLabel}>Blessing</Text>
-            <Text style={styles.lingamBlessingText}>{lingam.benefit}</Text>
-
-            <Text style={styles.lingamBlessingLabel}>Specialty</Text>
-            <Text style={styles.lingamBlessingText}>{lingam.specialty}</Text>
-
-            <View style={styles.lingamMeaningStripe}>
-              <Text style={styles.lingamMeaningText}>“{lingam.meaning}”</Text>
-            </View>
-          </View>
-        </View>
-      ))}
+          </Pressable>
+        );
+      })}
 
       <Text style={styles.sectionTitle}>Other Sacred Lingams</Text>
       <Text style={styles.sectionDesc}>Additional sacred Lingams on the Girivalam path</Text>
@@ -2649,7 +2681,9 @@ const styles = StyleSheet.create({
   lingamHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   lingamName: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.brown, flex: 1 },
   lingamDistance: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.saffron, backgroundColor: Colors.overlayLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2, marginBottom: 4 },
+  lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2 },
+  lingamSubRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  lingamExpanded: { marginTop: 8 },
   lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
   hillCard: { backgroundColor: Colors.white, borderRadius: 16, overflow: "hidden", marginBottom: 14, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.9, shadowRadius: 8, elevation: 3 },
   hillImage: { width: "100%", height: 260, backgroundColor: Colors.overlayLight },
