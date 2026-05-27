@@ -1908,15 +1908,15 @@ export default function RouteMapScreen() {
               <View style={styles.lingamHeader}>
                 <Text style={styles.lingamName}>{lingam.name}</Text>
                 <Text style={styles.lingamDistance}>{lingam.distance}</Text>
+                <View style={styles.lingamChevron}>
+                  <Ionicons
+                    name={isOpen ? "chevron-up" : "chevron-down"}
+                    size={18}
+                    color={Colors.saffron}
+                  />
+                </View>
               </View>
-              <View style={styles.lingamSubRow}>
-                <Text style={styles.lingamDirection}>{lingam.direction} · {lingam.element}</Text>
-                <Ionicons
-                  name={isOpen ? "chevron-up" : "chevron-down"}
-                  size={16}
-                  color={Colors.textLight}
-                />
-              </View>
+              <Text style={styles.lingamDirection}>{lingam.direction} · {lingam.element}</Text>
 
               {isOpen && (
                 <View style={styles.lingamExpanded}>
@@ -2682,7 +2682,7 @@ const styles = StyleSheet.create({
   lingamName: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.brown, flex: 1 },
   lingamDistance: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.saffron, backgroundColor: Colors.overlayLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2 },
-  lingamSubRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  lingamChevron: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center", marginLeft: 8 },
   lingamExpanded: { marginTop: 8 },
   lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
   hillCard: { backgroundColor: Colors.white, borderRadius: 16, overflow: "hidden", marginBottom: 14, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.9, shadowRadius: 8, elevation: 3 },
