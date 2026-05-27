@@ -100,24 +100,6 @@ const POIS: POI[] = [
   { kind: "water", lat: 12.2255, lng: 79.0660, name: "Agastya Theertham", subtitle: "South side water tank" },
 ];
 
-interface AudioTrack {
-  id: string;
-  title: string;
-  subtitle: string;
-  duration: string;
-  category: "guided" | "teaching" | "chant" | "music";
-}
-
-const AUDIO_TRACKS: AudioTrack[] = [
-  { id: "mental-girivalam", title: "Guided Mental Girivalam", subtitle: "Inner walk around the hill, in 25 minutes", duration: "25 min", category: "guided" },
-  { id: "who-am-i", title: "Who Am I?", subtitle: "Ramana's central teaching, read aloud", duration: "12 min", category: "teaching" },
-  { id: "ramana-talks", title: "Talks with Ramana — Selected", subtitle: "Short passages, one at a time", duration: "8 min", category: "teaching" },
-  { id: "aksharamanamalai", title: "Aksharamanamalai", subtitle: "Ramana's 108-verse hymn to Arunachala (Tamil)", duration: "18 min", category: "chant" },
-  { id: "om-namah-shivaya", title: "Om Namah Shivaya", subtitle: "Continuous chant for the walk", duration: "30 min", category: "chant" },
-  { id: "arunachala-shiva", title: "Arunachala Shiva", subtitle: "Devotional chant", duration: "20 min", category: "chant" },
-  { id: "bhajans", title: "Bhajans of Tiruvannamalai", subtitle: "Traditional devotional songs", duration: "45 min", category: "music" },
-];
-
 interface SpecialLingam {
   emoji: string;
   name: string;
@@ -166,10 +148,6 @@ export default function RouteMapScreen() {
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchIdRef = useRef<number | null>(null);
 
-  // Japa counter
-  const [japaCount, setJapaCount] = useState(0);
-  const [japaTarget, setJapaTarget] = useState(108);
-
   // Walk mode
   const [walkMode, setWalkMode] = useState(false);
   const [walkSeconds, setWalkSeconds] = useState(0);
@@ -181,8 +159,8 @@ export default function RouteMapScreen() {
   const [dismissedFor, setDismissedFor] = useState<number | null>(null);
   const [currentWalkId, setCurrentWalkId] = useState<string | null>(null);
   const [walkNumber, setWalkNumber] = useState<number | null>(null);
-  // Walk-screen overlay (japa / audio / plus / utilities / temple info)
-  type WalkOverlay = null | "japa" | "audio" | "plus" | "utilities" | "temple" | "translator" | "spots";
+  // Walk-screen overlay (plus / utilities / temple info)
+  type WalkOverlay = null | "plus" | "utilities" | "temple" | "translator" | "spots";
   const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
   const [templeInfoIdx, setTempleInfoIdx] = useState<number | null>(null);
   // Bookmarked sacred spots — loaded on demand for the list overlay.
@@ -466,7 +444,6 @@ export default function RouteMapScreen() {
       setShowFirstWalkPrep(false);
       AsyncStorage.setItem(PREP_SEEN_KEY, "1").catch(() => {});
     }
-    setJapaCount(0);
     setWalkSeconds(0);
     setSavedMoments({});
     setDismissedFor(null);
@@ -634,13 +611,6 @@ export default function RouteMapScreen() {
     Alert.alert(
       `${label} — ${lingam?.name ?? ""}`,
       `Saved to your pilgrimage archive on this phone.${captureNote}`
-    );
-  }
-
-  function playTrack(track: AudioTrack) {
-    Alert.alert(
-      track.title,
-      `${track.subtitle}\n\nDuration: ${track.duration}\n\nAudio file coming soon — this will play through your earphones while you walk.`
     );
   }
 
@@ -1071,18 +1041,6 @@ export default function RouteMapScreen() {
 
           {/* ── Bottom 4-button nav ── */}
           <View style={[dStyles.bottomNav, { paddingBottom: bottomInset + 14 }]}>
-            <NavTabBtn
-              emoji="📿"
-              label="Japa"
-              active={walkOverlay === "japa"}
-              onPress={() => setWalkOverlay(walkOverlay === "japa" ? null : "japa")}
-            />
-            <NavTabBtn
-              emoji="🎵"
-              label="Audio"
-              active={walkOverlay === "audio"}
-              onPress={() => setWalkOverlay(walkOverlay === "audio" ? null : "audio")}
-            />
             <Pressable
               onPress={() => setWalkOverlay(walkOverlay === "plus" ? null : "plus")}
               style={[
@@ -1109,88 +1067,6 @@ export default function RouteMapScreen() {
           </View>
 
           {/* ── Overlays (always inside the session) ── */}
-          {walkOverlay === "japa" && (
-            <WalkSheet title="JAPA COUNTER" onClose={() => setWalkOverlay(null)}>
-              <View style={dStyles.japaWrap}>
-                <View style={dStyles.japaMandala}>
-                  <Text style={dStyles.japaBig}>{japaCount}</Text>
-                  <Text style={dStyles.japaSub}>Mantras</Text>
-                </View>
-                <View style={dStyles.japaRow}>
-                  <Pressable
-                    onPress={() => setJapaCount((c) => Math.max(0, c - 1))}
-                    style={dStyles.japaSideBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Decrease"
-                  >
-                    <Ionicons name="remove" size={22} color={GOLD} />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setJapaCount((c) => c + 1)}
-                    style={dStyles.japaTapBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Count one chant"
-                  >
-                    <Text style={dStyles.japaTapText}>Tap to count</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setJapaCount((c) => c + 1)}
-                    style={dStyles.japaSideBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Add one"
-                  >
-                    <Ionicons name="add" size={22} color={GOLD} />
-                  </Pressable>
-                </View>
-                <Pressable
-                  onPress={() => setJapaCount(0)}
-                  style={dStyles.japaReset}
-                  accessibilityRole="button"
-                  accessibilityLabel="Reset count"
-                >
-                  <Ionicons name="refresh" size={13} color="rgba(255,255,255,0.5)" />
-                  <Text style={dStyles.japaResetText}>Reset</Text>
-                </Pressable>
-              </View>
-            </WalkSheet>
-          )}
-
-          {walkOverlay === "audio" && (
-            <WalkSheet title="AUDIO" onClose={() => setWalkOverlay(null)}>
-              <View style={dStyles.audioTabs}>
-                {["Bhajans", "Audiobooks", "Ambient"].map((t, i) => (
-                  <Text
-                    key={t}
-                    style={[dStyles.audioTab, i === 0 && dStyles.audioTabActive]}
-                  >
-                    {t}
-                  </Text>
-                ))}
-              </View>
-              {[
-                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda" },
-                { title: "Arunachala Ashtakam", artist: "Traditional" },
-                { title: "Lingashtakam", artist: "Adi Shankaracharya" },
-                { title: "Om Namah Shivaya", artist: "Swami Paramarthananda", playing: true },
-              ].map((t, i) => (
-                <View key={i} style={dStyles.audioRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={dStyles.audioTitle}>{t.title}</Text>
-                    <Text style={dStyles.audioArtist}>{t.artist}</Text>
-                  </View>
-                  <Ionicons
-                    name={t.playing ? "pause-circle" : "play-circle"}
-                    size={30}
-                    color={GOLD}
-                  />
-                </View>
-              ))}
-              <Text style={dStyles.audioFoot}>
-                Plays under the map · mini-player stays on
-              </Text>
-            </WalkSheet>
-          )}
-
           {walkOverlay === "plus" && (
             <WalkSheet title="ACTIONS" onClose={() => setWalkOverlay(null)}>
               {[
@@ -1936,7 +1812,7 @@ export default function RouteMapScreen() {
             <View>
               <Text style={styles.beginWalkTitle}>Begin my Girivalam</Text>
               <Text style={styles.beginWalkSub}>
-                Tap to enter walk mode · japa · map · emergency
+                Tap to enter walk mode · map · emergency
               </Text>
             </View>
           </View>
@@ -2132,83 +2008,6 @@ export default function RouteMapScreen() {
             <Text style={[styles.quickLabel, styles.quickLabelEmergency]}>Emergency</Text>
           </Pressable>
         </View>
-      </View>
-
-      {/* Japa Counter */}
-      <View style={styles.japaCard}>
-        <View style={styles.japaHeader}>
-          <Text style={styles.japaHeaderIcon}>📿</Text>
-          <Text style={styles.japaHeaderTitle}>Japa Counter</Text>
-          <Pressable onPress={() => setJapaCount(0)} accessibilityRole="button" style={styles.japaReset}>
-            <Text style={styles.japaResetText}>Reset</Text>
-          </Pressable>
-        </View>
-        <Pressable
-          style={styles.japaTapBtn}
-          onPress={() => setJapaCount((c) => c + 1)}
-          accessibilityRole="button"
-          accessibilityLabel="Count one chant"
-        >
-          <Text style={styles.japaCount}>{japaCount}</Text>
-          <Text style={styles.japaTapLabel}>TAP TO COUNT</Text>
-          {japaCount > 0 && japaCount % japaTarget === 0 && (
-            <Text style={styles.japaComplete}>🙏 {japaCount / japaTarget} mala complete!</Text>
-          )}
-        </Pressable>
-        <View style={styles.japaPresets}>
-          <Pressable
-            style={[styles.japaPresetBtn, japaTarget === 108 && styles.japaPresetActive]}
-            onPress={() => setJapaTarget(108)}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.japaPresetText, japaTarget === 108 && styles.japaPresetTextActive]}>108</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.japaPresetBtn, japaTarget === 1008 && styles.japaPresetActive]}
-            onPress={() => setJapaTarget(1008)}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.japaPresetText, japaTarget === 1008 && styles.japaPresetTextActive]}>1008</Text>
-          </Pressable>
-          <View style={styles.japaProgress}>
-            <View style={[styles.japaProgressFill, { width: `${Math.min(100, (japaCount % japaTarget || (japaCount > 0 && japaCount % japaTarget === 0 ? japaTarget : 0)) / japaTarget * 100)}%` as any }]} />
-          </View>
-          <Text style={styles.japaProgressLabel}>{japaTarget - (japaCount % japaTarget === 0 && japaCount > 0 ? japaTarget : japaCount % japaTarget)} to go</Text>
-        </View>
-      </View>
-
-      {/* Listen while you walk — Ramana audio, chants, bhajans */}
-      <View style={styles.audioCard}>
-        <View style={styles.audioHeader}>
-          <Text style={styles.audioHeaderIcon}>🎧</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.audioHeaderTitle}>Listen while you walk</Text>
-            <Text style={styles.audioHeaderHint}>Plug in your earphones. Walk with Ramana's words, or with sacred sound.</Text>
-          </View>
-        </View>
-
-        {AUDIO_TRACKS.map((track) => (
-          <Pressable
-            key={track.id}
-            style={styles.audioTrack}
-            onPress={() => playTrack(track)}
-            accessibilityRole="button"
-            accessibilityLabel={`Play ${track.title}, ${track.duration}`}
-          >
-            <View style={styles.audioPlayIcon}>
-              <Ionicons name="play" size={14} color={Colors.white} />
-            </View>
-            <View style={styles.audioTrackInfo}>
-              <Text style={styles.audioTrackTitle}>{track.title}</Text>
-              <Text style={styles.audioTrackSubtitle}>{track.subtitle}</Text>
-            </View>
-            <Text style={styles.audioTrackDuration}>{track.duration}</Text>
-          </Pressable>
-        ))}
-
-        <Text style={styles.audioFooterNote}>
-          Audio files coming soon. Plays in the background — keep walking, phone in pocket.
-        </Text>
       </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
