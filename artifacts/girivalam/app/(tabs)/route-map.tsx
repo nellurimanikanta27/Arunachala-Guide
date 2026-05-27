@@ -59,17 +59,55 @@ interface Lingam {
   lat: number;
   lng: number;
   meaning: string;
+  deity: string;
+  planet: string;
+  element: string;
+  mantra: string;
+  benefit: string;
+  specialty: string;
 }
 
 const LINGAMS: Lingam[] = [
-  { number: 1, name: "Indra Lingam", direction: "East", description: "Near the main Arunachaleswarar Temple entrance", distance: "0 km", lat: 12.2330, lng: 79.0750, meaning: "East. The lingam of beginnings. The walk truly starts here — walk with intention." },
-  { number: 2, name: "Agni Lingam", direction: "South-East", description: "Associated with fire element, near Kottai area", distance: "2 km", lat: 12.2264, lng: 79.0747, meaning: "Fire. Sit briefly. What do you want to burn away on this walk?" },
-  { number: 3, name: "Yama Lingam", direction: "South", description: "South direction shrine", distance: "3.5 km", lat: 12.2195, lng: 79.0700, meaning: "South — the direction of endings, of letting go. If something wants to release here, let it." },
-  { number: 4, name: "Niruthi Lingam", direction: "South-West", description: "Marking the south-west quarter of the hill", distance: "5 km", lat: 12.2237, lng: 79.0584, meaning: "South-West. The halfway turning. You have come this far. Keep walking." },
-  { number: 5, name: "Varuna Lingam", direction: "West", description: "Water element shrine on western path", distance: "7 km", lat: 12.2322, lng: 79.0530, meaning: "Water. Let something soften inside you. The path is older here." },
-  { number: 6, name: "Vayu Lingam", direction: "North-West", description: "Wind element, scenic forest section", distance: "9 km", lat: 12.2456, lng: 79.0571, meaning: "Wind. The wild forest section. The hill feels very close here. Walk slowly." },
-  { number: 7, name: "Kubera Lingam", direction: "North", description: "Prosperity shrine near northern path", distance: "11 km", lat: 12.2516, lng: 79.0670, meaning: "North — the abundance of stillness, not of things. The quieter half." },
-  { number: 8, name: "Isanya Lingam", direction: "North-East", description: "Last major shrine before completing the circle", distance: "13 km", lat: 12.2474, lng: 79.0764, meaning: "Almost home. Something is completing. Let yourself feel it." },
+  { number: 1, name: "Indra Lingam", direction: "East", description: "Near the main Arunachaleswarar Temple entrance", distance: "0 km", lat: 12.2330, lng: 79.0750, meaning: "East. The lingam of beginnings. The walk truly starts here — walk with intention.",
+    deity: "Lord Indra, king of the devas", planet: "Sun (Surya)", element: "Sky / Space",
+    mantra: "Om Indraya Namaha",
+    benefit: "Removes obstacles at the start of any journey · brings authority, leadership, and good fortune.",
+    specialty: "The walk traditionally begins here at sunrise. Indra performed Girivalam to atone for his sins — pilgrims bow here to begin with humility." },
+  { number: 2, name: "Agni Lingam", direction: "South-East", description: "Associated with fire element, near Kottai area", distance: "2 km", lat: 12.2264, lng: 79.0747, meaning: "Fire. Sit briefly. What do you want to burn away on this walk?",
+    deity: "Agni, god of fire", planet: "Venus (Shukra)", element: "Fire (Agni)",
+    mantra: "Om Agnaye Namaha",
+    benefit: "Burns away karma, illness, and negative habits · purifies the body and aura.",
+    specialty: "Devotees offer ghee lamps here. Arunachala itself appeared as a column of fire — Agni Lingam holds that primordial flame." },
+  { number: 3, name: "Yama Lingam", direction: "South", description: "South direction shrine", distance: "3.5 km", lat: 12.2195, lng: 79.0700, meaning: "South — the direction of endings, of letting go. If something wants to release here, let it.",
+    deity: "Yama, lord of dharma & death", planet: "Mars (Mangala)", element: "Earth",
+    mantra: "Om Yamaya Namaha",
+    benefit: "Removes fear of death · grants long life, protection, and freedom from untimely end.",
+    specialty: "The most powerful lingam for releasing fear. Pilgrims pray here for ancestors and for a peaceful end to suffering." },
+  { number: 4, name: "Niruthi Lingam", direction: "South-West", description: "Marking the south-west quarter of the hill", distance: "5 km", lat: 12.2237, lng: 79.0584, meaning: "South-West. The halfway turning. You have come this far. Keep walking.",
+    deity: "Nirruti, guardian of the south-west", planet: "Rahu", element: "Earth",
+    mantra: "Om Nirrutaye Namaha",
+    benefit: "Removes enemies, lawsuits, hidden troubles · protects against black magic and evil eye.",
+    specialty: "The quietest of the eight. Worship here is said to dissolve karma you didn't even know you were carrying." },
+  { number: 5, name: "Varuna Lingam", direction: "West", description: "Water element shrine on western path", distance: "7 km", lat: 12.2322, lng: 79.0530, meaning: "Water. Let something soften inside you. The path is older here.",
+    deity: "Varuna, lord of waters & oceans", planet: "Saturn (Shani)", element: "Water (Jala)",
+    mantra: "Om Varunaya Namaha",
+    benefit: "Cures water-related illness · brings rain, prosperity, and emotional healing.",
+    specialty: "Childless couples come here to pray. Bathing in nearby Theerthams after darshan is considered especially auspicious." },
+  { number: 6, name: "Vayu Lingam", direction: "North-West", description: "Wind element, scenic forest section", distance: "9 km", lat: 12.2456, lng: 79.0571, meaning: "Wind. The wild forest section. The hill feels very close here. Walk slowly.",
+    deity: "Vayu, god of wind & breath", planet: "Moon (Chandra)", element: "Air (Vayu)",
+    mantra: "Om Vayave Namaha",
+    benefit: "Cures lung and breathing diseases · steadies the mind · removes mental restlessness.",
+    specialty: "The forest grows thick here. Sit and breathe — pranayama at Vayu Lingam is said to give the fruit of a thousand chants." },
+  { number: 7, name: "Kubera Lingam", direction: "North", description: "Prosperity shrine near northern path", distance: "11 km", lat: 12.2516, lng: 79.0670, meaning: "North — the abundance of stillness, not of things. The quieter half.",
+    deity: "Kubera, lord of wealth", planet: "Mercury (Budha)", element: "Water",
+    mantra: "Om Kuberaya Namaha",
+    benefit: "Brings wealth, business success, and removes debts · grants lasting prosperity.",
+    specialty: "Merchants and householders come here on Pournami nights. Light a lamp facing north — Kubera's direction — for sustained abundance." },
+  { number: 8, name: "Isanya Lingam", direction: "North-East", description: "Last major shrine before completing the circle", distance: "13 km", lat: 12.2474, lng: 79.0764, meaning: "Almost home. Something is completing. Let yourself feel it.",
+    deity: "Ishana — a fierce form of Shiva himself", planet: "Jupiter (Guru)", element: "Space / Consciousness",
+    mantra: "Om Ishanaya Namaha",
+    benefit: "Grants moksha (liberation) · removes the deepest karma · awakens self-knowledge.",
+    specialty: "The highest of the eight. Ramana Maharshi taught that the walk truly completes only when you arrive here — and recognise the hill in your own heart." },
 ];
 
 const GEOFENCE_RADIUS_M = 150;
@@ -1921,95 +1959,6 @@ export default function RouteMapScreen() {
         )}
       </View>
 
-      {/* Where am I? card — live nearest lingam + geofence detection */}
-      <View style={styles.whereCard}>
-        <View style={styles.whereHeader}>
-          <Ionicons name="compass-outline" size={20} color={Colors.primary} />
-          <Text style={styles.whereTitle}>Where am I on the path?</Text>
-        </View>
-
-        {!userLocation && (
-          <>
-            <Text style={styles.whereHint}>
-              Tap below to find your position. The app will show the nearest lingam and quietly notice when you reach one.
-            </Text>
-            <Pressable
-              style={styles.whereBtn}
-              onPress={startTracking}
-              disabled={requesting}
-              accessibilityRole="button"
-            >
-              {requesting ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <>
-                  <Ionicons name="locate" size={18} color={Colors.white} />
-                  <Text style={styles.whereBtnText}>Find me on the path</Text>
-                </>
-              )}
-            </Pressable>
-          </>
-        )}
-
-        {userLocation && nearest && (
-          <>
-            {activeGeofenceIdx !== null ? (
-              <View style={styles.whereArrived}>
-                <Text style={styles.whereArrivedBadge}>YOU HAVE REACHED</Text>
-                <Text style={styles.whereArrivedName}>
-                  {LINGAMS[activeGeofenceIdx].number}. {LINGAMS[activeGeofenceIdx].name}
-                </Text>
-                <Text style={styles.whereArrivedMeaning}>
-                  {LINGAMS[activeGeofenceIdx].meaning}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.whereNearest}>
-                <Text style={styles.whereNearestLabel}>Nearest lingam</Text>
-                <Text style={styles.whereNearestName}>
-                  {nearest.lingam.number}. {nearest.lingam.name}
-                </Text>
-                <Text style={styles.whereNearestDist}>
-                  {formatDistance(nearest.distance)} away · {nearest.lingam.direction}
-                </Text>
-              </View>
-            )}
-            <Pressable
-              onPress={tracking ? stopTracking : startTracking}
-              style={styles.whereToggle}
-              accessibilityRole="button"
-            >
-              <Text style={styles.whereToggleText}>
-                {tracking ? "Stop live updates" : "Resume live updates"}
-              </Text>
-            </Pressable>
-          </>
-        )}
-      </View>
-
-      {/* Quick essentials — one-tap access to water, food, washroom, emergency */}
-      <View style={styles.quickCard}>
-        <Text style={styles.quickHeader}>QUICK ESSENTIALS</Text>
-        <View style={styles.quickRow}>
-          <Pressable style={styles.quickBtn} onPress={() => handleEssential("water")} accessibilityRole="button">
-            <Text style={styles.quickEmoji}>💧</Text>
-            <Text style={styles.quickLabel}>Water</Text>
-          </Pressable>
-          <Pressable style={styles.quickBtn} onPress={() => handleEssential("food")} accessibilityRole="button">
-            <Text style={styles.quickEmoji}>🍛</Text>
-            <Text style={styles.quickLabel}>Free Food</Text>
-          </Pressable>
-          <Pressable style={styles.quickBtn} onPress={() => handleEssential("washroom")} accessibilityRole="button">
-            <Text style={styles.quickEmoji}>🚻</Text>
-            <Text style={styles.quickLabel}>Washroom</Text>
-          </Pressable>
-          <Pressable style={[styles.quickBtn, styles.quickBtnEmergency]} onPress={() => handleEssential("emergency")} accessibilityRole="button">
-            <Text style={styles.quickEmoji}>🆘</Text>
-            <Text style={[styles.quickLabel, styles.quickLabelEmergency]}>Emergency</Text>
-          </Pressable>
-        </View>
-      </View>
-
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
       <Text style={styles.sectionDesc}>
         The Girivalam path passes through 8 directional shrines representing the 8 cardinal directions
@@ -2025,8 +1974,33 @@ export default function RouteMapScreen() {
               <Text style={styles.lingamName}>{lingam.name}</Text>
               <Text style={styles.lingamDistance}>{lingam.distance}</Text>
             </View>
-            <Text style={styles.lingamDirection}>{lingam.direction}</Text>
+            <Text style={styles.lingamDirection}>{lingam.direction} · {lingam.element}</Text>
             <Text style={styles.lingamDesc}>{lingam.description}</Text>
+
+            <View style={styles.lingamDetailGrid}>
+              <View style={styles.lingamDetailRow}>
+                <Text style={styles.lingamDetailLabel}>Deity</Text>
+                <Text style={styles.lingamDetailValue}>{lingam.deity}</Text>
+              </View>
+              <View style={styles.lingamDetailRow}>
+                <Text style={styles.lingamDetailLabel}>Planet</Text>
+                <Text style={styles.lingamDetailValue}>{lingam.planet}</Text>
+              </View>
+              <View style={styles.lingamDetailRow}>
+                <Text style={styles.lingamDetailLabel}>Mantra</Text>
+                <Text style={[styles.lingamDetailValue, styles.lingamMantraValue]}>{lingam.mantra}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.lingamBlessingLabel}>Blessing</Text>
+            <Text style={styles.lingamBlessingText}>{lingam.benefit}</Text>
+
+            <Text style={styles.lingamBlessingLabel}>Specialty</Text>
+            <Text style={styles.lingamBlessingText}>{lingam.specialty}</Text>
+
+            <View style={styles.lingamMeaningStripe}>
+              <Text style={styles.lingamMeaningText}>“{lingam.meaning}”</Text>
+            </View>
           </View>
         </View>
       ))}
@@ -2761,6 +2735,15 @@ const styles = StyleSheet.create({
   lingamDistance: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.saffron, backgroundColor: Colors.overlayLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   lingamDirection: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight, marginTop: 2, marginBottom: 4 },
   lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
+  lingamDetailGrid: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.overlayLight, gap: 6 },
+  lingamDetailRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  lingamDetailLabel: { width: 58, fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textLight, letterSpacing: 0.5, textTransform: "uppercase", paddingTop: 1 },
+  lingamDetailValue: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.text, lineHeight: 18 },
+  lingamMantraValue: { fontFamily: "Inter_600SemiBold", color: Colors.primary, fontStyle: "italic" },
+  lingamBlessingLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textLight, letterSpacing: 0.8, textTransform: "uppercase", marginTop: 12, marginBottom: 4 },
+  lingamBlessingText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.text, lineHeight: 19 },
+  lingamMeaningStripe: { marginTop: 14, padding: 12, borderRadius: 10, backgroundColor: Colors.overlayLight, borderLeftWidth: 3, borderLeftColor: Colors.saffron },
+  lingamMeaningText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 19, fontStyle: "italic" },
 
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8 },
   tipIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center" },
