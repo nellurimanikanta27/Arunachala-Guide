@@ -1886,7 +1886,7 @@ export default function RouteMapScreen() {
 
   // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: Colors.warmWhite }}>
     <ScreenBadge n={7} label="Girivalam (Route Map)" />
     {sankalpaPromptOpen && (
       <KeyboardAvoidingView
@@ -1997,7 +1997,7 @@ export default function RouteMapScreen() {
     )}
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
+      contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24, justifyContent: "flex-start" }]}
       showsVerticalScrollIndicator={false}
     >
       {/* Eight Lingams overview image — placed exactly as provided */}
@@ -2126,7 +2126,7 @@ export default function RouteMapScreen() {
         </View>
       ))}
     </ScrollView>
-    </>
+    </View>
   );
 }
 
@@ -2705,7 +2705,7 @@ const styles = StyleSheet.create({
 
   eightLingamsImage: {
     width: "100%",
-    aspectRatio: 935 / 1024,
+    height: 320,
     marginBottom: 16,
     borderRadius: 14,
   },
