@@ -9,10 +9,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Ignore the device's system font-scaling so the app's typography stays as designed
+// (prevents "everything looks magnified" when the OS has large-text accessibility on).
+// @ts-expect-error - defaultProps is valid at runtime for RN Text/TextInput
+Text.defaultProps = { ...(Text.defaultProps || {}), allowFontScaling: false };
+// @ts-expect-error - defaultProps is valid at runtime for RN Text/TextInput
+TextInput.defaultProps = { ...(TextInput.defaultProps || {}), allowFontScaling: false };
 
 SplashScreen.preventAutoHideAsync();
 
