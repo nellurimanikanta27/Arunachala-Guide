@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
+import * as Location from "expo-location";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Platform,
@@ -598,6 +599,67 @@ function formatDate(ms: number): string {
   }
 }
 
+type LatLng = { lat: number; lng: number };
+
+// Accurate coordinates for places we can geolocate (sourced from the route-map
+// data + well-known Tiruvannamalai landmarks). Places not listed here fall back
+// to their descriptive distance string.
+const PLACE_COORDS: Record<string, LatLng> = {
+  t1: { lat: 12.2319, lng: 79.0676 }, // Arunachaleswarar Temple
+  t3: { lat: 12.2233, lng: 79.056 }, // Adi Annamalaiyar Temple
+  a1: { lat: 12.2238, lng: 79.0682 }, // Sri Ramana Ashram
+  a2: { lat: 12.2247, lng: 79.0689 }, // Seshadri Swamigal Ashram
+  a3: { lat: 12.2272, lng: 79.0709 }, // Skandashram (on the hill)
+  a4: { lat: 12.2268, lng: 79.0701 }, // Virupaksha Cave
+  th1: { lat: 12.234, lng: 79.0688 }, // Siva Ganga Theertham
+  th2: { lat: 12.2358, lng: 79.0651 }, // Brahma Theertham
+  th3: { lat: 12.2255, lng: 79.066 }, // Agastya Theertham
+  free1: { lat: 12.2348, lng: 79.0668 }, // Annadanam – Main Temple
+  free2: { lat: 12.2238, lng: 79.0682 }, // Sri Ramana Ashram – Free Meals
+  free3: { lat: 12.2247, lng: 79.0689 }, // Seshadri Ashram – Free Meals
+};
+
+function haversineKm(a: LatLng, b: LatLng): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function formatDistanceKm(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m away`;
+  return `${km.toFixed(1)} km away`;
+}
+
+// Build a directions URL that routes from the user's current location to the
+// place — using exact coords when available, otherwise the place's search query.
+function directionsUrl(place: Place, userLoc: LatLng | null): string {
+  const coords = PLACE_COORDS[place.id];
+  let destination: string;
+  if (coords) {
+    destination = `${coords.lat},${coords.lng}`;
+  } else {
+    let q: string | null = null;
+    try {
+      q = new URL(place.mapsUrl).searchParams.get("q");
+    } catch {
+      q = null;
+    }
+    if (!q) return place.mapsUrl;
+    destination = q;
+  }
+  const params = new URLSearchParams({ api: "1", destination });
+  // Route explicitly from the user's fetched GPS position when we have it;
+  // otherwise Google Maps defaults the origin to the device's location.
+  if (userLoc) params.set("origin", `${userLoc.lat},${userLoc.lng}`);
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
 function openMaps(url: string) {
   Linking.openURL(url).catch(() =>
     Alert.alert("Cannot Open Maps", "Please install Google Maps or check your internet connection.")
@@ -623,8 +685,11 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function PlaceCard({ place }: { place: Place }) {
+function PlaceCard({ place, userLoc }: { place: Place; userLoc: LatLng | null }) {
   const categoryColor = CATEGORY_COLORS[place.category] ?? Colors.saffron;
+  const coords = PLACE_COORDS[place.id];
+  const liveKm = userLoc && coords ? haversineKm(userLoc, coords) : null;
+  const distanceLabel = liveKm != null ? formatDistanceKm(liveKm) : place.distance;
 
   return (
     <View style={styles.placeCard}>
@@ -641,18 +706,35 @@ function PlaceCard({ place }: { place: Place }) {
         </View>
         <Pressable
           style={styles.mapsBtn}
-          onPress={() => openMaps(place.mapsUrl)}
+          onPress={() => openMaps(directionsUrl(place, userLoc))}
           accessibilityRole="button"
-          accessibilityLabel={`Open ${place.name} in Google Maps`}
+          accessibilityLabel={`Navigate to ${place.name}`}
         >
           <Ionicons name="navigate" size={16} color={Colors.white} />
         </Pressable>
       </View>
       <Text style={styles.placeDesc}>{place.description}</Text>
       <View style={styles.tagsRow}>
-        <View style={[styles.distanceBadge, { borderColor: categoryColor }]}>
-          <Ionicons name="location-outline" size={12} color={categoryColor} />
-          <Text style={[styles.distanceText, { color: categoryColor }]}>{place.distance}</Text>
+        <View
+          style={[
+            styles.distanceBadge,
+            { borderColor: categoryColor },
+            liveKm != null && { backgroundColor: categoryColor },
+          ]}
+        >
+          <Ionicons
+            name={liveKm != null ? "navigate" : "location-outline"}
+            size={12}
+            color={liveKm != null ? Colors.white : categoryColor}
+          />
+          <Text
+            style={[
+              styles.distanceText,
+              { color: liveKm != null ? Colors.white : categoryColor },
+            ]}
+          >
+            {distanceLabel}
+          </Text>
         </View>
         {place.tags.map((tag) => (
           <View key={tag} style={[styles.tag, tag === "🙏 Free" && styles.tagFree]}>
@@ -681,6 +763,41 @@ export default function LocalGuideScreen() {
   const [ongoing, setOngoing] = useState(false);
   const [continueRead, setContinueRead] = useState<LibraryProgress[]>([]);
   const [recents, setRecents] = useState<RecentItem[]>([]);
+  const [userLoc, setUserLoc] = useState<LatLng | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (Platform.OS === "web") {
+          if (typeof navigator === "undefined" || !navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (!cancelled) {
+                setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+              }
+            },
+            () => {},
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+          );
+        } else {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== "granted") return;
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          if (!cancelled) {
+            setUserLoc({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+          }
+        }
+      } catch {
+        // Location unavailable — fall back to descriptive distance labels.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -880,7 +997,7 @@ export default function LocalGuideScreen() {
         {searching ? (
           searchResults.length > 0 ? (
             searchResults.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))
           ) : (
             <Text style={styles.sectionInfo}>
@@ -901,7 +1018,7 @@ export default function LocalGuideScreen() {
                   </View>
                 </View>
                 {items.map((place) => (
-                  <PlaceCard key={place.id} place={place} />
+                  <PlaceCard key={place.id} place={place} userLoc={userLoc} />
                 ))}
               </View>
             );
@@ -916,7 +1033,7 @@ export default function LocalGuideScreen() {
               </View>
             </View>
             {filtered.filter(p => p.tags.includes("🙏 Free")).map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
 
             <View style={styles.subSectionHeader}>
@@ -927,7 +1044,7 @@ export default function LocalGuideScreen() {
               </View>
             </View>
             {filtered.filter(p => p.subType === "popular").map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
 
             <View style={styles.subSectionHeader}>
@@ -938,7 +1055,7 @@ export default function LocalGuideScreen() {
               </View>
             </View>
             {filtered.filter(p => p.subType === "budget").map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
 
             <View style={styles.subSectionHeader}>
@@ -949,7 +1066,7 @@ export default function LocalGuideScreen() {
               </View>
             </View>
             {filtered.filter(p => p.subType === "cafe").map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
           </>
         ) : active === "ashrams" ? (
@@ -958,7 +1075,7 @@ export default function LocalGuideScreen() {
               Ashrams and spiritual places around Arunachala — open to all sincere seekers.
             </Text>
             {filtered.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
           </>
         ) : active === "meditation" ? (
@@ -967,7 +1084,7 @@ export default function LocalGuideScreen() {
               Meditation halls and centres where pilgrims sit in silence near the holy hill.
             </Text>
             {filtered.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
           </>
         ) : active === "utilities" ? (
@@ -988,7 +1105,7 @@ export default function LocalGuideScreen() {
                     </View>
                   </View>
                   {items.map((place) => (
-                    <PlaceCard key={place.id} place={place} />
+                    <PlaceCard key={place.id} place={place} userLoc={userLoc} />
                   ))}
                 </View>
               );
@@ -1000,7 +1117,7 @@ export default function LocalGuideScreen() {
               Accommodation options for pilgrims visiting Tiruvannamalai
             </Text>
             {filtered.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
           </>
         )}
