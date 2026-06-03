@@ -1,2 +1,3 @@
 - [Girivalam navigation](girivalam-navigation.md) — pilgrim-first tab structure, default-landing pattern, what's hidden-but-routable and why.
 - [Native startup gotchas](native-startup-gotchas.md) — module-load mutations (e.g. Text.defaultProps) pass on web but crash native; guard them, web preview hides it.
+- [ErrorBoundary vs preview wrapper](error-boundary-vs-wrapper.md) — "...artifact encountered an error" = transient preview load timeout (reload), not a code bug; app's own crash says "Something went wrong".
