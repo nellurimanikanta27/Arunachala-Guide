@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { reloadAppAsync } from "expo";
 import React, { useState } from "react";
 import {
@@ -33,12 +34,31 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   };
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleRestart = async () => {
     try {
       await reloadAppAsync();
     } catch (restartError) {
       console.error("Failed to restart app:", restartError);
+      resetError();
+    }
+  };
+
+  // Escape hatch for a persistent, data-induced crash loop: a plain reload
+  // would re-read the same saved data and crash again. Clearing local storage
+  // lets the pilgrim recover instead of being stuck on reload → crash → reload.
+  const handleReset = async () => {
+    if (isResetting) return;
+    setIsResetting(true);
+    try {
+      await AsyncStorage.clear();
+    } catch {
+      /* best effort */
+    }
+    try {
+      await reloadAppAsync();
+    } catch {
       resetError();
     }
   };
@@ -101,6 +121,27 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             Try Again
           </Text>
         </Pressable>
+
+        <Pressable
+          onPress={handleReset}
+          disabled={isResetting}
+          accessibilityRole="button"
+          accessibilityLabel="Reset app data and reload"
+          style={({ pressed }) => [
+            styles.resetButton,
+            {
+              opacity: isResetting ? 0.5 : pressed ? 0.7 : 1,
+            },
+          ]}
+        >
+          <Text style={[styles.resetButtonText, { color: theme.textSecondary }]}>
+            {isResetting ? "Resetting…" : "Reset app data & reload"}
+          </Text>
+        </Pressable>
+        <Text style={[styles.resetHint, { color: theme.textSecondary }]}>
+          Still stuck after reloading? This clears saved data on this device and
+          starts fresh.
+        </Text>
       </View>
 
       {__DEV__ ? (
@@ -235,6 +276,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     fontSize: 16,
+  },
+  resetButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  resetButtonText: {
+    fontWeight: "600",
+    textAlign: "center",
+    fontSize: 14,
+    textDecorationLine: "underline",
+  },
+  resetHint: {
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
+    maxWidth: 340,
+    opacity: 0.8,
   },
   modalOverlay: {
     flex: 1,

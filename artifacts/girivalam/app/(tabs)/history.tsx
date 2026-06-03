@@ -897,7 +897,7 @@ function ContinueRow({ p, onOpen }: { p: LibraryProgress; onOpen: (id: string) =
 function RecentRow({ r, onOpen }: { r: RecentItem; onOpen: (id: string) => void }) {
   return (
     <Pressable style={styles.recentRow} onPress={() => onOpen(r.id)} accessibilityRole="button">
-      <Ionicons name={CAT_ICON[r.kind]} size={16} color={W.goldLight} />
+      <Ionicons name={CAT_ICON[r.kind] ?? "document-outline"} size={16} color={W.goldLight} />
       <Text style={styles.recentTitle} numberOfLines={1}>{r.title}</Text>
       <Text style={styles.recentMeta}>{timeAgo(r.openedAt)}</Text>
     </Pressable>

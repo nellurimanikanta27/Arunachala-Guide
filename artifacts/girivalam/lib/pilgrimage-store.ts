@@ -105,6 +105,25 @@ async function load<T>(key: string, fallback: T): Promise<T> {
   }
 }
 
+// Defensive array loader. Persisted data can be from an older app version,
+// partially written, or corrupted. A non-array value here (or items that
+// aren't objects) would crash any consumer that does [...list], .sort, .map,
+// or item.field access during render. Always return a clean array of objects
+// so a bad payload degrades to "empty" instead of crashing the whole app.
+async function loadList<T>(key: string): Promise<T[]> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (raw == null) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is T => item != null && typeof item === "object"
+    );
+  } catch {
+    return [];
+  }
+}
+
 async function save<T>(key: string, value: T): Promise<void> {
   await AsyncStorage.setItem(key, JSON.stringify(value));
 }
@@ -125,7 +144,7 @@ function makeId(prefix: string): string {
 
 // ── Walks ───────────────────────────────────────────────────────────────
 export async function getWalks(): Promise<Walk[]> {
-  return load<Walk[]>(K.walks, []);
+  return loadList<Walk>(K.walks);
 }
 
 export async function startWalk(label?: string): Promise<Walk> {
@@ -160,7 +179,7 @@ export async function getWalk(id: string): Promise<Walk | undefined> {
 
 // ── Moments ─────────────────────────────────────────────────────────────
 export async function getMoments(): Promise<Moment[]> {
-  return load<Moment[]>(K.moments, []);
+  return loadList<Moment>(K.moments);
 }
 
 export async function addMoment(input: Omit<Moment, "id" | "savedAt">): Promise<Moment | null> {
@@ -180,7 +199,7 @@ export async function addMoment(input: Omit<Moment, "id" | "savedAt">): Promise<
 
 // ── Stories ─────────────────────────────────────────────────────────────
 export async function getStories(): Promise<Story[]> {
-  return load<Story[]>(K.stories, []);
+  return loadList<Story>(K.stories);
 }
 
 export async function addStory(input: Omit<Story, "id" | "createdAt">): Promise<Story> {
@@ -202,7 +221,7 @@ export interface Bookmark {
 }
 
 export async function getBookmarks(): Promise<Bookmark[]> {
-  return load<Bookmark[]>(K.bookmarks, []);
+  return loadList<Bookmark>(K.bookmarks);
 }
 
 export async function addBookmark(input: Omit<Bookmark, "id" | "createdAt">): Promise<Bookmark> {
@@ -231,13 +250,13 @@ export interface InnerNote {
 }
 
 export async function getInnerNotes(): Promise<InnerNote[]> {
-  const list = await load<InnerNote[]>(K.innerNotes, []);
+  const list = await loadList<InnerNote>(K.innerNotes);
   return [...list].sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function addInnerNote(input: Omit<InnerNote, "id" | "createdAt">): Promise<InnerNote> {
   return withKeyLock(K.innerNotes, async () => {
-    const list = await load<InnerNote[]>(K.innerNotes, []);
+    const list = await loadList<InnerNote>(K.innerNotes);
     const n: InnerNote = { ...input, id: makeId("n"), createdAt: Date.now() };
     await save(K.innerNotes, [...list, n]);
     return n;
@@ -246,7 +265,7 @@ export async function addInnerNote(input: Omit<InnerNote, "id" | "createdAt">): 
 
 export async function removeInnerNote(id: string): Promise<void> {
   return withKeyLock(K.innerNotes, async () => {
-    const list = await load<InnerNote[]>(K.innerNotes, []);
+    const list = await loadList<InnerNote>(K.innerNotes);
     await save(K.innerNotes, list.filter((n) => n.id !== id));
   });
 }
@@ -292,7 +311,7 @@ export interface LibraryProgress {
 }
 
 export async function getLibraryProgress(): Promise<LibraryProgress[]> {
-  const list = await load<LibraryProgress[]>(K.libraryProgress, []);
+  const list = await loadList<LibraryProgress>(K.libraryProgress);
   return [...list].sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
@@ -300,7 +319,7 @@ export async function upsertLibraryProgress(
   input: Omit<LibraryProgress, "updatedAt">
 ): Promise<LibraryProgress> {
   return withKeyLock(K.libraryProgress, async () => {
-    const list = await load<LibraryProgress[]>(K.libraryProgress, []);
+    const list = await loadList<LibraryProgress>(K.libraryProgress);
     const entry: LibraryProgress = { ...input, updatedAt: Date.now() };
     const next = [entry, ...list.filter((p) => p.id !== input.id)];
     await save(K.libraryProgress, next);
@@ -322,13 +341,13 @@ export interface RecentItem {
 }
 
 export async function getRecentlyOpened(): Promise<RecentItem[]> {
-  const list = await load<RecentItem[]>(K.recents, []);
+  const list = await loadList<RecentItem>(K.recents);
   return [...list].sort((a, b) => b.openedAt - a.openedAt);
 }
 
 export async function recordOpened(input: Omit<RecentItem, "openedAt">): Promise<void> {
   return withKeyLock(K.recents, async () => {
-    const list = await load<RecentItem[]>(K.recents, []);
+    const list = await loadList<RecentItem>(K.recents);
     const entry: RecentItem = { ...input, openedAt: Date.now() };
     const next = [entry, ...list.filter((r) => r.id !== input.id)].slice(0, 30);
     await save(K.recents, next);
@@ -345,13 +364,13 @@ export interface DownloadItem {
 }
 
 export async function getDownloads(): Promise<DownloadItem[]> {
-  const list = await load<DownloadItem[]>(K.downloads, []);
+  const list = await loadList<DownloadItem>(K.downloads);
   return [...list].sort((a, b) => b.downloadedAt - a.downloadedAt);
 }
 
 export async function addDownload(input: Omit<DownloadItem, "downloadedAt">): Promise<DownloadItem> {
   return withKeyLock(K.downloads, async () => {
-    const list = await load<DownloadItem[]>(K.downloads, []);
+    const list = await loadList<DownloadItem>(K.downloads);
     const entry: DownloadItem = { ...input, downloadedAt: Date.now() };
     const next = [entry, ...list.filter((d) => d.id !== input.id)];
     await save(K.downloads, next);
@@ -361,7 +380,7 @@ export async function addDownload(input: Omit<DownloadItem, "downloadedAt">): Pr
 
 export async function removeDownload(id: string): Promise<void> {
   return withKeyLock(K.downloads, async () => {
-    const list = await load<DownloadItem[]>(K.downloads, []);
+    const list = await loadList<DownloadItem>(K.downloads);
     await save(K.downloads, list.filter((d) => d.id !== id));
   });
 }
@@ -379,7 +398,7 @@ export interface VisitedPoint {
 }
 
 export async function getVisitedPoints(): Promise<VisitedPoint[]> {
-  const list = await load<VisitedPoint[]>(K.visited, []);
+  const list = await loadList<VisitedPoint>(K.visited);
   return [...list].sort((a, b) => b.visitedAt - a.visitedAt);
 }
 
@@ -390,7 +409,7 @@ export async function isVisited(key: string): Promise<boolean> {
 
 export async function markVisited(key: string, name: string): Promise<VisitedPoint> {
   return withKeyLock(K.visited, async () => {
-    const list = await load<VisitedPoint[]>(K.visited, []);
+    const list = await loadList<VisitedPoint>(K.visited);
     const existing = list.find((v) => v.key === key);
     if (existing) return existing;
     const entry: VisitedPoint = { key, name, visitedAt: Date.now() };
@@ -401,7 +420,7 @@ export async function markVisited(key: string, name: string): Promise<VisitedPoi
 
 export async function unmarkVisited(key: string): Promise<void> {
   return withKeyLock(K.visited, async () => {
-    const list = await load<VisitedPoint[]>(K.visited, []);
+    const list = await loadList<VisitedPoint>(K.visited);
     await save(K.visited, list.filter((v) => v.key !== key));
   });
 }

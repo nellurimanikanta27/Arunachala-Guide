@@ -84,7 +84,7 @@ function StatBlock({ value, label }: { value: string; label: string }) {
 }
 
 function MomentRow({ moment, isLast }: { moment: Moment; isLast: boolean }) {
-  const meta = KIND_META[moment.kind];
+  const meta = KIND_META[moment.kind] ?? KIND_META.note;
   return (
     <View style={styles.momentRow}>
       <View style={styles.momentRail}>
@@ -571,7 +571,7 @@ export default function MeScreen() {
                 {formatDate(s.createdAt)} · after {ordinal(s.walksAtTime)} walk
               </Text>
               <Text style={styles.storyTitle}>{s.title}</Text>
-              <Text style={styles.storyExcerpt}>{s.body.slice(0, 180)}</Text>
+              <Text style={styles.storyExcerpt}>{(s.body ?? "").slice(0, 180)}</Text>
               <Text style={styles.storyMore}>Read more →</Text>
             </Pressable>
           ))
