@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
@@ -713,7 +714,7 @@ export default function LocalGuideScreen() {
 
   return (
     <View style={styles.container}>
-      <TopBar title="Arunachala" subtitle="Explore · Learn · Experience" />
+      <TopBar title="Arunachala Guide" subtitle="Explore · Learn · Experience" />
       <View style={styles.searchBar}>
         <Ionicons name="search" size={18} color={Colors.textLight} />
         <TextInput
@@ -730,41 +731,6 @@ export default function LocalGuideScreen() {
           </Pressable>
         ) : null}
       </View>
-      {!searching && (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabBar}
-        contentContainerStyle={styles.tabBarContent}
-      >
-        {CATEGORIES.map((cat) => (
-          <Pressable
-            key={cat.id}
-            style={[
-              styles.tab,
-              active === cat.id && { backgroundColor: cat.color },
-            ]}
-            onPress={() => setActive(cat.id)}
-            accessibilityRole="button"
-            accessibilityLabel={cat.label}
-          >
-            <Ionicons
-              name={cat.icon as any}
-              size={18}
-              color={active === cat.id ? Colors.white : Colors.textLight}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                active === cat.id && styles.tabTextActive,
-              ]}
-            >
-              {cat.label}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      )}
 
       <ScrollView
         contentContainerStyle={[
@@ -775,8 +741,98 @@ export default function LocalGuideScreen() {
       >
         {!searching && (
           <>
+            <LinearGradient
+              colors={[Colors.saffron, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
+            >
+              <Text style={styles.heroWelcome}>Welcome to</Text>
+              <Text style={styles.heroTitle}>Arunachala</Text>
+              <Text style={styles.heroSub}>Explore · Learn · Experience</Text>
+              <Ionicons
+                name="triangle"
+                size={72}
+                color="rgba(255,255,255,0.12)"
+                style={styles.heroMountain}
+              />
+            </LinearGradient>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderTitle}>Quick Access</Text>
+              <Pressable
+                onPress={() => openMaps("https://maps.google.com/?q=places+to+visit+Tiruvannamalai")}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="View all places on the map"
+              >
+                <Text style={styles.viewAll}>View All</Text>
+              </Pressable>
+            </View>
+            <View style={styles.quickGrid}>
+              {CATEGORIES.map((cat) => (
+                <Pressable
+                  key={cat.id}
+                  style={styles.quickTile}
+                  onPress={() => setActive(cat.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={cat.label}
+                >
+                  <View
+                    style={[
+                      styles.quickIcon,
+                      { backgroundColor: active === cat.id ? cat.color : Colors.primaryFaint },
+                    ]}
+                  >
+                    <Ionicons
+                      name={cat.icon as any}
+                      size={22}
+                      color={active === cat.id ? Colors.white : cat.color}
+                    />
+                  </View>
+                  <Text
+                    style={[styles.quickLabel, active === cat.id && styles.quickLabelActive]}
+                    numberOfLines={1}
+                  >
+                    {cat.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.essentialsCard}>
+              <View style={styles.essentialsHeader}>
+                <Text style={styles.essentialsTitle}>Nearby Essentials</Text>
+                <Pressable
+                  onPress={() => openMaps("https://maps.google.com/?q=ATM+pharmacy+hospital+drinking+water+Tiruvannamalai")}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="View all essentials on the map"
+                >
+                  <Text style={styles.viewAll}>View All</Text>
+                </Pressable>
+              </View>
+              <View style={styles.essentialsRow}>
+                {NEARBY_ESSENTIALS.map((e) => (
+                  <Pressable
+                    key={e.label}
+                    style={styles.essentialChip}
+                    onPress={() => openMaps(e.url)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Find ${e.label} nearby`}
+                  >
+                    <View style={styles.essentialIcon}>
+                      <Ionicons name={e.icon as any} size={20} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.essentialLabel}>{e.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <Text style={styles.sectionHeaderTitle}>Continue Your Journey</Text>
             <Pressable
-              style={styles.continueCard}
+              style={[styles.continueCard, styles.continueCardTop]}
               onPress={() => router.push("/(tabs)/route-map" as any)}
               accessibilityRole="button"
               accessibilityLabel="Continue your journey on the map"
@@ -818,26 +874,6 @@ export default function LocalGuideScreen() {
                 <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
               </Pressable>
             )}
-
-            <View style={styles.essentialsCard}>
-              <Text style={styles.essentialsTitle}>Nearby Essentials</Text>
-              <View style={styles.essentialsRow}>
-                {NEARBY_ESSENTIALS.map((e) => (
-                  <Pressable
-                    key={e.label}
-                    style={styles.essentialChip}
-                    onPress={() => openMaps(e.url)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Find ${e.label} nearby`}
-                  >
-                    <View style={styles.essentialIcon}>
-                      <Ionicons name={e.icon as any} size={20} color={Colors.primary} />
-                    </View>
-                    <Text style={styles.essentialLabel}>{e.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
           </>
         )}
 
@@ -1041,40 +1077,90 @@ const styles = StyleSheet.create({
     color: Colors.text,
     padding: 0,
   },
-  tabBar: {
-    flexGrow: 0,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.creamDark,
-  },
-  tabBarContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  tab: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: Colors.creamDark,
-  },
-  tabText: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textLight,
-  },
-  tabTextActive: {
-    color: Colors.white,
-    fontFamily: "Inter_600SemiBold",
-  },
   content: {
     padding: 16,
+  },
+  hero: {
+    borderRadius: 20,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  heroWelcome: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.85)",
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+    marginTop: 2,
+  },
+  heroSub: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.9)",
+    marginTop: 4,
+  },
+  heroMountain: {
+    position: "absolute",
+    right: 14,
+    bottom: -8,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: Colors.brown,
+  },
+  viewAll: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.saffron,
+  },
+  quickGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  quickTile: {
+    width: "31%",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  quickIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textMid,
+  },
+  quickLabelActive: {
+    fontFamily: "Inter_700Bold",
+    color: Colors.brown,
+  },
+  essentialsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  continueCardTop: {
+    marginTop: 10,
   },
   sectionInfo: {
     fontSize: 13,
@@ -1301,7 +1387,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_700Bold",
     color: Colors.brown,
-    marginBottom: 12,
   },
   essentialsRow: {
     flexDirection: "row",
