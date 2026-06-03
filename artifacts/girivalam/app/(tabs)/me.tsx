@@ -1,10 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import ScreenBadge from "@/components/ScreenBadge";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -17,11 +19,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import {
   clearAllPilgrimageData,
+  getContinue,
+  getDownloads,
   getMoments,
   getSettings,
   getStats,
   getStories,
   getWalks,
+  removeDownload,
+  type DownloadItem,
+  type LibraryProgress,
   type Moment,
   type MomentKind,
   type Settings,
@@ -134,6 +141,7 @@ function SettingsRow({
 
 export default function MeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const isWeb = Platform.OS === "web";
   const topInset = isWeb ? 67 : insets.top;
   const bottomInset = isWeb ? 34 : insets.bottom;
@@ -144,20 +152,30 @@ export default function MeScreen() {
   const [stories, setStories] = useState<Story[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+  const [continueRead, setContinueRead] = useState<LibraryProgress[]>([]);
+  const [continueListen, setContinueListen] = useState<LibraryProgress[]>([]);
+  const [photoPreview, setPhotoPreview] = useState<Moment | null>(null);
 
   const reload = useCallback(async () => {
-    const [w, m, s, st, statsData] = await Promise.all([
+    const [w, m, s, st, statsData, dl, cr, cl] = await Promise.all([
       getWalks(),
       getMoments(),
       getStories(),
       getSettings(),
       getStats(),
+      getDownloads(),
+      getContinue("read"),
+      getContinue("listen"),
     ]);
     setWalks(w);
     setMoments(m);
     setStories(s);
     setSettings(st);
     setStats(statsData);
+    setDownloads(dl);
+    setContinueRead(cr);
+    setContinueListen(cl);
     setLoaded(true);
   }, []);
 
@@ -203,6 +221,29 @@ export default function MeScreen() {
     const next = await updateSettings({ backupOptIn: false });
     setSettings(next);
   }
+
+  async function handleRemoveDownload(item: DownloadItem) {
+    Alert.alert(
+      "Remove download?",
+      `"${item.title}" will no longer be available offline. You can download it again later.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            await removeDownload(item.id);
+            setDownloads(await getDownloads());
+          },
+        },
+      ]
+    );
+  }
+
+  // Photos captured at the lingams (Camera Roll)
+  const photoMoments = moments
+    .filter((m) => m.kind === "photo" && !!m.uri)
+    .sort((a, b) => b.savedAt - a.savedAt);
 
   // Group moments under their walk
   const walkById = new Map(walks.map((w) => [w.id, w]));
@@ -361,6 +402,151 @@ export default function MeScreen() {
           </>
         )}
 
+        {/* ── CAMERA ROLL ─────────────────────────────────── */}
+        <Text style={styles.sectionLabel}>CAMERA ROLL</Text>
+        {photoMoments.length === 0 ? (
+          <View style={styles.subEmptyCard}>
+            <Ionicons name="images-outline" size={22} color={Colors.textFaint} />
+            <Text style={styles.subEmptyText}>
+              Photos you capture at the lingams will appear here.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.photoGrid}>
+            {photoMoments.map((m) => (
+              <Pressable
+                key={m.id}
+                style={styles.photoCell}
+                onPress={() => setPhotoPreview(m)}
+                accessibilityRole="imagebutton"
+                accessibilityLabel={`Photo at ${m.lingamName}`}
+              >
+                <Image
+                  source={{ uri: m.uri }}
+                  style={styles.photoThumb}
+                  contentFit="cover"
+                  transition={150}
+                />
+                <Text style={styles.photoCaption} numberOfLines={1}>
+                  {m.lingamName}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        {/* ── CONTINUE READING / LISTENING ────────────────── */}
+        {(continueRead.length > 0 || continueListen.length > 0) && (
+          <>
+            <Text style={styles.sectionLabel}>CONTINUE</Text>
+            {continueRead.map((p) => (
+              <Pressable
+                key={`read-${p.id}`}
+                style={styles.continueCard}
+                onPress={() => router.push("/(tabs)/history")}
+                accessibilityRole="button"
+                accessibilityLabel={`Continue reading ${p.title}`}
+              >
+                <View style={styles.continueIcon}>
+                  <Ionicons name="book-outline" size={16} color={Colors.primary} />
+                </View>
+                <View style={styles.continueBody}>
+                  <Text style={styles.continueKicker}>Continue reading</Text>
+                  <Text style={styles.continueTitle} numberOfLines={1}>
+                    {p.title}
+                  </Text>
+                  <View style={styles.progressTrack}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${Math.round(Math.min(1, Math.max(0, p.progress)) * 100)}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.continueMeta}>
+                    {p.position ? `${p.position} · ` : ""}
+                    {Math.round(Math.min(1, Math.max(0, p.progress)) * 100)}%
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textFaint} />
+              </Pressable>
+            ))}
+            {continueListen.map((p) => (
+              <Pressable
+                key={`listen-${p.id}`}
+                style={styles.continueCard}
+                onPress={() => router.push("/(tabs)/history")}
+                accessibilityRole="button"
+                accessibilityLabel={`Continue listening ${p.title}`}
+              >
+                <View style={styles.continueIcon}>
+                  <Ionicons name="headset-outline" size={16} color={Colors.primary} />
+                </View>
+                <View style={styles.continueBody}>
+                  <Text style={styles.continueKicker}>Continue listening</Text>
+                  <Text style={styles.continueTitle} numberOfLines={1}>
+                    {p.title}
+                  </Text>
+                  <View style={styles.progressTrack}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${Math.round(Math.min(1, Math.max(0, p.progress)) * 100)}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.continueMeta}>
+                    {p.position ? `${p.position} · ` : ""}
+                    {Math.round(Math.min(1, Math.max(0, p.progress)) * 100)}%
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textFaint} />
+              </Pressable>
+            ))}
+          </>
+        )}
+
+        {/* ── DOWNLOADS ───────────────────────────────────── */}
+        <Text style={styles.sectionLabel}>DOWNLOADS</Text>
+        {downloads.length === 0 ? (
+          <View style={styles.subEmptyCard}>
+            <Ionicons name="cloud-offline-outline" size={22} color={Colors.textFaint} />
+            <Text style={styles.subEmptyText}>No offline downloads yet.</Text>
+          </View>
+        ) : (
+          <View style={styles.settingsGroup}>
+            {downloads.map((d, i) => (
+              <View key={d.id}>
+                {i > 0 ? <View style={styles.settingsDivider} /> : null}
+                <View style={styles.downloadRow}>
+                  <Ionicons
+                    name={d.kind === "map" ? "map-outline" : "document-text-outline"}
+                    size={18}
+                    color={Colors.textMid}
+                  />
+                  <View style={styles.downloadBody}>
+                    <Text style={styles.downloadTitle} numberOfLines={1}>
+                      {d.title}
+                    </Text>
+                    <Text style={styles.downloadMeta}>
+                      {d.kind}
+                      {d.sizeLabel ? ` · ${d.sizeLabel}` : ""}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => handleRemoveDownload(d)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove download ${d.title}`}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={Colors.primary} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* ── REFLECTIONS ─────────────────────────────────── */}
         <Text style={styles.sectionLabel}>REFLECTIONS</Text>
         {stories.length === 0 ? (
@@ -463,6 +649,41 @@ export default function MeScreen() {
 
         <Text style={styles.footerText}>ॐ नमः शिवाय · Arunachala Shiva</Text>
       </ScrollView>
+
+      <Modal
+        visible={photoPreview != null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoPreview(null)}
+      >
+        <Pressable style={styles.previewBackdrop} onPress={() => setPhotoPreview(null)}>
+          <Pressable
+            style={styles.previewClose}
+            onPress={() => setPhotoPreview(null)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Close photo"
+          >
+            <Ionicons name="close" size={26} color={Colors.white} />
+          </Pressable>
+          {photoPreview?.uri ? (
+            <Image
+              source={{ uri: photoPreview.uri }}
+              style={styles.previewImage}
+              contentFit="contain"
+              transition={150}
+            />
+          ) : null}
+          {photoPreview ? (
+            <View style={styles.previewCaptionWrap}>
+              <Text style={styles.previewCaptionTitle}>{photoPreview.lingamName}</Text>
+              <Text style={styles.previewCaptionMeta}>
+                {formatDate(photoPreview.savedAt)} · {formatTime(photoPreview.savedAt)}
+              </Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -772,5 +993,165 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginTop: 12,
     marginBottom: 4,
+  },
+
+  subEmptyCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: "center",
+    gap: 8,
+  },
+  subEmptyText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    lineHeight: 18,
+  },
+
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  photoCell: {
+    width: "31.5%",
+  },
+  photoThumb: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 12,
+    backgroundColor: Colors.cream,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  photoCaption: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textLight,
+    marginTop: 4,
+  },
+
+  continueCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginBottom: 6,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  continueIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.primaryFaint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  continueBody: { flex: 1 },
+  continueKicker: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textFaint,
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  continueTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.borderLight,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.primary,
+  },
+  continueMeta: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    marginTop: 4,
+  },
+
+  downloadRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
+  downloadBody: { flex: 1 },
+  downloadTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+  },
+  downloadMeta: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    marginTop: 2,
+    textTransform: "capitalize",
+  },
+
+  previewBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  previewClose: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
+  previewImage: {
+    width: "100%",
+    height: "75%",
+  },
+  previewCaptionWrap: {
+    position: "absolute",
+    bottom: 56,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  previewCaptionTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+  previewCaptionMeta: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 4,
   },
 });

@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import ScreenBadge from "@/components/ScreenBadge";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import * as Linking from "expo-linking";
 import React, { useState } from "react";
 import {
@@ -78,6 +80,13 @@ function openGoogleTranslate(text: string, targetLang: string, sourceLang: strin
   );
 }
 
+function openGoogleTranslateMode(sourceLang: string, targetLang: string) {
+  const url = `https://translate.google.com/?op=translate&sl=${sourceLang}&tl=${targetLang}`;
+  Linking.openURL(url).catch(() =>
+    Alert.alert("Cannot Open Translator", "Please check your internet connection.")
+  );
+}
+
 export default function TranslatorScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
@@ -88,6 +97,7 @@ export default function TranslatorScreen() {
   const [targetLang, setTargetLang] = useState("ta");
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [showTargetPicker, setShowTargetPicker] = useState(false);
+  const [capturedUri, setCapturedUri] = useState<string | null>(null);
 
   const sourceLanguage = LANGUAGES.find((l) => l.code === sourceLang)!;
   const targetLanguage = LANGUAGES.find((l) => l.code === targetLang)!;
@@ -103,6 +113,73 @@ export default function TranslatorScreen() {
       return;
     }
     openGoogleTranslate(inputText, targetLang, sourceLang);
+  };
+
+  // ── Voice translation: hand off to Google Translate's microphone mode ──
+  const handleVoice = () => {
+    openGoogleTranslateMode(sourceLang, targetLang);
+  };
+
+  // ── Camera translation: capture a signboard/menu in-app, then hand the
+  //    OCR + translation off to Google Translate's free photo/camera mode ──
+  const handleCamera = async () => {
+    if (isWeb) {
+      Alert.alert(
+        "Camera unavailable on web",
+        "Opening Google Translate so you can use its photo translation instead.",
+        [{ text: "Open Google Translate", onPress: () => openGoogleTranslateMode("auto", targetLang) }]
+      );
+      return;
+    }
+    try {
+      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!camPerm.granted) {
+        Alert.alert(
+          "Camera permission needed",
+          "To photograph a signboard or menu, allow camera access for this app in your device Settings.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        allowsEditing: false,
+      });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      setCapturedUri(result.assets[0].uri);
+    } catch (e) {
+      console.warn("Camera capture failed", e);
+      Alert.alert("Couldn't open camera", "Please try again.");
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    if (isWeb) {
+      openGoogleTranslateMode("auto", targetLang);
+      return;
+    }
+    try {
+      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!libPerm.granted) {
+        Alert.alert(
+          "Photo access needed",
+          "To pick a photo of a signboard or menu, allow photo access for this app in your device Settings.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        allowsEditing: false,
+      });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      setCapturedUri(result.assets[0].uri);
+    } catch (e) {
+      console.warn("Gallery pick failed", e);
+      Alert.alert("Couldn't open gallery", "Please try again.");
+    }
   };
 
   return (
@@ -225,6 +302,107 @@ export default function TranslatorScreen() {
           <Text style={styles.translateBtnText}>Translate with Google</Text>
           <Ionicons name="open-outline" size={16} color="rgba(255,255,255,0.7)" />
         </Pressable>
+      </View>
+
+      <View style={styles.modeRow}>
+        <Pressable
+          style={styles.modeCard}
+          onPress={handleVoice}
+          accessibilityRole="button"
+          accessibilityLabel="Voice translation"
+        >
+          <View style={styles.modeIconWrap}>
+            <Ionicons name="mic" size={22} color={Colors.saffron} />
+          </View>
+          <Text style={styles.modeTitle}>Voice</Text>
+          <Text style={styles.modeDesc}>Speak to translate</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.modeCard}
+          onPress={handleCamera}
+          accessibilityRole="button"
+          accessibilityLabel="Camera translation"
+        >
+          <View style={styles.modeIconWrap}>
+            <Ionicons name="camera" size={22} color={Colors.saffron} />
+          </View>
+          <Text style={styles.modeTitle}>Camera</Text>
+          <Text style={styles.modeDesc}>Read signs & menus</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.modeHelpCard}>
+        <Ionicons name="mic-outline" size={18} color={Colors.textLight} />
+        <Text style={styles.modeHelpText}>
+          Use Google Translate&apos;s microphone to speak and hear the translation.
+        </Text>
+      </View>
+
+      <View style={styles.cameraCard}>
+        <Text style={styles.cameraTitle}>Camera translation</Text>
+        <Text style={styles.cameraDesc}>
+          Photograph a signboard or menu here, then let Google Translate&apos;s
+          camera/photo mode read and translate the text (free).
+        </Text>
+
+        {capturedUri && (
+          <View style={styles.previewWrap}>
+            <Image
+              source={{ uri: capturedUri }}
+              style={styles.previewThumb}
+              contentFit="cover"
+            />
+            <Pressable
+              style={styles.previewClear}
+              onPress={() => setCapturedUri(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Clear captured photo"
+            >
+              <Ionicons name="close-circle" size={22} color={Colors.brown} />
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.cameraBtnRow}>
+          <Pressable
+            style={[styles.cameraBtn, styles.cameraBtnPrimary]}
+            onPress={handleCamera}
+            accessibilityRole="button"
+            accessibilityLabel="Take a photo"
+          >
+            <Ionicons name="camera-outline" size={18} color={Colors.white} />
+            <Text style={styles.cameraBtnTextPrimary}>Take photo</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.cameraBtn, styles.cameraBtnSecondary]}
+            onPress={handlePickFromGallery}
+            accessibilityRole="button"
+            accessibilityLabel="Pick from gallery"
+          >
+            <Ionicons name="images-outline" size={18} color={Colors.saffron} />
+            <Text style={styles.cameraBtnTextSecondary}>Pick from gallery</Text>
+          </Pressable>
+        </View>
+
+        {capturedUri && (
+          <>
+            <Pressable
+              style={styles.readBtn}
+              onPress={() => openGoogleTranslateMode("auto", targetLang)}
+              accessibilityRole="button"
+              accessibilityLabel="Read and translate this photo"
+            >
+              <Ionicons name="language" size={18} color={Colors.white} />
+              <Text style={styles.readBtnText}>Read &amp; translate this</Text>
+              <Ionicons name="open-outline" size={15} color="rgba(255,255,255,0.7)" />
+            </Pressable>
+            <Text style={styles.cameraHint}>
+              Google Translate&apos;s camera/photo mode will read the text in
+              your photo and translate it into {targetLanguage.name}.
+            </Text>
+          </>
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>Common Pilgrim Phrases</Text>
@@ -390,6 +568,154 @@ const styles = StyleSheet.create({
     color: Colors.white,
     flex: 1,
     textAlign: "center",
+  },
+  modeRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  modeCard: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    alignItems: "center",
+    gap: 6,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  modeIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.overlayLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
+  modeTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.brown,
+  },
+  modeDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+  },
+  modeHelpCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: Colors.creamDark,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  modeHelpText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    lineHeight: 18,
+  },
+  cameraCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cameraTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.brown,
+    marginBottom: 4,
+  },
+  cameraDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  previewWrap: {
+    alignSelf: "flex-start",
+    marginBottom: 14,
+  },
+  previewThumb: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+    backgroundColor: Colors.creamDark,
+  },
+  previewClear: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+  },
+  cameraBtnRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  cameraBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  cameraBtnPrimary: {
+    backgroundColor: Colors.saffron,
+  },
+  cameraBtnSecondary: {
+    backgroundColor: Colors.overlayLight,
+    borderWidth: 1.5,
+    borderColor: Colors.saffron,
+  },
+  cameraBtnTextPrimary: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+  cameraBtnTextSecondary: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.saffron,
+  },
+  readBtn: {
+    backgroundColor: Colors.green,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  readBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.white,
+  },
+  cameraHint: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    lineHeight: 18,
+    marginTop: 10,
   },
   sectionTitle: {
     fontSize: 20,

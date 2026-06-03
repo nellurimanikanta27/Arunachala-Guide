@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import ScreenBadge from "@/components/ScreenBadge";
 import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
-import React, { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Platform,
@@ -16,9 +17,34 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import {
+  getContinue,
+  getRecentlyOpened,
+  getWalks,
+  type LibraryProgress,
+  type RecentItem,
+  type Walk,
+} from "@/lib/pilgrimage-store";
 
-type Category = "temples" | "food" | "stay";
-type SubType = "temple" | "lingam" | "ashram" | "theertham" | "food" | "popular" | "budget" | "cafe" | "stay";
+type Category = "temples" | "food" | "stay" | "ashrams" | "meditation" | "utilities";
+type SubType =
+  | "temple"
+  | "lingam"
+  | "ashram"
+  | "theertham"
+  | "food"
+  | "popular"
+  | "budget"
+  | "cafe"
+  | "stay"
+  | "meditation"
+  | "medical"
+  | "pharmacy"
+  | "atm"
+  | "toilets"
+  | "water"
+  | "parking"
+  | "transport";
 
 interface Place {
   id: string;
@@ -109,7 +135,7 @@ const PLACES: Place[] = [
   {
     id: "a1",
     name: "Sri Ramana Ashram",
-    category: "temples",
+    category: "ashrams",
     subType: "ashram",
     description: "The sacred ashram of Bhagavan Ramana Maharshi at the foot of Arunachala. Open to all. Meditation hall, shrine, and library available.",
     distance: "2 km from main temple",
@@ -120,7 +146,7 @@ const PLACES: Place[] = [
   {
     id: "a2",
     name: "Seshadri Swamigal Ashram",
-    category: "temples",
+    category: "ashrams",
     subType: "ashram",
     description: "Dedicated to the great saint Seshadri Swamigal, a contemporary of Ramana Maharshi. A place of deep spiritual energy and devotion.",
     distance: "Near main temple",
@@ -130,7 +156,7 @@ const PLACES: Place[] = [
   {
     id: "a3",
     name: "Skandashram",
-    category: "temples",
+    category: "ashrams",
     subType: "ashram",
     description: "Located on the slopes of Arunachala hill, this ashram was where Ramana Maharshi lived for many years. Offers a breathtaking view of Tiruvannamalai.",
     distance: "On the hill",
@@ -140,7 +166,7 @@ const PLACES: Place[] = [
   {
     id: "a4",
     name: "Virupaksha Cave",
-    category: "temples",
+    category: "ashrams",
     subType: "ashram",
     description: "A natural cave on Arunachala hill where Ramana Maharshi meditated for over 17 years. Deeply connected with his early spiritual life.",
     distance: "On the hill",
@@ -364,13 +390,213 @@ const PLACES: Place[] = [
     mapsUrl: "https://maps.google.com/?q=Ramanasramam+guesthouse+Tiruvannamalai",
     tags: ["Ashram", "Spiritual", "Budget"],
   },
+
+  // ── Meditation Centres ────────────────────────────────────────────────
+  {
+    id: "m1",
+    name: "Sri Ramana Ashram — Meditation Hall",
+    category: "meditation",
+    subType: "meditation",
+    description: "The New Hall, Mother's Shrine, and Old Hall at Sri Ramanasramam are open for silent meditation through the day. A profoundly still space at the foot of Arunachala.",
+    distance: "2 km from main temple",
+    mapsUrl: "https://maps.google.com/?q=Sri+Ramanasramam+Tiruvannamalai",
+    tags: ["Silent", "Self-Enquiry", "Open to All"],
+    openHours: "6:00 AM – 8:00 PM",
+  },
+  {
+    id: "m2",
+    name: "Yogi Ramsuratkumar Ashram",
+    category: "meditation",
+    subType: "meditation",
+    description: "The ashram of the saint Yogi Ramsuratkumar on Chengam Road. Devotees gather for bhajan, meditation, and quiet contemplation in a serene setting.",
+    distance: "Chengam Road",
+    mapsUrl: "https://maps.google.com/?q=Yogi+Ramsuratkumar+Ashram+Tiruvannamalai",
+    tags: ["Bhajan", "Meditation", "Peaceful"],
+  },
+  {
+    id: "m3",
+    name: "Sri Nannagaru Ashram",
+    category: "meditation",
+    subType: "meditation",
+    description: "Ashram of Sri Nannagaru, a devotee of Bhagavan Ramana. A calm meditation hall where seekers sit in silence near Arunachala.",
+    distance: "Near Ramanasramam",
+    mapsUrl: "https://maps.google.com/?q=Sri+Nannagaru+Ashram+Tiruvannamalai",
+    tags: ["Meditation", "Devotion", "Quiet"],
+  },
+
+  // ── Utilities (everyday essentials) ───────────────────────────────────
+  {
+    id: "u-med1",
+    name: "Government Hospital, Tiruvannamalai",
+    category: "utilities",
+    subType: "medical",
+    description: "The main government hospital in Tiruvannamalai for medical emergencies and treatment. Tap to navigate.",
+    distance: "Tiruvannamalai town",
+    mapsUrl: "https://maps.google.com/?q=Government+Hospital+Tiruvannamalai",
+    tags: ["Hospital", "Emergency"],
+  },
+  {
+    id: "u-med2",
+    name: "Hospitals & Clinics Nearby",
+    category: "utilities",
+    subType: "medical",
+    description: "Find hospitals and clinics close to the Arunachaleswarar Temple and the Girivalam path.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=hospital+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Clinics", "Medical"],
+  },
+  {
+    id: "u-pharm",
+    name: "Pharmacies & Medical Shops",
+    category: "utilities",
+    subType: "pharmacy",
+    description: "Medical shops and pharmacies around the temple area for medicines, first aid, and essentials.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=pharmacy+medical+shop+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Medicines", "First Aid"],
+  },
+  {
+    id: "u-atm",
+    name: "ATMs & Banks",
+    category: "utilities",
+    subType: "atm",
+    description: "ATMs and banks near the Arunachaleswarar Temple to withdraw cash before your walk.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=ATM+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Cash", "Bank"],
+  },
+  {
+    id: "u-toilet",
+    name: "Public Toilets",
+    category: "utilities",
+    subType: "toilets",
+    description: "Public toilets along the Girivalam path and around the main temple for pilgrims.",
+    distance: "Along the Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=public+toilets+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Restrooms", "On the Route"],
+  },
+  {
+    id: "u-water",
+    name: "Drinking Water Points",
+    category: "utilities",
+    subType: "water",
+    description: "Drinking water stalls and points along the 14 km Girivalam path — stay hydrated during your walk.",
+    distance: "Along the Girivalam path",
+    mapsUrl: "https://maps.google.com/?q=drinking+water+Girivalam+path+Tiruvannamalai",
+    tags: ["Hydration", "On the Route"],
+  },
+  {
+    id: "u-park",
+    name: "Parking",
+    category: "utilities",
+    subType: "parking",
+    description: "Parking areas near the Arunachaleswarar Temple for cars, two-wheelers, and buses.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=parking+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Cars", "Two-Wheelers"],
+  },
+  {
+    id: "u-trans1",
+    name: "Tiruvannamalai Bus Stand",
+    category: "utilities",
+    subType: "transport",
+    description: "The main bus stand for buses to Chennai, Bengaluru, Pondicherry, and surrounding towns.",
+    distance: "Tiruvannamalai town",
+    mapsUrl: "https://maps.google.com/?q=Tiruvannamalai+Bus+Stand",
+    tags: ["Buses", "Travel"],
+  },
+  {
+    id: "u-trans2",
+    name: "Taxis & Auto Stands",
+    category: "utilities",
+    subType: "transport",
+    description: "Find taxis and auto-rickshaw stands near the temple for local travel around Tiruvannamalai.",
+    distance: "Near main temple",
+    mapsUrl: "https://maps.google.com/?q=taxi+auto+stand+near+Arunachaleswarar+Temple+Tiruvannamalai",
+    tags: ["Taxi", "Auto"],
+  },
+];
+
+const NEARBY_ESSENTIALS: { label: string; icon: string; url: string }[] = [
+  {
+    label: "Water",
+    icon: "water-outline",
+    url: "https://maps.google.com/?q=drinking+water+Girivalam+path+Tiruvannamalai",
+  },
+  {
+    label: "Toilets",
+    icon: "male-female-outline",
+    url: "https://maps.google.com/?q=public+toilets+near+Arunachaleswarar+Temple+Tiruvannamalai",
+  },
+  {
+    label: "Medical",
+    icon: "medkit-outline",
+    url: "https://maps.google.com/?q=hospital+near+Arunachaleswarar+Temple+Tiruvannamalai",
+  },
+  {
+    label: "ATM",
+    icon: "card-outline",
+    url: "https://maps.google.com/?q=ATM+near+Arunachaleswarar+Temple+Tiruvannamalai",
+  },
+  {
+    label: "Parking",
+    icon: "car-outline",
+    url: "https://maps.google.com/?q=parking+near+Arunachaleswarar+Temple+Tiruvannamalai",
+  },
+];
+
+const LOCAL_CONTACT_CATEGORIES: { label: string; icon: string }[] = [
+  { label: "Local Guides", icon: "person-outline" },
+  { label: "Volunteers", icon: "people-outline" },
+  { label: "Temple Offices", icon: "business-outline" },
+  { label: "Ashrams", icon: "leaf-outline" },
+  { label: "Emergency Services", icon: "alert-circle-outline" },
 ];
 
 const CATEGORIES: { id: Category; label: string; icon: string; color: string }[] = [
   { id: "temples", label: "Temples", icon: "business", color: Colors.saffron },
+  { id: "ashrams", label: "Ashrams", icon: "flower-outline", color: Colors.green },
+  { id: "meditation", label: "Meditation", icon: "body", color: Colors.blue },
   { id: "food", label: "Food", icon: "restaurant", color: Colors.teal },
   { id: "stay", label: "Stay", icon: "bed", color: Colors.purple },
+  { id: "utilities", label: "Utilities", icon: "medkit", color: Colors.gold },
 ];
+
+const CATEGORY_COLORS: Record<Category, string> = {
+  temples: Colors.saffron,
+  ashrams: Colors.green,
+  meditation: Colors.blue,
+  food: Colors.teal,
+  stay: Colors.purple,
+  utilities: Colors.gold,
+};
+
+const MORE_SEARCH: Record<Category, { q: string; label: string }> = {
+  temples: { q: "temples", label: "temples" },
+  ashrams: { q: "ashrams", label: "ashrams" },
+  meditation: { q: "meditation+centres", label: "meditation centres" },
+  food: { q: "vegetarian+restaurants", label: "restaurants" },
+  stay: { q: "hotels", label: "hotels" },
+  utilities: { q: "ATM+pharmacy+hospital", label: "essentials" },
+};
+
+const UTILITY_SECTIONS: { subType: SubType; label: string; emoji: string; desc: string }[] = [
+  { subType: "medical", label: "Medical", emoji: "🏥", desc: "Hospitals and clinics for emergencies" },
+  { subType: "pharmacy", label: "Pharmacy", emoji: "💊", desc: "Medical shops for medicines and first aid" },
+  { subType: "atm", label: "ATM & Banks", emoji: "🏧", desc: "Withdraw cash before your walk" },
+  { subType: "toilets", label: "Toilets", emoji: "🚻", desc: "Public restrooms on the path and in town" },
+  { subType: "water", label: "Drinking Water", emoji: "💧", desc: "Stay hydrated along the Girivalam path" },
+  { subType: "parking", label: "Parking", emoji: "🅿️", desc: "Parking near the main temple" },
+  { subType: "transport", label: "Transport", emoji: "🚌", desc: "Buses, taxis, and autos" },
+];
+
+function formatDate(ms: number): string {
+  try {
+    return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  } catch {
+    return "";
+  }
+}
 
 function openMaps(url: string) {
   Linking.openURL(url).catch(() =>
@@ -398,12 +624,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function PlaceCard({ place }: { place: Place }) {
-  const categoryColor =
-    place.category === "temples"
-      ? Colors.saffron
-      : place.category === "food"
-        ? Colors.teal
-        : Colors.purple;
+  const categoryColor = CATEGORY_COLORS[place.category] ?? Colors.saffron;
 
   return (
     <View style={styles.placeCard}>
@@ -446,7 +667,6 @@ function PlaceCard({ place }: { place: Place }) {
 const TEMPLE_SECTIONS: { subType: SubType; label: string; emoji: string; desc: string }[] = [
   { subType: "temple", label: "Important Temples", emoji: "🛕", desc: "Sacred temples around Arunachala and on the Girivalam path" },
   { subType: "lingam", label: "Sacred Lingams", emoji: "🔱", desc: "Surya, Chandra and other sacred Lingams on the Girivalam path" },
-  { subType: "ashram", label: "Ashrams & Spiritual Places", emoji: "🧘", desc: "Deeply connected with saints and meditation practices" },
   { subType: "theertham", label: "Sacred Theerthams", emoji: "💧", desc: "Holy water bodies on the Girivalam path" },
 ];
 
@@ -456,6 +676,25 @@ export default function LocalGuideScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
   const [active, setActive] = useState<Category>("temples");
   const [query, setQuery] = useState("");
+
+  const [lastWalk, setLastWalk] = useState<Walk | null>(null);
+  const [ongoing, setOngoing] = useState(false);
+  const [continueRead, setContinueRead] = useState<LibraryProgress[]>([]);
+  const [recents, setRecents] = useState<RecentItem[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const walks = await getWalks();
+        const sorted = [...walks].sort((a, b) => b.startedAt - a.startedAt);
+        const latest = sorted[0] ?? null;
+        setLastWalk(latest);
+        setOngoing(latest != null && latest.endedAt == null);
+        setContinueRead(await getContinue("read"));
+        setRecents(await getRecentlyOpened());
+      })().catch((e) => console.warn("Failed to load Local Guide journey state", e));
+    }, [])
+  );
 
   const q = query.trim().toLowerCase();
   const searching = q.length > 0;
@@ -494,7 +733,12 @@ export default function LocalGuideScreen() {
         ) : null}
       </View>
       {!searching && (
-      <View style={styles.tabBar}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabBar}
+        contentContainerStyle={styles.tabBarContent}
+      >
         {CATEGORIES.map((cat) => (
           <Pressable
             key={cat.id}
@@ -521,7 +765,7 @@ export default function LocalGuideScreen() {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       )}
 
       <ScrollView
@@ -531,6 +775,74 @@ export default function LocalGuideScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {!searching && (
+          <>
+            <Pressable
+              style={styles.continueCard}
+              onPress={() => router.push("/(tabs)/route-map" as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Continue your journey on the map"
+            >
+              <View style={[styles.continueIcon, { backgroundColor: Colors.saffron }]}>
+                <Ionicons name="walk" size={20} color={Colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.continueTitle}>
+                  {ongoing ? "Resume your walk" : lastWalk ? "Continue your journey" : "Begin your Girivalam"}
+                </Text>
+                <Text style={styles.continueSub} numberOfLines={1}>
+                  {ongoing
+                    ? "Your Girivalam is in progress"
+                    : lastWalk
+                      ? `Last walk · ${formatDate(lastWalk.startedAt)}`
+                      : "Open the sacred route map to start"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+            </Pressable>
+
+            {(continueRead.length > 0 || recents.length > 0) && (
+              <Pressable
+                style={styles.continueCard}
+                onPress={() => router.push("/(tabs)/history" as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Continue reading in Wisdom"
+              >
+                <View style={[styles.continueIcon, { backgroundColor: Colors.amber }]}>
+                  <Ionicons name="book" size={18} color={Colors.white} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.continueTitle}>Continue reading</Text>
+                  <Text style={styles.continueSub} numberOfLines={1}>
+                    {continueRead[0]?.title ?? recents[0]?.title ?? "Pick up where you left off"}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+              </Pressable>
+            )}
+
+            <View style={styles.essentialsCard}>
+              <Text style={styles.essentialsTitle}>Nearby Essentials</Text>
+              <View style={styles.essentialsRow}>
+                {NEARBY_ESSENTIALS.map((e) => (
+                  <Pressable
+                    key={e.label}
+                    style={styles.essentialChip}
+                    onPress={() => openMaps(e.url)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Find ${e.label} nearby`}
+                  >
+                    <View style={styles.essentialIcon}>
+                      <Ionicons name={e.icon as any} size={20} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.essentialLabel}>{e.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </>
+        )}
+
         {searching ? (
           searchResults.length > 0 ? (
             searchResults.map((place) => (
@@ -606,6 +918,48 @@ export default function LocalGuideScreen() {
               <PlaceCard key={place.id} place={place} />
             ))}
           </>
+        ) : active === "ashrams" ? (
+          <>
+            <Text style={styles.sectionInfo}>
+              Ashrams and spiritual places around Arunachala — open to all sincere seekers.
+            </Text>
+            {filtered.map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+          </>
+        ) : active === "meditation" ? (
+          <>
+            <Text style={styles.sectionInfo}>
+              Meditation halls and centres where pilgrims sit in silence near the holy hill.
+            </Text>
+            {filtered.map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+          </>
+        ) : active === "utilities" ? (
+          <>
+            <Text style={styles.sectionInfo}>
+              Everyday essentials around Tiruvannamalai and the Girivalam path.
+            </Text>
+            {UTILITY_SECTIONS.map((section) => {
+              const items = filtered.filter((p) => p.subType === section.subType);
+              if (items.length === 0) return null;
+              return (
+                <View key={section.subType}>
+                  <View style={styles.subSectionHeader}>
+                    <Text style={styles.subSectionEmoji}>{section.emoji}</Text>
+                    <View style={styles.subSectionTitles}>
+                      <Text style={styles.subSectionLabel}>{section.label}</Text>
+                      <Text style={styles.subSectionDesc}>{section.desc}</Text>
+                    </View>
+                  </View>
+                  {items.map((place) => (
+                    <PlaceCard key={place.id} place={place} />
+                  ))}
+                </View>
+              );
+            })}
+          </>
         ) : (
           <>
             <Text style={styles.sectionInfo}>
@@ -617,20 +971,47 @@ export default function LocalGuideScreen() {
           </>
         )}
 
-        <Pressable
-          style={styles.moreBtn}
-          onPress={() =>
-            openMaps(
-              `https://www.google.com/maps/search/${active === "temples" ? "temples" : active === "food" ? "vegetarian+restaurants" : "hotels"}+near+Tiruvannamalai`
-            )
-          }
-          accessibilityRole="button"
-        >
-          <Ionicons name="search" size={18} color={Colors.saffron} />
-          <Text style={styles.moreBtnText}>
-            Find more {active === "temples" ? "temples" : active === "food" ? "restaurants" : "hotels"} on Google Maps
-          </Text>
-        </Pressable>
+        {!searching && (
+          <Pressable
+            style={styles.moreBtn}
+            onPress={() =>
+              openMaps(
+                `https://www.google.com/maps/search/${MORE_SEARCH[active].q}+near+Tiruvannamalai`
+              )
+            }
+            accessibilityRole="button"
+          >
+            <Ionicons name="search" size={18} color={Colors.saffron} />
+            <Text style={styles.moreBtnText}>
+              Find more {MORE_SEARCH[active].label} on Google Maps
+            </Text>
+          </Pressable>
+        )}
+
+        {!searching && (
+          <View style={styles.contactsSection}>
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionEmoji}>📞</Text>
+              <View style={styles.subSectionTitles}>
+                <Text style={styles.subSectionLabel}>Local Contacts</Text>
+                <Text style={styles.subSectionDesc}>
+                  Helpful people and offices — directory coming soon
+                </Text>
+              </View>
+            </View>
+            {LOCAL_CONTACT_CATEGORIES.map((c) => (
+              <View key={c.label} style={styles.contactRow}>
+                <View style={styles.contactIcon}>
+                  <Ionicons name={c.icon as any} size={18} color={Colors.textLight} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contactLabel}>{c.label}</Text>
+                  <Text style={styles.contactPlaceholder}>No contacts yet</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -663,20 +1044,25 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   tabBar: {
-    flexDirection: "row",
-    padding: 12,
-    gap: 8,
+    flexGrow: 0,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.creamDark,
   },
+  tabBarContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
   tab: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
     paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 12,
     backgroundColor: Colors.creamDark,
   },
@@ -865,5 +1251,113 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     lineHeight: 17,
     marginTop: 2,
+  },
+  continueCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  continueIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  continueTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.brown,
+    marginBottom: 2,
+  },
+  continueSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+  },
+  essentialsCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  essentialsTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    color: Colors.brown,
+    marginBottom: 12,
+  },
+  essentialsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  essentialChip: {
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+  essentialIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.primaryFaint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  essentialLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textMid,
+  },
+  contactsSection: {
+    marginTop: 12,
+  },
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  contactIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.cream,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contactLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.brown,
+    marginBottom: 1,
+  },
+  contactPlaceholder: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textFaint,
   },
 });

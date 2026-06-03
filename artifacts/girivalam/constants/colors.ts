@@ -1,45 +1,57 @@
+// ── Sacred Minimalism palette ───────────────────────────────────────────
+// Warm Ivory · Sandstone · Muted Gold · Soft Bronze · Deep Charcoal.
+// Every token NAME below is preserved for backward compatibility so all
+// screens pick up the calmer look without per-screen rewrites. Only the
+// VALUES were re-tuned toward soft, spacious, low-saturation "temple at
+// dawn" tones — no neon, no heavy glassmorphism.
 const Colors = {
-  primary: "#9B3D12",
-  primaryDark: "#5C1A00",
-  primaryLight: "#C4571A",
-  primaryFaint: "#FFF0E6",
-  primaryMid: "#7A2E0A",
+  // Soft Bronze — primary brand / actions
+  primary: "#9A6A43",
+  primaryDark: "#6E4A2C",
+  primaryLight: "#B5885E",
+  primaryFaint: "#F4EADF",
+  primaryMid: "#835836",
 
-  amber: "#C47A1E",
-  amberLight: "#E09A2A",
-  amberFaint: "#FFF8E8",
+  // Muted Gold — gentle accents / highlights
+  amber: "#B8912E",
+  amberLight: "#CDA64A",
+  amberFaint: "#FAF3E2",
 
-  cream: "#FAF0E6",
-  creamDark: "#F0E0CC",
-  warmWhite: "#FDF8F2",
+  // Warm Ivory + Sandstone — surfaces
+  cream: "#F7EEDF",      // warm ivory
+  creamDark: "#E8DAC2",  // sandstone
+  warmWhite: "#FCF8F1",  // lightest ivory
   white: "#FFFFFF",
 
-  text: "#1E0A00",
-  textMid: "#5C3018",
-  textLight: "#9A6040",
-  textFaint: "#C4956A",
+  // Deep Charcoal — text scale
+  text: "#2B2520",
+  textMid: "#5A4D40",
+  textLight: "#8A7864",
+  textFaint: "#B6A48C",
 
-  border: "#EDD8C4",
-  borderLight: "#F5EAE0",
+  border: "#E4D6C0",
+  borderLight: "#F0E7D8",
 
-  shadow: "rgba(94, 30, 0, 0.10)",
-  shadowMed: "rgba(94, 30, 0, 0.16)",
-  overlay: "rgba(30, 10, 0, 0.50)",
-  overlayLight: "rgba(155, 61, 18, 0.10)",
+  shadow: "rgba(74, 54, 30, 0.10)",
+  shadowMed: "rgba(74, 54, 30, 0.16)",
+  overlay: "rgba(43, 37, 32, 0.50)",
+  overlayLight: "rgba(154, 106, 67, 0.10)",
 
   // aliases for backward compat with other screens
-  saffron: "#9B3D12",
-  saffronDark: "#5C1A00",
-  saffronLight: "#C4571A",
-  brown: "#1E0A00",
-  brownMid: "#5C3018",
-  brownLight: "#9A6040",
-  gold: "#C47A1E",
-  goldLight: "#E09A2A",
-  green: "#9B3D12",
-  blue: "#9B3D12",
-  purple: "#9B3D12",
-  teal: "#9B3D12",
+  saffron: "#9A6A43",
+  saffronDark: "#6E4A2C",
+  saffronLight: "#B5885E",
+  brown: "#2B2520",
+  brownMid: "#5A4D40",
+  brownLight: "#8A7864",
+  gold: "#B8912E",
+  goldLight: "#CDA64A",
+  // Calm, desaturated category accents (no neon) — gently distinct so the
+  // expanded Local Guide categories read apart from one another.
+  green: "#7E8B5A",
+  blue: "#5C7A99",
+  purple: "#8A7A9E",
+  teal: "#5F8175",
 };
 
 export default Colors;

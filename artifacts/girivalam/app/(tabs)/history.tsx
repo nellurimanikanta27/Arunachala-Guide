@@ -1,8 +1,10 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import ScreenBadge from "@/components/ScreenBadge";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LayoutAnimation,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,10 +18,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import {
+  addDownload,
   addInnerNote,
+  getContinue,
+  getDownloads,
   getInnerNotes,
+  getRecentlyOpened,
+  recordOpened,
+  removeDownload,
   removeInnerNote,
+  upsertLibraryProgress,
+  type DownloadItem,
   type InnerNote,
+  type LibraryKind,
+  type LibraryProgress,
+  type RecentItem,
 } from "@/lib/pilgrimage-store";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -198,6 +211,185 @@ const SACRED_AUDIO = [
   { id: "s5", icon: "water" as const, title: "Om Namah Shivaya — slow chant", desc: "For japa, mala practice, or background while reading", duration: "60 min" },
   { id: "s6", icon: "mic" as const, title: "Talks with Ramana — narrated", desc: "One conversation a day, gently read", duration: "8 min each" },
 ];
+
+// ── Unified library model (organises ALL existing content by category) ─────
+type LibItem = {
+  id: string;
+  title: string;
+  category: LibraryKind;
+  mode: "read" | "listen";
+  author?: string;
+  meta?: string;
+  body: string;
+  downloadable: boolean;
+  audio?: boolean;
+};
+
+const CATEGORIES: { key: LibraryKind; label: string }[] = [
+  { key: "book", label: "Books" },
+  { key: "audiobook", label: "Audiobooks" },
+  { key: "teaching", label: "Teachings" },
+  { key: "story", label: "Stories" },
+  { key: "quote", label: "Quotes" },
+  { key: "video", label: "Videos" },
+  { key: "chanting", label: "Chanting" },
+  { key: "article", label: "Articles" },
+];
+
+const CAT_ICON: Record<LibraryKind, keyof typeof Ionicons.glyphMap> = {
+  book: "book-outline",
+  audiobook: "headset-outline",
+  teaching: "school-outline",
+  story: "moon-outline",
+  quote: "chatbubble-ellipses-outline",
+  video: "videocam-outline",
+  chanting: "musical-notes-outline",
+  article: "document-text-outline",
+};
+
+const CATEGORY_LABEL = CATEGORIES.reduce((acc, c) => {
+  acc[c.key] = c.label;
+  return acc;
+}, {} as Record<LibraryKind, string>);
+
+const BOOK_ITEMS: LibItem[] = LIBRARY.map((b) => ({
+  id: `book_${b.id}`,
+  title: b.title,
+  category: "book",
+  mode: "read",
+  author: b.author,
+  meta: b.minutes > 0 ? `${b.minutes} min read` : "Dip in & out",
+  body: b.summary,
+  downloadable: true,
+}));
+
+const QUOTE_ITEMS: LibItem[] = DAILY_QUOTES.map((q, i) => ({
+  id: `quote_${i}`,
+  title: q.q.length > 52 ? `${q.q.slice(0, 50).trim()}…` : q.q,
+  category: "quote",
+  mode: "read",
+  author: q.a,
+  body: `\u201C${q.q}\u201D\n\n\u2014 ${q.a}`,
+  downloadable: false,
+}));
+
+const TEACHING_ITEMS: LibItem[] = [
+  ...MICRO_READS.map((m) => ({
+    id: `teaching_${m.id}`,
+    title: m.title,
+    category: "teaching" as const,
+    mode: "read" as const,
+    meta: "2-min read",
+    body: m.body,
+    downloadable: true,
+  })),
+  ...EMOTIONS.map((e) => ({
+    id: `teaching_emotion_${e.key}`,
+    title: e.label,
+    category: "teaching" as const,
+    mode: "read" as const,
+    body: `${e.teaching}\n\n${e.passage}`,
+    downloadable: true,
+  })),
+];
+
+const STORY_ITEMS: LibItem[] = [
+  ...ASHRAM_STORIES.map((s) => ({
+    id: `story_${s.id}`,
+    title: s.title,
+    category: "story" as const,
+    mode: "read" as const,
+    body: s.body,
+    downloadable: true,
+  })),
+  ...RAMANA_TIMELINE.map((t, i) => ({
+    id: `story_timeline_${i}`,
+    title: `${t.year} \u00B7 ${t.title}`,
+    category: "story" as const,
+    mode: "read" as const,
+    body: t.body,
+    downloadable: true,
+  })),
+];
+
+const ARTICLE_ITEMS: LibItem[] = [
+  ...ASK_QUESTIONS.map((qa, i) => ({
+    id: `article_${i}`,
+    title: qa.q,
+    category: "article" as const,
+    mode: "read" as const,
+    body: qa.a,
+    downloadable: true,
+  })),
+  ...DAILY_QUESTIONS.map((q, i) => ({
+    id: `article_enquiry_${i}`,
+    title: q,
+    category: "article" as const,
+    mode: "read" as const,
+    meta: "Self-enquiry",
+    body: `A question for self-enquiry. Sit with it gently. Do not rush to answer \u2014 let the question do its work.\n\n\u201C${q}\u201D`,
+    downloadable: false,
+  })),
+];
+
+const CHANTING_ITEMS: LibItem[] = SACRED_AUDIO.map((a) => ({
+  id: `chanting_${a.id}`,
+  title: a.title,
+  category: "chanting",
+  mode: "listen",
+  meta: a.duration,
+  body: a.desc,
+  downloadable: false,
+  audio: true,
+}));
+
+const ALL_ITEMS: LibItem[] = [
+  ...BOOK_ITEMS,
+  ...TEACHING_ITEMS,
+  ...STORY_ITEMS,
+  ...QUOTE_ITEMS,
+  ...CHANTING_ITEMS,
+  ...ARTICLE_ITEMS,
+];
+
+const ITEM_BY_ID = new Map<string, LibItem>(ALL_ITEMS.map((i) => [i.id, i]));
+
+const CATEGORY_COUNT = CATEGORIES.reduce((acc, c) => {
+  acc[c.key] = ALL_ITEMS.filter((i) => i.category === c.key).length;
+  return acc;
+}, {} as Record<LibraryKind, number>);
+
+// ── Local content bookmarks (device-only, this screen) ─────────────────────
+const WISDOM_BOOKMARKS_KEY = "@girivalam/v1/wisdom-bookmarks";
+async function getWisdomBookmarks(): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(WISDOM_BOOKMARKS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+async function toggleWisdomBookmark(id: string): Promise<string[]> {
+  const list = await getWisdomBookmarks();
+  const next = list.includes(id) ? list.filter((x) => x !== id) : [id, ...list];
+  try {
+    await AsyncStorage.setItem(WISDOM_BOOKMARKS_KEY, JSON.stringify(next));
+  } catch {
+    /* non-fatal */
+  }
+  return next;
+}
+
+function timeAgo(ts: number): string {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
 
 // ── Daily picker (deterministic per calendar day) ──────────────────────────
 function dayIndex(): number {
@@ -494,11 +686,371 @@ function InnerNotesSection() {
   );
 }
 
+// ── Library: category nav, item cards, reader, store-backed rows ───────────
+function CategoryNav({
+  active,
+  onSelect,
+}: {
+  active: LibraryKind | null;
+  onSelect: (k: LibraryKind) => void;
+}) {
+  return (
+    <View style={styles.catGrid}>
+      {CATEGORIES.map((c) => {
+        const isActive = active === c.key;
+        return (
+          <Pressable
+            key={c.key}
+            style={[styles.catBtn, isActive && styles.catBtnActive]}
+            onPress={() => onSelect(c.key)}
+            accessibilityRole="button"
+          >
+            <Ionicons name={CAT_ICON[c.key]} size={18} color={isActive ? "#FFFAEC" : W.goldLight} />
+            <Text style={[styles.catLabel, isActive && styles.catLabelActive]} numberOfLines={1}>
+              {c.label}
+            </Text>
+            <Text style={[styles.catCount, isActive && styles.catCountActive]}>
+              {CATEGORY_COUNT[c.key]}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function LibraryItemCard({
+  item,
+  bookmarked,
+  downloaded,
+  onOpen,
+  onToggleBookmark,
+  onToggleDownload,
+}: {
+  item: LibItem;
+  bookmarked: boolean;
+  downloaded: boolean;
+  onOpen: (item: LibItem) => void;
+  onToggleBookmark: (item: LibItem) => void;
+  onToggleDownload: (item: LibItem) => void;
+}) {
+  return (
+    <View style={styles.libCard}>
+      <Pressable style={styles.libCardMain} onPress={() => onOpen(item)} accessibilityRole="button">
+        <View style={styles.libIconWrap}>
+          <Ionicons name={CAT_ICON[item.category]} size={18} color={W.goldLight} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.libTitle}>{item.title}</Text>
+          {item.author ? <Text style={styles.libAuthor}>{item.author}</Text> : null}
+          <Text style={styles.libBody} numberOfLines={2}>{item.body}</Text>
+          <View style={styles.libMetaRow}>
+            <View style={styles.libTag}>
+              <Text style={styles.libTagText}>{CATEGORY_LABEL[item.category]}</Text>
+            </View>
+            {item.meta ? <Text style={styles.libMeta}>· {item.meta}</Text> : null}
+            {item.audio ? <Text style={styles.libMeta}>· Listen</Text> : null}
+          </View>
+        </View>
+      </Pressable>
+      <View style={styles.libActions}>
+        <Pressable
+          style={styles.libActionBtn}
+          onPress={() => onToggleBookmark(item)}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <Ionicons
+            name={bookmarked ? "bookmark" : "bookmark-outline"}
+            size={16}
+            color={bookmarked ? W.gold : W.textFaint}
+          />
+          <Text style={[styles.libActionText, bookmarked && { color: W.gold }]}>
+            {bookmarked ? "Saved" : "Save"}
+          </Text>
+        </Pressable>
+        {item.downloadable ? (
+          <Pressable
+            style={styles.libActionBtn}
+            onPress={() => onToggleDownload(item)}
+            hitSlop={8}
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={downloaded ? "checkmark-circle" : "download-outline"}
+              size={16}
+              color={downloaded ? W.gold : W.textFaint}
+            />
+            <Text style={[styles.libActionText, downloaded && { color: W.gold }]}>
+              {downloaded ? "Offline" : "Download"}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function ReaderModal({
+  item,
+  bookmarked,
+  downloaded,
+  onClose,
+  onToggleBookmark,
+  onToggleDownload,
+}: {
+  item: LibItem | null;
+  bookmarked: boolean;
+  downloaded: boolean;
+  onClose: () => void;
+  onToggleBookmark: (item: LibItem) => void;
+  onToggleDownload: (item: LibItem) => void;
+}) {
+  return (
+    <Modal visible={!!item} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.readerOverlay}>
+        <Pressable style={styles.readerBackdrop} onPress={onClose} />
+        <View style={styles.readerSheet}>
+          {item ? (
+            <>
+              <View style={styles.readerHeader}>
+                <View style={styles.libTag}>
+                  <Text style={styles.libTagText}>{CATEGORY_LABEL[item.category]}</Text>
+                </View>
+                <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button">
+                  <Ionicons name="close" size={22} color={W.textMid} />
+                </Pressable>
+              </View>
+              <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+                <Text style={styles.readerTitle}>{item.title}</Text>
+                {item.author ? <Text style={styles.readerAuthor}>{item.author}</Text> : null}
+                {item.audio ? (
+                  <Text style={styles.readerNote}>
+                    Audio narration coming soon — the description is below.
+                  </Text>
+                ) : null}
+                <Text style={styles.readerBody}>{item.body}</Text>
+              </ScrollView>
+              <View style={styles.readerFooter}>
+                <Pressable
+                  style={styles.readerFooterBtn}
+                  onPress={() => onToggleBookmark(item)}
+                  accessibilityRole="button"
+                >
+                  <Ionicons
+                    name={bookmarked ? "bookmark" : "bookmark-outline"}
+                    size={16}
+                    color={bookmarked ? W.gold : W.textMid}
+                  />
+                  <Text style={styles.readerFooterText}>{bookmarked ? "Saved" : "Save"}</Text>
+                </Pressable>
+                {item.downloadable ? (
+                  <Pressable
+                    style={styles.readerFooterBtn}
+                    onPress={() => onToggleDownload(item)}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons
+                      name={downloaded ? "checkmark-circle" : "download-outline"}
+                      size={16}
+                      color={downloaded ? W.gold : W.textMid}
+                    />
+                    <Text style={styles.readerFooterText}>
+                      {downloaded ? "Saved offline" : "Download"}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </>
+          ) : null}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function ContinueRow({ p, onOpen }: { p: LibraryProgress; onOpen: (id: string) => void }) {
+  const pct = Math.max(0, Math.min(1, p.progress));
+  return (
+    <Pressable style={styles.contRow} onPress={() => onOpen(p.id)} accessibilityRole="button">
+      <View style={styles.contIconWrap}>
+        <Ionicons
+          name={p.mode === "listen" ? "headset-outline" : "book-outline"}
+          size={16}
+          color={W.goldLight}
+        />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.contTitle} numberOfLines={1}>{p.title}</Text>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.round(pct * 100)}%` }]} />
+        </View>
+        <Text style={styles.contMeta}>
+          {p.position ? `${p.position} · ` : ""}{Math.round(pct * 100)}%
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={W.textFaint} />
+    </Pressable>
+  );
+}
+
+function RecentRow({ r, onOpen }: { r: RecentItem; onOpen: (id: string) => void }) {
+  return (
+    <Pressable style={styles.recentRow} onPress={() => onOpen(r.id)} accessibilityRole="button">
+      <Ionicons name={CAT_ICON[r.kind]} size={16} color={W.goldLight} />
+      <Text style={styles.recentTitle} numberOfLines={1}>{r.title}</Text>
+      <Text style={styles.recentMeta}>{timeAgo(r.openedAt)}</Text>
+    </Pressable>
+  );
+}
+
+function DownloadRow({
+  d,
+  onOpen,
+  onRemove,
+}: {
+  d: DownloadItem;
+  onOpen: (id: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const icon: keyof typeof Ionicons.glyphMap =
+    d.kind === "map" ? "map-outline" : CAT_ICON[d.kind] ?? "document-outline";
+  return (
+    <View style={styles.dlRow}>
+      <Pressable style={styles.dlMain} onPress={() => onOpen(d.id)} accessibilityRole="button">
+        <Ionicons name={icon} size={16} color={W.goldLight} />
+        <Text style={styles.dlTitle} numberOfLines={1}>{d.title}</Text>
+      </Pressable>
+      {d.sizeLabel ? <Text style={styles.dlMeta}>{d.sizeLabel}</Text> : null}
+      <Pressable onPress={() => onRemove(d.id)} hitSlop={8} accessibilityRole="button">
+        <Ionicons name="trash-outline" size={16} color={W.textFaint} />
+      </Pressable>
+    </View>
+  );
+}
+
 // ── Screen ─────────────────────────────────────────────────────────────────
 export default function WisdomScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const bottomInset = isWeb ? 34 : insets.bottom;
+
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<LibraryKind | null>(null);
+  const [readerItem, setReaderItem] = useState<LibItem | null>(null);
+
+  const [continueRead, setContinueRead] = useState<LibraryProgress[]>([]);
+  const [continueListen, setContinueListen] = useState<LibraryProgress[]>([]);
+  const [recents, setRecents] = useState<RecentItem[]>([]);
+  const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+
+  const reload = useCallback(async () => {
+    const [cr, cl, rc, dl, bm] = await Promise.all([
+      getContinue("read"),
+      getContinue("listen"),
+      getRecentlyOpened(),
+      getDownloads(),
+      getWisdomBookmarks(),
+    ]);
+    setContinueRead(cr);
+    setContinueListen(cl);
+    setRecents(rc);
+    setDownloads(dl);
+    setBookmarks(bm);
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks]);
+  const downloadSet = useMemo(() => new Set(downloads.map((d) => d.id)), [downloads]);
+  const bookmarkItems = useMemo(
+    () => bookmarks.map((id) => ITEM_BY_ID.get(id)).filter((x): x is LibItem => !!x),
+    [bookmarks],
+  );
+
+  const openItem = useCallback(
+    async (item: LibItem) => {
+      setReaderItem(item);
+      try {
+        await recordOpened({ id: item.id, title: item.title, kind: item.category });
+        const inProgress = item.category === "book" || item.mode === "listen";
+        await upsertLibraryProgress({
+          id: item.id,
+          title: item.title,
+          kind: item.category,
+          mode: item.mode,
+          progress: inProgress ? 0.25 : 1,
+          position: item.mode === "listen" ? "Started" : inProgress ? "Started" : "Read",
+        });
+      } finally {
+        reload();
+      }
+    },
+    [reload],
+  );
+
+  const openById = useCallback(
+    (id: string) => {
+      const it = ITEM_BY_ID.get(id);
+      if (it) openItem(it);
+    },
+    [openItem],
+  );
+
+  const onToggleBookmark = useCallback(async (item: LibItem) => {
+    const next = await toggleWisdomBookmark(item.id);
+    setBookmarks(next);
+  }, []);
+
+  const onToggleDownload = useCallback(
+    async (item: LibItem) => {
+      if (downloadSet.has(item.id)) {
+        await removeDownload(item.id);
+      } else {
+        await addDownload({ id: item.id, title: item.title, kind: item.category, sizeLabel: "Text" });
+      }
+      reload();
+    },
+    [downloadSet, reload],
+  );
+
+  const onRemoveDownload = useCallback(
+    async (id: string) => {
+      await removeDownload(id);
+      reload();
+    },
+    [reload],
+  );
+
+  const onSelectCat = useCallback(
+    (k: LibraryKind) => setActiveCategory((cur) => (cur === k ? null : k)),
+    [],
+  );
+
+  const filtered = useMemo(() => {
+    let list = ALL_ITEMS;
+    if (activeCategory) list = list.filter((i) => i.category === activeCategory);
+    const q = query.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (i) =>
+          i.title.toLowerCase().includes(q) ||
+          i.body.toLowerCase().includes(q) ||
+          (i.author?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    return list;
+  }, [activeCategory, query]);
+
+  const filterActive = !!activeCategory || query.trim().length > 0;
+
+  const clearFilter = useCallback(() => {
+    setActiveCategory(null);
+    setQuery("");
+  }, []);
 
   return (
     <>
@@ -507,6 +1059,7 @@ export default function WisdomScreen() {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 40 }]}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {/* Hero */}
       <View style={styles.headerWrap}>
@@ -516,6 +1069,143 @@ export default function WisdomScreen() {
         <Text style={styles.headerSub}>
           Slow down. Read a little. Sit with it. Return tomorrow.
         </Text>
+      </View>
+
+      {/* Search */}
+      <View style={styles.searchWrap}>
+        <Ionicons name="search" size={18} color={W.textFaint} />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search wisdom…"
+          placeholderTextColor={W.textFaint}
+          style={styles.searchInput}
+          returnKeyType="search"
+        />
+        {query ? (
+          <Pressable onPress={() => setQuery("")} hitSlop={8} accessibilityRole="button">
+            <Ionicons name="close-circle" size={18} color={W.textFaint} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      {/* Category navigation */}
+      <CategoryNav active={activeCategory} onSelect={onSelectCat} />
+
+      {filterActive ? (
+        <>
+          <View style={styles.filterHeaderRow}>
+            <Text style={styles.filterHeaderText}>
+              {activeCategory ? CATEGORY_LABEL[activeCategory] : "Search results"}
+              {query.trim() ? ` · \u201C${query.trim()}\u201D` : ""}
+            </Text>
+            <Pressable onPress={clearFilter} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.clearLink}>Clear</Text>
+            </Pressable>
+          </View>
+          {filtered.length ? (
+            <View style={{ gap: 12 }}>
+              {filtered.map((it) => (
+                <LibraryItemCard
+                  key={it.id}
+                  item={it}
+                  bookmarked={bookmarkSet.has(it.id)}
+                  downloaded={downloadSet.has(it.id)}
+                  onOpen={openItem}
+                  onToggleBookmark={onToggleBookmark}
+                  onToggleDownload={onToggleDownload}
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.card}>
+              <Text style={styles.emptyText}>
+                {activeCategory && CATEGORY_COUNT[activeCategory] === 0
+                  ? "More coming. This shelf is being prepared with care."
+                  : "Nothing matches yet. Try another word."}
+              </Text>
+            </View>
+          )}
+        </>
+      ) : (
+        <>
+      {/* Continue */}
+      <SectionHeader
+        overline="PICK UP WHERE YOU LEFT"
+        title="Continue"
+        sub="Your reading and listening, kept in place."
+      />
+      <View style={[styles.card, { gap: 16 }]}>
+        <View style={{ gap: 8 }}>
+          <Text style={styles.subHead}>Continue reading</Text>
+          {continueRead.length ? (
+            continueRead.map((p) => <ContinueRow key={p.id} p={p} onOpen={openById} />)
+          ) : (
+            <Text style={styles.emptyText}>Nothing in progress yet. Open a book to begin.</Text>
+          )}
+        </View>
+        <View style={{ gap: 8 }}>
+          <Text style={styles.subHead}>Continue listening</Text>
+          {continueListen.length ? (
+            continueListen.map((p) => <ContinueRow key={p.id} p={p} onOpen={openById} />)
+          ) : (
+            <Text style={styles.emptyText}>Nothing in progress yet.</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Recently opened */}
+      <SectionHeader overline="RECENTLY OPENED" title="Where you've been" />
+      <View style={styles.card}>
+        {recents.length ? (
+          <View style={{ gap: 4 }}>
+            {recents.slice(0, 8).map((r) => (
+              <RecentRow key={r.id} r={r} onOpen={openById} />
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>Nothing opened yet. Tap any teaching to begin.</Text>
+        )}
+      </View>
+
+      {/* Bookmarks */}
+      <SectionHeader overline="SAVED" title="Bookmarks" />
+      {bookmarkItems.length ? (
+        <View style={{ gap: 12 }}>
+          {bookmarkItems.map((it) => (
+            <LibraryItemCard
+              key={it.id}
+              item={it}
+              bookmarked
+              downloaded={downloadSet.has(it.id)}
+              onOpen={openItem}
+              onToggleBookmark={onToggleBookmark}
+              onToggleDownload={onToggleDownload}
+            />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.emptyText}>
+            Nothing bookmarked yet. Tap the bookmark on any piece to save it here.
+          </Text>
+        </View>
+      )}
+
+      {/* Downloads */}
+      <SectionHeader overline="OFFLINE" title="Downloads" />
+      <View style={styles.card}>
+        {downloads.length ? (
+          <View style={{ gap: 4 }}>
+            {downloads.map((d) => (
+              <DownloadRow key={d.id} d={d} onOpen={openById} onRemove={onRemoveDownload} />
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>
+            Your downloads will appear here for offline reading.
+          </Text>
+        )}
       </View>
 
       {/* 1. Daily Wisdom */}
@@ -619,6 +1309,8 @@ export default function WisdomScreen() {
         sub="Wisdom becomes yours the moment you write it down."
       />
       <InnerNotesSection />
+        </>
+      )}
 
       {/* Closing */}
       <View style={styles.closingWrap}>
@@ -628,6 +1320,15 @@ export default function WisdomScreen() {
         </Text>
       </View>
     </ScrollView>
+
+    <ReaderModal
+      item={readerItem}
+      bookmarked={readerItem ? bookmarkSet.has(readerItem.id) : false}
+      downloaded={readerItem ? downloadSet.has(readerItem.id) : false}
+      onClose={() => setReaderItem(null)}
+      onToggleBookmark={onToggleBookmark}
+      onToggleDownload={onToggleDownload}
+    />
     </>
   );
 }
@@ -881,4 +1582,135 @@ const styles = StyleSheet.create({
     fontSize: 13, color: W.textMid, fontFamily: "Inter_400Regular",
     fontStyle: "italic",
   },
+
+  // Search
+  searchWrap: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 14, paddingVertical: 12, borderRadius: 14,
+    backgroundColor: W.card, borderWidth: 1, borderColor: W.cardBorder,
+  },
+  searchInput: {
+    flex: 1, color: W.text, fontFamily: "Inter_400Regular", fontSize: 14,
+    padding: 0,
+  },
+
+  // Category navigation
+  catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  catBtn: {
+    width: "47%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 12, paddingVertical: 12, borderRadius: 14,
+    backgroundColor: W.card, borderWidth: 1, borderColor: W.cardBorder,
+  },
+  catBtnActive: { backgroundColor: W.gold, borderColor: W.gold },
+  catLabel: { flex: 1, fontSize: 13, color: W.text, fontFamily: "Inter_600SemiBold" },
+  catLabelActive: { color: "#FFFAEC" },
+  catCount: {
+    fontSize: 11, color: W.textFaint, fontFamily: "Inter_600SemiBold",
+    minWidth: 16, textAlign: "right",
+  },
+  catCountActive: { color: "#FFFAEC" },
+
+  // Filter results header
+  filterHeaderRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
+  filterHeaderText: { flex: 1, fontSize: 16, color: W.text, fontFamily: "Inter_700Bold" },
+  clearLink: { fontSize: 13, color: W.goldLight, fontFamily: "Inter_600SemiBold" },
+
+  // Generic empty / sub-head
+  emptyText: {
+    fontSize: 12, color: W.textFaint, fontFamily: "Inter_400Regular",
+    lineHeight: 18, fontStyle: "italic",
+  },
+  subHead: {
+    fontSize: 11, color: W.goldLight, letterSpacing: 1.5,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // Library item card
+  libCard: {
+    backgroundColor: W.card, borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: W.cardBorder,
+  },
+  libCardMain: { flexDirection: "row", gap: 12 },
+  libIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: W.goldFaint, borderWidth: 1, borderColor: W.cardBorder,
+    alignItems: "center", justifyContent: "center",
+  },
+  libTitle: { fontSize: 14, color: W.text, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
+  libAuthor: { fontSize: 11, color: W.textFaint, fontFamily: "Inter_400Regular", marginTop: 2 },
+  libBody: { fontSize: 12, color: W.textMid, fontFamily: "Inter_400Regular", lineHeight: 18, marginTop: 6 },
+  libMetaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" },
+  libTag: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
+    backgroundColor: W.goldFaint, borderWidth: 1, borderColor: W.cardBorder,
+  },
+  libTagText: { fontSize: 10, color: W.goldLight, fontFamily: "Inter_600SemiBold" },
+  libMeta: { fontSize: 11, color: W.textFaint, fontFamily: "Inter_400Regular" },
+  libActions: {
+    flexDirection: "row", gap: 18, marginTop: 12, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: W.cardBorder,
+  },
+  libActionBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+  libActionText: { fontSize: 12, color: W.textFaint, fontFamily: "Inter_500Medium" },
+
+  // Reader modal
+  readerOverlay: { flex: 1, justifyContent: "flex-end" },
+  readerBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(43, 31, 8, 0.45)" },
+  readerSheet: {
+    backgroundColor: W.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: W.cardBorder,
+  },
+  readerHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  readerTitle: { fontSize: 20, color: W.text, fontFamily: "Inter_700Bold", lineHeight: 28 },
+  readerAuthor: { fontSize: 12, color: W.goldLight, fontFamily: "Inter_600SemiBold", marginTop: 4 },
+  readerNote: {
+    fontSize: 12, color: W.textFaint, fontFamily: "Inter_400Regular",
+    fontStyle: "italic", marginTop: 10,
+  },
+  readerBody: {
+    fontSize: 15, color: W.textMid, fontFamily: "Inter_400Regular",
+    lineHeight: 24, marginTop: 14,
+  },
+  readerFooter: {
+    flexDirection: "row", gap: 12, marginTop: 18, paddingTop: 16,
+    borderTopWidth: 1, borderTopColor: W.cardBorder,
+  },
+  readerFooterBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100,
+    backgroundColor: W.goldFaint, borderWidth: 1, borderColor: W.cardBorder,
+  },
+  readerFooterText: { fontSize: 13, color: W.textMid, fontFamily: "Inter_600SemiBold" },
+
+  // Continue rows
+  contRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 6 },
+  contIconWrap: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: W.goldFaint, borderWidth: 1, borderColor: W.cardBorder,
+    alignItems: "center", justifyContent: "center",
+  },
+  contTitle: { fontSize: 13, color: W.text, fontFamily: "Inter_600SemiBold" },
+  progressTrack: {
+    height: 5, borderRadius: 3, backgroundColor: W.goldFaint, marginTop: 6,
+    overflow: "hidden",
+  },
+  progressFill: { height: 5, borderRadius: 3, backgroundColor: W.gold },
+  contMeta: { fontSize: 10, color: W.textFaint, fontFamily: "Inter_500Medium", marginTop: 4 },
+
+  // Recently opened
+  recentRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
+  recentTitle: { flex: 1, fontSize: 13, color: W.text, fontFamily: "Inter_500Medium" },
+  recentMeta: { fontSize: 11, color: W.textFaint, fontFamily: "Inter_400Regular" },
+
+  // Downloads
+  dlRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
+  dlMain: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
+  dlTitle: { flex: 1, fontSize: 13, color: W.text, fontFamily: "Inter_500Medium" },
+  dlMeta: { fontSize: 11, color: W.textFaint, fontFamily: "Inter_400Regular" },
 });

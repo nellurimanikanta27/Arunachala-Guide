@@ -32,7 +32,7 @@ import ScreenBadge from "@/components/ScreenBadge";
 import Colors from "@/constants/colors";
 // CINEMATIC-V1
 import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
-import { addBookmark, addMoment, type Bookmark, finishWalk, getBookmarks, getMomentsForWalk, getSettings, getWalkProgress, type Moment, removeBookmark, startWalk, updateSettings, updateWalk } from "@/lib/pilgrimage-store";
+import { addBookmark, addMoment, type Bookmark, finishWalk, getBookmarks, getMomentsForWalk, getSettings, getVisitedPoints, getWalkProgress, isVisited, markVisited, type Moment, removeBookmark, startWalk, unmarkVisited, updateSettings, updateWalk } from "@/lib/pilgrimage-store";
 import * as ImagePicker from "expo-image-picker";
 
 const PREP_SEEN_KEY = "girivalam:firstWalkPrepSeen";
@@ -231,12 +231,50 @@ export default function RouteMapScreen() {
   type WalkOverlay = null | "plus" | "utilities" | "temple" | "translator" | "spots";
   const [walkOverlay, setWalkOverlay] = useState<WalkOverlay>(null);
   const [templeInfoIdx, setTempleInfoIdx] = useState<number | null>(null);
+  // Sacred-point sheet: expandable "Read Article" + "Audio Explanation" sections.
+  const [templeArticleOpen, setTempleArticleOpen] = useState(false);
+  const [templeAudioOpen, setTempleAudioOpen] = useState(false);
+  // Visited sacred points — persisted via pilgrimage-store (survives reloads).
+  const [visitedKeys, setVisitedKeys] = useState<Set<string>>(new Set());
+  const refreshVisited = React.useCallback(() => {
+    getVisitedPoints()
+      .then((list) => setVisitedKeys(new Set(list.map((v) => v.key))))
+      .catch(() => {});
+  }, []);
   // Bookmarked sacred spots — loaded on demand for the list overlay.
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   // Refs avoid stale-closure / concurrent-tap races on saveMoment.
   const currentWalkIdRef = useRef<string | null>(null);
   const walkInFlightRef = useRef<Promise<string> | null>(null);
   const savedKindsRef = useRef<Set<string>>(new Set()); // "lingamIdx:kind"
+
+  // Load persisted visited points once on mount.
+  useEffect(() => { refreshVisited(); }, [refreshVisited]);
+
+  // Collapse the sacred-point sheet's expandable sections whenever a
+  // different point is opened so each sheet starts clean.
+  useEffect(() => {
+    setTempleArticleOpen(false);
+    setTempleAudioOpen(false);
+  }, [templeInfoIdx, walkOverlay]);
+
+  // Toggle the persisted "visited" state for a lingam sacred point.
+  const toggleVisited = React.useCallback(async (lingamIdx: number) => {
+    const l = LINGAMS[lingamIdx];
+    const key = `lingam-${l.number}`;
+    try {
+      const already = await isVisited(key);
+      if (already) {
+        await unmarkVisited(key);
+      } else {
+        await markVisited(key, l.name);
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      refreshVisited();
+    }
+  }, [refreshVisited]);
 
   // Sankalpa thread — the "why" of this walk
   const [sankalpa, setSankalpa] = useState("");
@@ -1842,6 +1880,79 @@ export default function RouteMapScreen() {
                     <Text style={[dStyles.templeBody, { marginTop: 14 }]}>
                       {t.description}
                     </Text>
+
+                    {/* Sacred Point Experience — Audio · Article · Visited */}
+                    {(() => {
+                      const visited = visitedKeys.has(`lingam-${t.number}`);
+                      return (
+                        <View style={dStyles.spActionRow}>
+                          <Pressable
+                            style={[dStyles.spActionBtn, templeAudioOpen && dStyles.spActionBtnActive]}
+                            onPress={() => setTempleAudioOpen((v) => !v)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Audio explanation of this sacred point"
+                          >
+                            <Ionicons name="volume-medium-outline" size={18} color={GOLD} />
+                            <Text style={dStyles.spActionLabel}>Audio</Text>
+                          </Pressable>
+                          <Pressable
+                            style={[dStyles.spActionBtn, templeArticleOpen && dStyles.spActionBtnActive]}
+                            onPress={() => setTempleArticleOpen((v) => !v)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Read full article about this sacred point"
+                          >
+                            <Ionicons name="book-outline" size={18} color={GOLD} />
+                            <Text style={dStyles.spActionLabel}>Read Article</Text>
+                          </Pressable>
+                          <Pressable
+                            style={[dStyles.spActionBtn, visited && dStyles.spActionBtnVisited]}
+                            onPress={() => toggleVisited(t.number - 1)}
+                            accessibilityRole="button"
+                            accessibilityLabel={visited ? "Visited. Tap to unmark." : "Mark this sacred point as visited"}
+                          >
+                            <Ionicons
+                              name={visited ? "checkmark-circle" : "checkmark-circle-outline"}
+                              size={18}
+                              color={visited ? "#9BD17C" : GOLD}
+                            />
+                            <Text style={[dStyles.spActionLabel, visited && { color: "#9BD17C" }]}>
+                              {visited ? "Visited" : "Mark Visited"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      );
+                    })()}
+
+                    {templeAudioOpen && (
+                      <View style={dStyles.spExpand}>
+                        <View style={dStyles.spAudioHead}>
+                          <Ionicons name="headset-outline" size={16} color={GOLD} />
+                          <Text style={dStyles.spExpandTitle}>Audio explanation</Text>
+                        </View>
+                        <Text style={dStyles.spExpandBody}>{t.meaning}</Text>
+                        <Text style={[dStyles.spExpandBody, { marginTop: 10 }]}>{t.specialty}</Text>
+                        <Text style={dStyles.spAudioNote}>
+                          Audio narration coming soon — for now, read this spoken-style
+                          explanation slowly to yourself as you stand here.
+                        </Text>
+                      </View>
+                    )}
+
+                    {templeArticleOpen && (
+                      <View style={dStyles.spExpand}>
+                        <Text style={dStyles.spExpandTitle}>About {t.name}</Text>
+                        <Text style={dStyles.spExpandMeta}>
+                          {t.deity} · {t.direction}
+                        </Text>
+                        <View style={dStyles.spExpandGrid}>
+                          <Text style={dStyles.spExpandRow}>Planet · {t.planet}</Text>
+                          <Text style={dStyles.spExpandRow}>Element · {t.element}</Text>
+                          <Text style={dStyles.spExpandRow}>Mantra · {t.mantra}</Text>
+                        </View>
+                        <Text style={dStyles.spExpandBody}>{t.benefit}</Text>
+                        <Text style={[dStyles.spExpandBody, { marginTop: 10 }]}>{t.specialty}</Text>
+                      </View>
+                    )}
                   </ScrollView>
                   <View style={dStyles.templeFootRow}>
                     {[
@@ -3753,6 +3864,86 @@ const dStyles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 18,
     paddingBottom: 12,
+    fontStyle: "italic",
+  },
+
+  // ─── Sacred Point Experience actions (geofence sheet) ───────────────────
+  spActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 20,
+  },
+  spActionBtn: {
+    flex: 1,
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    backgroundColor: "rgba(196,122,30,0.06)",
+  },
+  spActionBtnActive: {
+    borderColor: GOLD_DIM,
+    backgroundColor: "rgba(196,122,30,0.14)",
+  },
+  spActionBtnVisited: {
+    borderColor: "rgba(155,209,124,0.5)",
+    backgroundColor: "rgba(155,209,124,0.10)",
+  },
+  spActionLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.82)",
+    textAlign: "center",
+  },
+  spExpand: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: HAIRLINE,
+  },
+  spExpandTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "white",
+  },
+  spExpandMeta: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: GOLD,
+    marginTop: 2,
+  },
+  spExpandGrid: {
+    marginTop: 10,
+    gap: 4,
+  },
+  spExpandRow: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12.5,
+    color: "rgba(255,255,255,0.7)",
+  },
+  spExpandBody: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13.5,
+    lineHeight: 21,
+    color: "rgba(255,255,255,0.82)",
+    marginTop: 10,
+  },
+  spAudioHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  spAudioNote: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11.5,
+    color: TEXT_DIM,
+    marginTop: 12,
+    lineHeight: 17,
     fontStyle: "italic",
   },
 

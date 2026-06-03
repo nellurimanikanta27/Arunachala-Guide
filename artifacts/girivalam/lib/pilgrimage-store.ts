@@ -22,6 +22,10 @@ const K = {
   settings: `${NS}/settings`,
   bookmarks: `${NS}/bookmarks`,
   innerNotes: `${NS}/inner-notes`,
+  libraryProgress: `${NS}/library-progress`,
+  recents: `${NS}/recents`,
+  downloads: `${NS}/downloads`,
+  visited: `${NS}/visited`,
 };
 
 export type MomentKind = "photo" | "voice" | "note" | "feeling";
@@ -266,9 +270,156 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
   });
 }
 
+// ── Wisdom library: reading/listening progress, recents, downloads ──────
+export type LibraryKind =
+  | "book"
+  | "audiobook"
+  | "teaching"
+  | "story"
+  | "quote"
+  | "video"
+  | "chanting"
+  | "article";
+
+export interface LibraryProgress {
+  id: string;            // stable content id
+  title: string;
+  kind: LibraryKind;
+  mode: "read" | "listen";
+  progress: number;      // 0..1
+  position?: string;     // e.g. "Page 12" or "12:34"
+  updatedAt: number;
+}
+
+export async function getLibraryProgress(): Promise<LibraryProgress[]> {
+  const list = await load<LibraryProgress[]>(K.libraryProgress, []);
+  return [...list].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export async function upsertLibraryProgress(
+  input: Omit<LibraryProgress, "updatedAt">
+): Promise<LibraryProgress> {
+  return withKeyLock(K.libraryProgress, async () => {
+    const list = await load<LibraryProgress[]>(K.libraryProgress, []);
+    const entry: LibraryProgress = { ...input, updatedAt: Date.now() };
+    const next = [entry, ...list.filter((p) => p.id !== input.id)];
+    await save(K.libraryProgress, next);
+    return entry;
+  });
+}
+
+export async function getContinue(mode: "read" | "listen"): Promise<LibraryProgress[]> {
+  const all = await getLibraryProgress();
+  return all.filter((p) => p.mode === mode && p.progress < 1);
+}
+
+// ── Recently opened library items ───────────────────────────────────────
+export interface RecentItem {
+  id: string;
+  title: string;
+  kind: LibraryKind;
+  openedAt: number;
+}
+
+export async function getRecentlyOpened(): Promise<RecentItem[]> {
+  const list = await load<RecentItem[]>(K.recents, []);
+  return [...list].sort((a, b) => b.openedAt - a.openedAt);
+}
+
+export async function recordOpened(input: Omit<RecentItem, "openedAt">): Promise<void> {
+  return withKeyLock(K.recents, async () => {
+    const list = await load<RecentItem[]>(K.recents, []);
+    const entry: RecentItem = { ...input, openedAt: Date.now() };
+    const next = [entry, ...list.filter((r) => r.id !== input.id)].slice(0, 30);
+    await save(K.recents, next);
+  });
+}
+
+// ── Downloads (offline library + maps) ──────────────────────────────────
+export interface DownloadItem {
+  id: string;
+  title: string;
+  kind: LibraryKind | "map";
+  sizeLabel?: string;
+  downloadedAt: number;
+}
+
+export async function getDownloads(): Promise<DownloadItem[]> {
+  const list = await load<DownloadItem[]>(K.downloads, []);
+  return [...list].sort((a, b) => b.downloadedAt - a.downloadedAt);
+}
+
+export async function addDownload(input: Omit<DownloadItem, "downloadedAt">): Promise<DownloadItem> {
+  return withKeyLock(K.downloads, async () => {
+    const list = await load<DownloadItem[]>(K.downloads, []);
+    const entry: DownloadItem = { ...input, downloadedAt: Date.now() };
+    const next = [entry, ...list.filter((d) => d.id !== input.id)];
+    await save(K.downloads, next);
+    return entry;
+  });
+}
+
+export async function removeDownload(id: string): Promise<void> {
+  return withKeyLock(K.downloads, async () => {
+    const list = await load<DownloadItem[]>(K.downloads, []);
+    await save(K.downloads, list.filter((d) => d.id !== id));
+  });
+}
+
+export async function isDownloaded(id: string): Promise<boolean> {
+  const list = await getDownloads();
+  return list.some((d) => d.id === id);
+}
+
+// ── Visited sacred points (Map flow geofence sheet) ─────────────────────
+export interface VisitedPoint {
+  key: string;   // stable point identifier (e.g. lingam index or stop title)
+  name: string;
+  visitedAt: number;
+}
+
+export async function getVisitedPoints(): Promise<VisitedPoint[]> {
+  const list = await load<VisitedPoint[]>(K.visited, []);
+  return [...list].sort((a, b) => b.visitedAt - a.visitedAt);
+}
+
+export async function isVisited(key: string): Promise<boolean> {
+  const list = await getVisitedPoints();
+  return list.some((v) => v.key === key);
+}
+
+export async function markVisited(key: string, name: string): Promise<VisitedPoint> {
+  return withKeyLock(K.visited, async () => {
+    const list = await load<VisitedPoint[]>(K.visited, []);
+    const existing = list.find((v) => v.key === key);
+    if (existing) return existing;
+    const entry: VisitedPoint = { key, name, visitedAt: Date.now() };
+    await save(K.visited, [...list, entry]);
+    return entry;
+  });
+}
+
+export async function unmarkVisited(key: string): Promise<void> {
+  return withKeyLock(K.visited, async () => {
+    const list = await load<VisitedPoint[]>(K.visited, []);
+    await save(K.visited, list.filter((v) => v.key !== key));
+  });
+}
+
 // ── Wipe everything ─────────────────────────────────────────────────────
 export async function clearAllPilgrimageData(): Promise<void> {
-  await AsyncStorage.multiRemove([K.walks, K.moments, K.stories, K.settings, K.bookmarks, K.innerNotes]);
+  await AsyncStorage.multiRemove([
+    K.walks,
+    K.moments,
+    K.stories,
+    K.settings,
+    K.bookmarks,
+    K.innerNotes,
+    K.libraryProgress,
+    K.recents,
+    K.downloads,
+    K.visited,
+  ]);
 }
 
 // ── Derived stats ───────────────────────────────────────────────────────

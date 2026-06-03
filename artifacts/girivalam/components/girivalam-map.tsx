@@ -126,6 +126,14 @@ function buildMapHtml(zoom = 14): string {
       box-shadow: 0 0 0 0 rgba(155,61,18,0.7);
       animation: lingam-pulse 2s infinite;
     }
+    #offline-banner {
+      position: absolute; top: 8px; left: 8px; right: 8px; z-index: 1200;
+      display: none; padding: 8px 12px; border-radius: 10px;
+      background: rgba(43, 37, 32, 0.92); color: #FCF8F1;
+      font-family: -apple-system, system-ui, sans-serif; font-size: 12px;
+      line-height: 1.35; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    #offline-banner b { color: #CDA64A; }
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6); }
       70% { box-shadow: 0 0 0 18px rgba(30, 136, 229, 0); }
@@ -140,15 +148,48 @@ function buildMapHtml(zoom = 14): string {
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <div id="offline-banner">📡 <b>You're offline.</b> The map basemap needs a connection, but your sacred route and stops are still shown below.</div>
   <script>
+    // Graceful fallback if Leaflet can't load (offline / CDN unreachable).
+    function showMapOfflineFallback() {
+      var b = document.getElementById('offline-banner');
+      if (b) b.style.display = 'block';
+      var mapEl = document.getElementById('map');
+      if (mapEl && !mapEl.querySelector('.leaflet-pane')) {
+        mapEl.style.display = 'flex';
+        mapEl.style.alignItems = 'center';
+        mapEl.style.justifyContent = 'center';
+        mapEl.style.padding = '24px';
+        mapEl.style.textAlign = 'center';
+        mapEl.style.fontFamily = '-apple-system, system-ui, sans-serif';
+        mapEl.style.color = '#6E4A2C';
+        mapEl.style.fontSize = '13px';
+        mapEl.innerHTML = '📡 The map needs an internet connection to load. Please reconnect to see the Girivalam route.';
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onerror="showMapOfflineFallback();"></script>
+  <script>
+   if (typeof L === 'undefined') {
+     showMapOfflineFallback();
+   } else {
     var map = L.map('map', { zoomControl: true, attributionControl: true })
       .setView([${ARUNACHALA_CENTER[0]}, ${ARUNACHALA_CENTER[1]}], ${zoom});
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var offlineBanner = document.getElementById('offline-banner');
+    var tileErrors = 0;
+    function showOffline() { if (offlineBanner) offlineBanner.style.display = 'block'; }
+    function hideOffline() { if (offlineBanner) offlineBanner.style.display = 'none'; }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) showOffline();
+    window.addEventListener('online', hideOffline);
+    window.addEventListener('offline', showOffline);
+
+    var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+    tiles.on('tileerror', function () { tileErrors += 1; if (tileErrors >= 3) showOffline(); });
+    tiles.on('load', function () { tileErrors = 0; if (navigator.onLine !== false) hideOffline(); });
 
     // CINEMATIC-V1: layered gold glow — wide soft underlay + bright top line.
     L.polyline(${polylineCoords}, {
@@ -270,6 +311,7 @@ function buildMapHtml(zoom = 14): string {
     }
     window.addEventListener('message', function(e) { handleMessage(e.data); });
     document.addEventListener('message', function(e) { handleMessage(e.data); });
+   }
   </script>
 </body>
 </html>`;
