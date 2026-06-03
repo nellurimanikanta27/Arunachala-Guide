@@ -264,7 +264,7 @@ export default function MeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenBadge n={6} label="My Pilgrimage" />
+      <ScreenBadge n={8} label="My Pilgrimage" />
       <LinearGradient
         colors={[Colors.primaryDark, Colors.primary]}
         start={{ x: 0, y: 0 }}

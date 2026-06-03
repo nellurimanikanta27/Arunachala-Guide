@@ -714,7 +714,7 @@ export default function LocalGuideScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenBadge n={10} label="Local Guide" />
+      <ScreenBadge n={3} label="Local Guide" />
       <TopBar title="Arunachala" subtitle="Explore · Learn · Experience" />
       <View style={styles.searchBar}>
         <Ionicons name="search" size={18} color={Colors.textLight} />

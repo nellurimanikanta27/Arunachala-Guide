@@ -172,7 +172,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenBadge n={3} label="Home" />
+      <ScreenBadge n={10} label="Home" />
       <LinearGradient
         colors={[Colors.primaryDark, Colors.primary]}
         start={{ x: 0, y: 0 }}

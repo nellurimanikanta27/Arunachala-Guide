@@ -1998,7 +1998,7 @@ export default function RouteMapScreen() {
   // ─── NORMAL MAP SCREEN ────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: Colors.warmWhite }}>
-    <ScreenBadge n={7} label="Girivalam (Route Map)" />
+    <ScreenBadge n={5} label="Girivalam (Route Map)" />
     {sankalpaPromptOpen && (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}

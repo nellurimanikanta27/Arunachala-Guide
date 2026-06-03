@@ -184,7 +184,7 @@ export default function TranslatorScreen() {
 
   return (
     <>
-    <ScreenBadge n={5} label="Translator" />
+    <ScreenBadge n={7} label="Translator" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[

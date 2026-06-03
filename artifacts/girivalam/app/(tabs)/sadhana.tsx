@@ -143,7 +143,7 @@ export default function SadhanaScreen() {
 
   return (
     <>
-    <ScreenBadge n={9} label="Sadhana" />
+    <ScreenBadge n={6} label="Sadhana" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}

@@ -1054,7 +1054,7 @@ export default function WisdomScreen() {
 
   return (
     <>
-    <ScreenBadge n={8} label="Wisdom" />
+    <ScreenBadge n={4} label="Wisdom" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 40 }]}
