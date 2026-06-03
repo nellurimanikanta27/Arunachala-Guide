@@ -21,7 +21,6 @@ import {
   getPournamiDate,
   getTithi,
 } from "@/lib/sacred-time";
-import ScreenBadge from "@/components/ScreenBadge";
 import { getWalkProgress, type WalkProgress } from "@/lib/pilgrimage-store";
 
 type FeatureRoute = "route-map" | "history" | "sadhana" | "local-guide";
@@ -172,7 +171,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenBadge n={10} label="Home" />
       <LinearGradient
         colors={[Colors.primaryDark, Colors.primary]}
         start={{ x: 0, y: 0 }}

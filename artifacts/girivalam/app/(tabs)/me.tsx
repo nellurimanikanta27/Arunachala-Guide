@@ -1,5 +1,4 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import ScreenBadge from "@/components/ScreenBadge";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -264,7 +263,6 @@ export default function MeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenBadge n={8} label="My Pilgrimage" />
       <LinearGradient
         colors={[Colors.primaryDark, Colors.primary]}
         start={{ x: 0, y: 0 }}

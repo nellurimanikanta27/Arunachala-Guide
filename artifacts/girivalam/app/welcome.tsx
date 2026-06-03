@@ -18,7 +18,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import ScreenBadge from "@/components/ScreenBadge";
 import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-store";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -108,7 +107,6 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.root}>
-      <ScreenBadge n={2} label="Welcome" />
       <LinearGradient
         colors={["#0A0604", "#1A0A05", "#2A1208"]}
         start={{ x: 0.5, y: 0 }}

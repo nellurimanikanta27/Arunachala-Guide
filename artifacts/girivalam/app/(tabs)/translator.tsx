@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import ScreenBadge from "@/components/ScreenBadge";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Linking from "expo-linking";
@@ -184,7 +183,6 @@ export default function TranslatorScreen() {
 
   return (
     <>
-    <ScreenBadge n={7} label="Translator" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[

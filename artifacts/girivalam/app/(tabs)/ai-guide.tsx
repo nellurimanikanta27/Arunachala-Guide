@@ -1,5 +1,4 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import ScreenBadge from "@/components/ScreenBadge";
 import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -111,7 +110,6 @@ export default function AIGuideScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={80}
     >
-      <ScreenBadge n={9} label="AI Guide" />
       <View style={styles.botHeader}>
         <View style={styles.botAvatar}>
           <MaterialCommunityIcons name="robot-happy-outline" size={22} color={Colors.white} />

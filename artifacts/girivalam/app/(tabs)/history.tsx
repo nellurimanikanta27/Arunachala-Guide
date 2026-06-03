@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import ScreenBadge from "@/components/ScreenBadge";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LayoutAnimation,
@@ -1054,7 +1053,6 @@ export default function WisdomScreen() {
 
   return (
     <>
-    <ScreenBadge n={4} label="Wisdom" />
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 40 }]}
