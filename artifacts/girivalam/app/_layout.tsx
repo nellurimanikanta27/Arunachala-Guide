@@ -17,12 +17,24 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Ignore the device's system font-scaling so the app's typography stays as designed
 // (prevents "everything looks magnified" when the OS has large-text accessibility on).
-// @ts-expect-error - defaultProps is valid at runtime for RN Text/TextInput
-Text.defaultProps = { ...(Text.defaultProps || {}), allowFontScaling: false };
-// @ts-expect-error - defaultProps is valid at runtime for RN Text/TextInput
-TextInput.defaultProps = { ...(TextInput.defaultProps || {}), allowFontScaling: false };
+// NOTE: `defaultProps` can be a read-only property on native (Hermes + React 19),
+// where reassigning it throws a TypeError at module load and crashes the app before
+// it mounts. We guard the mutation so a non-writable platform degrades gracefully
+// (font scaling stays on) instead of taking the whole app down.
+function disableFontScaling(Component: { defaultProps?: { allowFontScaling?: boolean } }) {
+  try {
+    Component.defaultProps = {
+      ...(Component.defaultProps || {}),
+      allowFontScaling: false,
+    };
+  } catch {
+    // Property is read-only on this platform; skip rather than crash.
+  }
+}
+disableFontScaling(Text as unknown as { defaultProps?: { allowFontScaling?: boolean } });
+disableFontScaling(TextInput as unknown as { defaultProps?: { allowFontScaling?: boolean } });
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient();
 
