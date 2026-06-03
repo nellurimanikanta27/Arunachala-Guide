@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import ScreenBadge from "@/components/ScreenBadge";
+import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
 import React, { useState } from "react";
 import {
@@ -9,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -453,12 +455,45 @@ export default function LocalGuideScreen() {
   const isWeb = Platform.OS === "web";
   const bottomInset = isWeb ? 34 : insets.bottom;
   const [active, setActive] = useState<Category>("temples");
+  const [query, setQuery] = useState("");
 
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  const searchResults = searching
+    ? PLACES.filter((p) => {
+        const hay = (
+          p.name +
+          " " +
+          p.description +
+          " " +
+          (p.tags?.join(" ") ?? "")
+        ).toLowerCase();
+        return hay.includes(q);
+      })
+    : [];
   const filtered = PLACES.filter((p) => p.category === active);
 
   return (
     <View style={styles.container}>
       <ScreenBadge n={10} label="Local Guide" />
+      <TopBar title="Arunachala" subtitle="Explore · Learn · Experience" />
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color={Colors.textLight} />
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search temples, food, stay…"
+          placeholderTextColor={Colors.textFaint}
+          returnKeyType="search"
+        />
+        {searching ? (
+          <Pressable onPress={() => setQuery("")} hitSlop={8} accessibilityLabel="Clear search">
+            <Ionicons name="close-circle" size={18} color={Colors.textLight} />
+          </Pressable>
+        ) : null}
+      </View>
+      {!searching && (
       <View style={styles.tabBar}>
         {CATEGORIES.map((cat) => (
           <Pressable
@@ -487,6 +522,7 @@ export default function LocalGuideScreen() {
           </Pressable>
         ))}
       </View>
+      )}
 
       <ScrollView
         contentContainerStyle={[
@@ -495,7 +531,17 @@ export default function LocalGuideScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {active === "temples" ? (
+        {searching ? (
+          searchResults.length > 0 ? (
+            searchResults.map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))
+          ) : (
+            <Text style={styles.sectionInfo}>
+              No matches for “{query}”. Try temples, food, ashram, stay…
+            </Text>
+          )
+        ) : active === "temples" ? (
           TEMPLE_SECTIONS.map((section) => {
             const items = filtered.filter((p) => p.subType === section.subType);
             if (items.length === 0) return null;
@@ -594,6 +640,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.warmWhite,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === "ios" ? 11 : 6,
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: Colors.text,
+    padding: 0,
   },
   tabBar: {
     flexDirection: "row",

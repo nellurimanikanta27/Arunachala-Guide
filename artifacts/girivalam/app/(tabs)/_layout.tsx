@@ -1,30 +1,42 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 
 import Colors from "@/constants/colors";
+import FloatingAssistant from "@/components/FloatingAssistant";
+
+// Land on the Local Guide (pilgrim-first) rather than the old dashboard.
+export const unstable_settings = {
+  initialRouteName: "local-guide",
+};
+
+// Emphasized center "Map" tab — a raised circular button representing the
+// physical pilgrimage journey.
+function MapTabIcon({ focused }: { focused: boolean }) {
+  return (
+    <View style={[styles.mapButton, focused && styles.mapButtonActive]}>
+      <MaterialCommunityIcons name="map-marker-path" size={28} color={Colors.white} />
+    </View>
+  );
+}
 
 export default function TabLayout() {
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         animation: "fade",
         lazy: true,
-        headerStyle: { backgroundColor: Colors.saffron },
-        headerTintColor: Colors.white,
-        headerTitleStyle: {
-          fontFamily: "Inter_600SemiBold",
-          fontSize: 18,
-        },
+        headerShown: false,
         sceneStyle: { backgroundColor: Colors.warmWhite },
-        tabBarActiveTintColor: Colors.saffron,
+        tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textLight,
         tabBarStyle: {
           backgroundColor: Colors.white,
           borderTopColor: Colors.borderLight,
           borderTopWidth: 1,
-          height: Platform.OS === "web" ? 64 : undefined,
+          height: Platform.OS === "web" ? 68 : undefined,
           paddingTop: 6,
           paddingBottom: Platform.OS === "web" ? 10 : undefined,
         },
@@ -35,21 +47,36 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="local-guide"
         options={{
-          title: "Home",
-          headerShown: false,
+          title: "Guide",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="compass" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="ai-guide"
+        name="history"
         options={{
-          title: "AI Guide",
+          title: "Wisdom",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-ellipses" size={size} color={color} />
+            <Ionicons name="book" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="route-map"
+        options={{
+          title: "",
+          tabBarIcon: ({ focused }) => <MapTabIcon focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="sadhana"
+        options={{
+          title: "Sadhana",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="meditation" size={size} color={color} />
           ),
         }}
       />
@@ -62,21 +89,36 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="me"
-        options={{
-          title: "My Pilgrimage",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="foot-print" size={size} color={color} />
-          ),
-        }}
-      />
 
-      {/* Hidden from tab bar, still routable from the home grid */}
-      <Tabs.Screen name="route-map" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="history" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="sadhana" options={{ href: null, title: "Sadhana" }} />
-      <Tabs.Screen name="local-guide" options={{ href: null, title: "Local Guide" }} />
+      {/* Routable but hidden from the bottom bar */}
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="home" options={{ href: null }} />
+      <Tabs.Screen name="me" options={{ href: null }} />
+      <Tabs.Screen name="ai-guide" options={{ href: null }} />
     </Tabs>
+    <FloatingAssistant />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  mapButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Platform.OS === "web" ? -18 : -24,
+    borderWidth: 4,
+    borderColor: Colors.white,
+    shadowColor: Colors.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  mapButtonActive: {
+    backgroundColor: Colors.primary,
+  },
+});

@@ -1,0 +1,1 @@
+- [Girivalam navigation](girivalam-navigation.md) — pilgrim-first tab structure, default-landing pattern, what's hidden-but-routable and why.
