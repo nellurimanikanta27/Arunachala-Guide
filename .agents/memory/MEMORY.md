@@ -1,4 +1,5 @@
 - [Girivalam navigation](girivalam-navigation.md) — pilgrim-first tab structure, default-landing pattern, what's hidden-but-routable and why.
+- [Girivalam typography](girivalam-typography.md) — no central type scale; change text size app-wide via FONT_SCALE Text.render patch in app/_layout.tsx, not call sites.
 - [Girivalam persisted-data crashes](girivalam-persisted-data-crashes.md) — "reload→crash→reload" loop = bad saved data; harden store loads + ErrorFallback reset + per-item field guards.
 - [Native startup gotchas](native-startup-gotchas.md) — module-load mutations (e.g. Text.defaultProps) pass on web but crash native; guard them, web preview hides it.
 - [ErrorBoundary vs preview wrapper](error-boundary-vs-wrapper.md) — "...artifact encountered an error" = transient preview load timeout (reload), not a code bug; app's own crash says "Something went wrong".
