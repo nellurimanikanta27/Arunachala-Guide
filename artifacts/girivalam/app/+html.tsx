@@ -29,5 +29,18 @@ export default function Root({ children }: PropsWithChildren) {
 const fullHeightStyle = `
 html, body { height: 100%; margin: 0; padding: 0; }
 body { overflow: hidden; }
-#root { display: flex; flex: 1 1 auto; height: 100%; min-height: 100%; }
+/* Global on-screen magnification for the web build. Lower the zoom below to make
+   the WHOLE UI (text + spacing + cards) less "zoomed in", not just the font.
+   Because CSS zoom scales the rendered box, #root is sized to 100%/zoom on both
+   axes so the scaled result still fills the viewport exactly — otherwise the
+   locked bottom tab bar would leave an empty gap. If you change the 0.9 zoom,
+   recompute the two 111.12% values as round(100 / zoom)%. */
+#root {
+  display: flex;
+  flex: 1 1 auto;
+  zoom: 0.9;
+  width: 111.12%;
+  height: 111.12%;
+  min-height: 111.12%;
+}
 `;

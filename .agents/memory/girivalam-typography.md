@@ -20,4 +20,21 @@ only. The patch is guarded in try/catch (same reasoning as the `disableFontScali
 Text.defaultProps mutation right above it — module-load mutations can be read-only
 on native/Hermes and would otherwise crash before mount). It only scales styles
 that declare a numeric `fontSize`; text relying on the RN default (~14) is left
-alone. A `__fontScaled` flag prevents re-patching on Fast Refresh.
+alone. A `__fontScaled` flag prevents re-patching on Fast Refresh. It also skips
+icon fonts (Ionicons/MaterialCommunityIcons/etc. via `ICON_FONT_RE`) so glyph
+icons keep their intended size — `FONT_SCALE` is for words, not icons.
+
+# Overall magnification (web "zoom")
+
+"Reduce font" only shrinks text; if the user says the whole **structure/layout
+looks zoomed**, scale font + spacing + cards together via the web-only CSS `zoom`
+on `#root` in `app/+html.tsx` (not by editing spacing at call sites).
+
+**Why:** spacing/padding/card sizes are hardcoded everywhere too; one `zoom` knob
+de-magnifies everything proportionally.
+
+**How to apply:** lower the `zoom` value on `#root`. CRITICAL: because `zoom`
+scales the rendered box, `#root` width AND height must be set to `100/zoom %`
+(e.g. zoom 0.9 → 111.12%) or the full-height layout shrinks and the locked bottom
+tab bar leaves an empty gap at the bottom. This is web-only (CSS); native gets no
+zoom. `FONT_SCALE` and `zoom` stack on web (net text ≈ FONT_SCALE × zoom).

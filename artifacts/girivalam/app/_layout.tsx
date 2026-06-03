@@ -41,7 +41,7 @@ disableFontScaling(TextInput as unknown as { defaultProps?: { allowFontScaling?:
 // larger/smaller (1 = no change, 0.9 = 10% smaller). Guarded in try/catch like
 // disableFontScaling so a non-patchable platform degrades to unscaled text
 // rather than crashing.
-const FONT_SCALE: number = 0.9;
+const FONT_SCALE: number = 0.95;
 const ICON_FONT_RE =
   /^(Ionicons|Material(CommunityIcons|Icons)|FontAwesome(5|6)?|Feather|AntDesign|Entypo|EvilIcons|Foundation|Octicons|SimpleLineIcons|Zocial|Fontisto)/;
 function applyGlobalFontScale(Component: {
