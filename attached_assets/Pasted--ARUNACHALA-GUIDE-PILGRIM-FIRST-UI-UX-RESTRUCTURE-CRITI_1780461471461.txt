@@ -1,0 +1,562 @@
+# ARUNACHALA GUIDE — PILGRIM-FIRST UI/UX RESTRUCTURE
+
+## CRITICAL RULE — DO NOT REMOVE FEATURES
+
+This is a UI/UX restructuring task only.
+
+DO NOT remove:
+- Existing pages
+- Existing APIs
+- Existing data models
+- Existing books
+- Existing audiobooks
+- Existing teachings
+- Existing bookmarks
+- Existing downloads
+- Existing translation functionality
+- Existing Girivalam tracking
+- Existing history
+- Existing notes
+- Existing progress
+- Existing cloud sync
+- Existing local storage
+
+If functionality appears duplicated:
+- Consolidate it
+- Reorganize it
+- Improve discoverability
+
+But NEVER delete functionality.
+
+Goal:
+"Redesign the experience while preserving the platform."
+
+---
+
+# APP VISION
+
+Arunachala Guide is not a tourism app.
+
+It is a spiritual pilgrimage companion.
+
+The app should help users:
+- Explore Arunachala
+- Learn Arunachala
+- Walk Arunachala
+- Practice Sadhana
+- Preserve Memories
+- Continue Their Spiritual Journey
+
+Design should feel:
+- Sacred
+- Calm
+- Premium
+- Minimal
+- Mobile First
+- Spiritual
+- Distraction Free
+
+Avoid:
+- Social media feeds
+- Generic travel app designs
+- Dashboard clutter
+- Overcomplicated interfaces
+
+---
+
+# NAVIGATION ARCHITECTURE
+
+Top Bar:
+- App Logo / Title
+- Profile Avatar (Top Right)
+
+Bottom Navigation:
+1. Local Guide
+2. Wisdom
+3. Map (Primary Center Tab)
+4. Sadhana
+5. Translator
+
+Map should feel visually emphasized because it represents the physical pilgrimage journey.
+
+Profile should NOT be part of bottom navigation.
+
+---
+
+# FLOATING ARUNACHALA ASSISTANT
+
+Replace the floating translator with a floating AI assistant.
+
+Visible across the entire application.
+
+Inspired by:
+- Apple Assistive Touch
+- Floating AI companion
+- Accessibility widgets
+
+Users can:
+- Drag
+- Minimize
+- Expand
+- Reposition
+
+Persist position locally.
+
+Assistant should understand app context and help users navigate the entire experience.
+
+Examples:
+- Tell me about this temple
+- Recommend a book
+- Guide me through Girivalam
+- Where should I meditate?
+- Translate this mantra
+- What should I visit next?
+
+---
+
+# DEFAULT HOME SCREEN
+
+Default landing page should be:
+
+LOCAL GUIDE
+
+Reason:
+Most pilgrims first need information about:
+- Temples
+- Ashrams
+- Food
+- Stay
+- Meditation Centres
+- Utilities
+
+before opening maps.
+
+---
+
+# LOCAL GUIDE
+
+Create a pilgrimage-first landing experience.
+
+Top:
+- Search Bar
+- Quick Search
+
+Examples:
+Search temples, food, stay, meditation...
+
+Hero Section:
+Welcome to Arunachala
+Explore. Learn. Experience.
+
+Quick Access:
+- Temples
+- Ashrams
+- Meditation Centres
+- Food
+- Stay
+- Utilities
+
+Nearby Essentials:
+- Water
+- Toilets
+- Medical
+- ATM
+- Parking
+
+Continue Journey:
+- Last Girivalam
+- Resume Journey
+- Recent Visits
+
+Continue Reading:
+- Books
+- Audiobooks
+- Teachings
+
+Local Guide Categories:
+
+## Temples
+- History
+- Importance
+- Timings
+- Photos
+- Location
+
+## Ashrams
+- Information
+- Timings
+- Programs
+- Meditation Opportunities
+
+## Meditation Centres
+- Retreats
+- Silent Spaces
+- Programs
+
+## Food
+- Restaurants
+- Food Stalls
+- Prasadam
+- Tea Shops
+
+## Stay
+- Hotels
+- Guest Houses
+- Ashram Accommodation
+
+## Utilities
+- Medical
+- Pharmacy
+- ATM
+- Toilets
+- Water
+- Parking
+- Transport
+
+## Local Contacts
+Future-ready structure for:
+- Local Guides
+- Volunteers
+- Temple Offices
+- Ashrams
+- Emergency Services
+
+Do not hardcode fake data.
+
+We will manually populate verified contacts later.
+
+---
+
+# WISDOM
+
+Wisdom becomes the spiritual content library.
+
+Top Category Navigation:
+- Books
+- Audiobooks
+- Teachings
+- Stories
+- Quotes
+- Videos
+- Chanting
+- Articles
+
+Display ALL existing content.
+
+Do not remove content.
+
+Features:
+- Search
+- Bookmarks
+- Continue Reading
+- Continue Listening
+- Recently Opened
+- Downloads
+
+Think:
+Kindle + Spotify for Arunachala.
+
+---
+
+# MAP
+
+Map is the physical pilgrimage experience.
+
+Use real map providers:
+- OpenStreetMap
+- MapLibre
+- Leaflet
+
+Avoid:
+- Fake maps
+- Decorative route animations
+- Placeholder routes
+
+Display:
+- Arunachaleswara Temple
+- Temples
+- Ashrams
+- Sacred Locations
+- Meditation Spots
+- Restaurants
+- Water Points
+- Toilets
+- Medical Facilities
+- Utilities
+
+Fetch real location data where possible.
+
+Design architecture for future manual additions.
+
+Map Home Card:
+
+Girivalam Today
+
+Distance: 14 KM
+
+Primary CTA:
+Start Sacred Walk
+
+---
+
+# GIRIVALAM FLOW
+
+Local Guide
+→ Map
+→ Start Sacred Walk
+→ Preparation Screen
+→ Begin Girivalam
+→ Active Tracking
+→ Sacred Point Discovery
+→ Completion
+→ Journey Summary
+
+---
+
+# PREPARATION SCREEN
+
+Display:
+- Distance
+- Estimated Duration
+- Weather
+- Water Recommendation
+- Temple Status
+
+Primary CTA:
+Begin My Girivalam
+
+Reuse existing tracking functionality.
+
+Do not rebuild tracking systems.
+
+---
+
+# ACTIVE TRACKING MODE
+
+Hide bottom navigation.
+
+Enter immersive pilgrimage mode.
+
+Display:
+- Real Map
+- Live Location
+- Distance Completed
+- Elapsed Time
+- Remaining Route
+- Next Sacred Point
+
+Actions:
+- Pause
+- Resume
+- Emergency
+- Finish
+
+---
+
+# SACRED POINT EXPERIENCE
+
+When approaching sacred locations:
+
+Automatically display information sheets.
+
+Examples:
+- Yama Lingam
+- Agni Lingam
+- Indra Lingam
+- Sacred Caves
+- Ashrams
+
+Display:
+- Significance
+- History
+- Spiritual Importance
+- Audio Explanation
+- Read Article
+- Mark Visited
+
+Reuse existing content.
+
+---
+
+# SADHANA
+
+Personal spiritual practice centre.
+
+Organize existing functionality into:
+
+- Meditation
+- Japa
+- Reflection
+- Daily Practice
+- Spiritual Streaks
+
+Examples:
+- Chant Counter
+- Meditation Timer
+- Silence Tracker
+- Gratitude Journal
+- Daily Goals
+
+Preserve all current features.
+
+---
+
+# TRANSLATOR
+
+Translator remains a dedicated bottom navigation tab.
+
+Support:
+
+## Voice Translation
+- Real-time conversations
+- Microphone input
+
+## Text Translation
+- Manual typing
+- Instant translation
+
+## Camera Translation
+- Temple boards
+- Signboards
+- Menus
+- Posters
+- Notices
+
+Translate detected text.
+
+Preserve all existing translation functionality.
+
+Only improve UI.
+
+---
+
+# PROFILE
+
+Accessible from top-right avatar.
+
+Profile acts as the user's spiritual archive.
+
+Sections:
+
+## Journey History
+- Girivalam Sessions
+- Duration
+- Distance
+- Completion Status
+- Cloud Sync
+- Local Cache
+
+## Notes
+- Reflections
+- Journal Entries
+- Observations
+
+## Camera Roll
+- Pilgrimage Photos
+- Sacred Places
+- Memories
+
+## Bookmarks
+- Books
+- Audiobooks
+- Articles
+- Teachings
+- Locations
+
+## Continue Reading
+- Resume Books
+- Reading Progress
+
+## Continue Listening
+- Resume Audiobooks
+- Listening Progress
+
+## Downloads
+- Offline Books
+- Offline Audio
+- Offline Content
+- Offline Maps
+
+## Settings
+- Language
+- Theme
+- Notifications
+- Sync
+- Account
+
+---
+
+# OFFLINE FIRST
+
+Support offline access wherever possible.
+
+Cache:
+- Maps
+- Books
+- Audiobooks
+- Notes
+- Bookmarks
+- History
+
+Pilgrims may have weak connectivity.
+
+Offline support is important.
+
+---
+
+# DESIGN LANGUAGE
+
+Style:
+Sacred Minimalism
+
+Visual Inspiration:
+- Temple Stone Architecture
+- Pilgrimage Journals
+- Palm Leaf Manuscripts
+- Spiritual Retreats
+
+Colors:
+- Warm Ivory
+- Sandstone
+- Muted Gold
+- Soft Bronze
+- Deep Charcoal
+
+Use:
+- Large Typography
+- Spacious Layouts
+- Calm Hierarchy
+- Soft Shadows
+- Natural Textures
+
+Avoid:
+- Neon Colors
+- Gaming UI
+- Heavy Glassmorphism
+- Busy Dashboards
+- Social Media Patterns
+
+The experience should feel like:
+
+"A wise companion walking with the pilgrim."
+
+---
+
+# FINAL VALIDATION
+
+Before completing redesign verify:
+
+✓ No feature removed
+✓ No content removed
+✓ No APIs removed
+✓ No tracking removed
+✓ No bookmarks removed
+✓ No history removed
+✓ No downloads removed
+✓ No translation functionality removed
+
+Modernize.
+Reorganize.
+Simplify.
+
+Never delete functionality.
