@@ -38,18 +38,18 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ── Misty hill palette — sage paper, soft brass lamps, calm dawn light ────
+// ── Clean white palette — white paper, soft brass lamps, charcoal ink ─────
 const W = {
-  bg: "#EDF4F0",                          // misty green-white paper
-  bgSoft: "#DCE9E2",                      // pale sage cloth
-  card: "#F7FBF9",                        // soft lamp glow
-  cardBorder: "rgba(30, 90, 82, 0.20)",   // muted teal outline
-  gold: "#836418",                        // deep brass (AA contrast on mist & gold chips)
+  bg: "#FFFFFF",                          // white paper
+  bgSoft: "#F2F2F2",                      // light gray fill
+  card: "#FFFFFF",                        // white card
+  cardBorder: "rgba(0, 0, 0, 0.10)",      // soft gray outline
+  gold: "#836418",                        // deep brass accent (AA on white)
   goldLight: "#C49B3D",                   // brighter brass for accents
-  goldFaint: "rgba(169, 131, 39, 0.10)",  // soft brass wash
-  text: "#1E2A27",                        // deep charcoal-green sacred ink
-  textMid: "#46564F",                     // slate green
-  textFaint: "#616E66",                   // muted sage (AA-readable)
+  goldFaint: "rgba(131, 100, 24, 0.08)",  // soft brass wash
+  text: "#1C1C1E",                        // near-black ink
+  textMid: "#48484A",                     // dark gray
+  textFaint: "#6E6E73",                   // mid gray (AA-readable)
   accent: "#C8501C",                      // sindoor / kumkum red-orange
 };
 

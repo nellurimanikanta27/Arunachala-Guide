@@ -21,6 +21,10 @@ or the old palette bleeds through:**
 - `app/(tabs)/history.tsx` — its OWN local palette object `W = {...}` (Wisdom
   tab "parchment/paper" look), independent of `Colors`.
 
-Current theme (2026-06): "Sacred Hill" — serene teal-green primary
-(`#2E7D72`), misty green-white surfaces, soft brass gold accents, cool
-charcoal-green text. Replaced the earlier brown/saffron "Sacred Minimalism".
+Current theme (2026-06): "Clean White" — white surfaces, graphite primary
+(`#3A3A3C`) for actions/hero/active-tab (white text on it), soft brass-gold
+accents (not green), charcoal text. Category `green`/`teal` tokens were
+re-pointed to neutral slate/brass so no green hue remains. Onboarding
+(welcome/intro) and the route-map screen stay intentionally dark, but
+neutral-gray now (green removed). Replaced the prior teal-green "Sacred Hill",
+which replaced the original brown/saffron "Sacred Minimalism".

@@ -888,7 +888,7 @@ export default function RouteMapScreen() {
     return (
       <View style={dStyles.root}>
         <LinearGradient
-          colors={["#07201B", "#0D2A24", "#07201B"]}
+          colors={["#18181A", "#202022", "#18181A"]}
           style={dStyles.gradient}
         >
           {/* CINEMATIC-V1: ambient gold particles drifting upward */}
@@ -927,7 +927,7 @@ export default function RouteMapScreen() {
                 <Ionicons
                   name={silentMode ? "moon" : "moon-outline"}
                   size={14}
-                  color={silentMode ? "#07201B" : GOLD}
+                  color={silentMode ? "#18181A" : GOLD}
                 />
               </Pressable>
               <Pressable
@@ -1108,7 +1108,7 @@ export default function RouteMapScreen() {
                   ]}
                 >
                   <View style={[dStyles.utilPinDot, { backgroundColor: u.color, shadowColor: u.color }]}>
-                    <Ionicons name={u.icon} size={10} color="#07201B" />
+                    <Ionicons name={u.icon} size={10} color="#18181A" />
                   </View>
                   <Text style={dStyles.utilPinText}>
                     {u.label} · <Text style={{ color: "rgba(255,255,255,0.55)" }}>{p.dist}</Text>
@@ -1224,7 +1224,7 @@ export default function RouteMapScreen() {
               accessibilityRole="button"
               accessibilityLabel="Quick actions"
             >
-              <Ionicons name="add" size={32} color="#07201B" />
+              <Ionicons name="add" size={32} color="#18181A" />
             </Pressable>
             <NavTabBtn
               emoji="🧭"
@@ -1736,9 +1736,9 @@ export default function RouteMapScreen() {
                     accessibilityLabel="Translate"
                   >
                     {trLoading ? (
-                      <ActivityIndicator color="#07201B" size="small" />
+                      <ActivityIndicator color="#18181A" size="small" />
                     ) : (
-                      <Ionicons name="arrow-forward" size={20} color="#07201B" />
+                      <Ionicons name="arrow-forward" size={20} color="#18181A" />
                     )}
                   </Pressable>
                 </View>
@@ -3077,7 +3077,7 @@ const styles = StyleSheet.create({
 // ─── Dark/Gold walk-mode tokens & helpers ────────────────────────────────────
 const GOLD = "#C6A24A";
 const GOLD_DIM = "rgba(198,162,74,0.55)";
-const DARK_BG = "#07201B";
+const DARK_BG = "#18181A";
 const DARK_PANEL = "rgba(20,12,6,0.95)";
 const HAIRLINE = "rgba(198,162,74,0.18)";
 const TEXT_DIM = "rgba(255,255,255,0.55)";
@@ -3703,7 +3703,7 @@ const dStyles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: GOLD,
   },
-  japaTapText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#07201B", letterSpacing: 0.5 },
+  japaTapText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#18181A", letterSpacing: 0.5 },
   japaReset: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 6 },
   japaResetText: { fontFamily: "Inter_500Medium", fontSize: 11, color: TEXT_DIM, letterSpacing: 0.5 },
 
@@ -4123,7 +4123,7 @@ const dStyles = StyleSheet.create({
   ritualBtnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    color: "#07201B",
+    color: "#18181A",
     letterSpacing: 0.5,
   },
   ritualShareBtn: {
@@ -4150,7 +4150,7 @@ const dStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#07201B",
+    backgroundColor: "#18181A",
     zIndex: 100,
   },
   sankalpaScroll: {
@@ -4232,7 +4232,7 @@ const dStyles = StyleSheet.create({
   sankalpaBeginText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
-    color: "#07201B",
+    color: "#18181A",
     letterSpacing: 0.5,
   },
   sankalpaSkipBtn: {
@@ -4304,8 +4304,8 @@ const dStyles = StyleSheet.create({
 // ── End-of-walk sacred completion card (matches reference design) ──────
 const CARD_GOLD = "#C6A24A";
 const CARD_GOLD_LIGHT = "#E4C97A";
-const CARD_CREAM = "#E3F0EC";
-const CARD_BG = "#07201B";
+const CARD_CREAM = "#F5F5F5";
+const CARD_BG = "#18181A";
 
 const cardStyles = StyleSheet.create({
   scrollPad: {
@@ -4536,7 +4536,7 @@ const cardStyles = StyleSheet.create({
   },
   polaroid: {
     width: 86,
-    backgroundColor: "#E3F0EC",
+    backgroundColor: "#F5F5F5",
     padding: 4,
     paddingBottom: 14,
     marginHorizontal: 2,
@@ -4705,7 +4705,7 @@ const cardStyles = StyleSheet.create({
     fontFamily: SERIF_DISPLAY,
     fontSize: 26,
     fontStyle: "italic",
-    color: "#E3F0EC",
+    color: "#F5F5F5",
     textAlign: "center",
     minWidth: "60%",
   },
@@ -4731,7 +4731,7 @@ const cardStyles = StyleSheet.create({
     flex: 1,
     fontFamily: SERIF_DISPLAY,
     fontSize: 12,
-    color: "#E3F0EC",
+    color: "#F5F5F5",
     textAlign: "center",
   },
   overlayPolaroids: {
@@ -4774,7 +4774,7 @@ const cardStyles = StyleSheet.create({
   overlaySankalpaText: {
     fontFamily: SERIF_DISPLAY,
     fontSize: 12,
-    color: "#E3F0EC",
+    color: "#F5F5F5",
     fontStyle: "italic",
     marginTop: 2,
   },

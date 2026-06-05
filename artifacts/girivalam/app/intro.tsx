@@ -14,8 +14,8 @@ import {
 
 const GOLD = "#C6A24A";
 const GOLD_LIGHT = "#E4C97A";
-const CREAM = "#E3F0EC";
-const BG = "#07201B";
+const CREAM = "#F5F5F5";
+const BG = "#18181A";
 
 export default function IntroAnimation() {
   // Animation values
@@ -157,7 +157,7 @@ export default function IntroAnimation() {
       {/* Pre-dawn sky → dawn gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: skyFade }]}>
         <LinearGradient
-          colors={["#07201B", "#0D3029", "#176054", "#2E7D72"]}
+          colors={["#18181A", "#262628", "#48484A", "#5A5A5E"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 260,
     borderTopWidth: 320,
     borderRightColor: "transparent",
-    borderTopColor: "#0D2A24",
+    borderTopColor: "#202022",
   },
   mountainRight: {
     position: "absolute",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 260,
     borderTopWidth: 320,
     borderLeftColor: "transparent",
-    borderTopColor: "#0D2A24",
+    borderTopColor: "#202022",
   },
   mountainBase: {
     position: "absolute",
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: "35%",
-    backgroundColor: "#07201B",
+    backgroundColor: "#18181A",
   },
 
   // Golden rays

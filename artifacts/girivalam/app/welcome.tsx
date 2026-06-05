@@ -22,8 +22,8 @@ import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-sto
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
-const BG = "#07201B";
-const CREAM = "#E3F0EC";
+const BG = "#18181A";
+const CREAM = "#F5F5F5";
 const GOLD = "#C6A24A";
 const GOLD_LIGHT = "#E4C97A";
 const MUTED = "rgba(244,229,194,0.7)";
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#07201B", "#0D3029", "#154E46"]}
+        colors={["#18181A", "#262628", "#3A3A3C"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
