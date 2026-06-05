@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { getDailyQuote, getPournamiCountdown, getPournamiDate } from "@/lib/sacred-time";
 import {
   getContinue,
   getRecentlyOpened,
@@ -884,13 +885,44 @@ export default function LocalGuideScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
-              <Text style={styles.heroWelcome}>Welcome to</Text>
-              <Text style={styles.heroTitle}>Arunachala</Text>
-              <Text style={styles.heroSub}>Explore · Learn · Experience</Text>
+              {(() => {
+                const pournami = getPournamiCountdown();
+                const quote = getDailyQuote();
+                const pournamiDate = getPournamiDate();
+                return (
+                  <>
+                    <View style={styles.heroTop}>
+                      <Ionicons
+                        name="moon"
+                        size={14}
+                        color="rgba(255,255,255,0.7)"
+                      />
+                      <Text style={styles.heroTag}>NEXT POURNAMI</Text>
+                    </View>
+                    {pournami.isToday ? (
+                      <Text style={styles.heroPournamiToday}>🌕 Pournami Today!</Text>
+                    ) : (
+                      <View style={styles.heroCountRow}>
+                        <Text style={styles.heroCount}>{pournami.days}</Text>
+                        <View style={styles.heroCountLabelCol}>
+                          <Text style={styles.heroCountTop}>
+                            {pournami.days === 1 ? "DAY" : "DAYS"}
+                          </Text>
+                          <Text style={styles.heroCountBot}>until full moon</Text>
+                        </View>
+                      </View>
+                    )}
+                    <Text style={styles.heroPournamiDate}>{pournamiDate}</Text>
+                    <View style={styles.heroDivider} />
+                    <Text style={styles.heroQuote}>"{quote}"</Text>
+                    <Text style={styles.heroQuoteAuthor}>— Sri Ramana Maharshi</Text>
+                  </>
+                );
+              })()}
               <Ionicons
                 name="triangle"
                 size={72}
-                color="rgba(255,255,255,0.12)"
+                color="rgba(255,255,255,0.10)"
                 style={styles.heroMountain}
               />
             </LinearGradient>
@@ -1243,22 +1275,72 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: "hidden",
   },
-  heroWelcome: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
+  heroTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  heroTag: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.8)",
+    letterSpacing: 2,
+  },
+  heroCountRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+    marginTop: 8,
+  },
+  heroCount: {
+    fontSize: 48,
+    lineHeight: 52,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+  },
+  heroCountLabelCol: {
+    paddingBottom: 6,
+  },
+  heroCountTop: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+    letterSpacing: 1,
+  },
+  heroCountBot: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.85)",
   },
-  heroTitle: {
+  heroPournamiToday: {
     fontSize: 26,
     fontFamily: "Inter_700Bold",
     color: Colors.white,
-    marginTop: 2,
+    marginTop: 8,
   },
-  heroSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.9)",
+  heroPournamiDate: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.8)",
     marginTop: 4,
+  },
+  heroDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    marginVertical: 14,
+  },
+  heroQuote: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontFamily: "Inter_400Regular",
+    fontStyle: "italic",
+    color: "rgba(255,255,255,0.95)",
+  },
+  heroQuoteAuthor: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 6,
   },
   heroMountain: {
     position: "absolute",
