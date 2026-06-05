@@ -38,9 +38,9 @@ body { overflow: hidden; }
 #root {
   display: flex;
   flex: 1 1 auto;
-  zoom: 0.9;
-  width: 111.12%;
-  height: 111.12%;
-  min-height: 111.12%;
+  zoom: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
 }
 `;
