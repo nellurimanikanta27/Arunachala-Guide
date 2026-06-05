@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -758,6 +758,25 @@ export default function LocalGuideScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
   const [active, setActive] = useState<Category>("temples");
   const [query, setQuery] = useState("");
+  const scrollRef = useRef<ScrollView>(null);
+  const listY = useRef(0);
+
+  const handleCategory = useCallback((id: Category) => {
+    setActive(id);
+    const doScroll = (attempt: number) => {
+      // The anchor may not have measured yet (listY still 0), e.g. before the
+      // async "Continue reading" card lays out. Retry briefly until it has.
+      if (listY.current <= 0 && attempt < 6) {
+        setTimeout(() => doScroll(attempt + 1), 60);
+        return;
+      }
+      scrollRef.current?.scrollTo({
+        y: Math.max(listY.current - 12, 0),
+        animated: true,
+      });
+    };
+    requestAnimationFrame(() => doScroll(0));
+  }, []);
 
   const [lastWalk, setLastWalk] = useState<Walk | null>(null);
   const [ongoing, setOngoing] = useState(false);
@@ -850,6 +869,7 @@ export default function LocalGuideScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: bottomInset + 24 },
@@ -891,7 +911,7 @@ export default function LocalGuideScreen() {
                 <Pressable
                   key={cat.id}
                   style={styles.quickTile}
-                  onPress={() => setActive(cat.id)}
+                  onPress={() => handleCategory(cat.id)}
                   accessibilityRole="button"
                   accessibilityLabel={cat.label}
                 >
@@ -992,6 +1012,25 @@ export default function LocalGuideScreen() {
               </Pressable>
             )}
           </>
+        )}
+
+        <View
+          onLayout={(e) => {
+            listY.current = e.nativeEvent.layout.y;
+          }}
+        />
+
+        {!searching && (
+          <View style={styles.listTitleRow}>
+            <Ionicons
+              name={(CATEGORIES.find((c) => c.id === active)?.icon ?? "list") as any}
+              size={18}
+              color={CATEGORY_COLORS[active] ?? Colors.saffron}
+            />
+            <Text style={styles.listTitle}>
+              {CATEGORIES.find((c) => c.id === active)?.label ?? "Places"}
+            </Text>
+          </View>
         )}
 
         {searching ? (
@@ -1285,6 +1324,17 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     lineHeight: 19,
     marginBottom: 16,
+  },
+  listTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  listTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
   },
   placeCard: {
     backgroundColor: Colors.white,
