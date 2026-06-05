@@ -21,10 +21,16 @@ or the old palette bleeds through:**
 - `app/(tabs)/history.tsx` — its OWN local palette object `W = {...}` (Wisdom
   tab "parchment/paper" look), independent of `Colors`.
 
-Current theme (2026-06): "Clean White" — white surfaces, graphite primary
-(`#3A3A3C`) for actions/hero/active-tab (white text on it), soft brass-gold
-accents (not green), charcoal text. Category `green`/`teal` tokens were
-re-pointed to neutral slate/brass so no green hue remains. Onboarding
-(welcome/intro) and the route-map screen stay intentionally dark, but
-neutral-gray now (green removed). Replaced the prior teal-green "Sacred Hill",
-which replaced the original brown/saffron "Sacred Minimalism".
+Current theme (2026-06): "Pure White + Gold" — white surfaces everywhere, a
+single soft-gold accent (`#C2A24E`, dark `#A6843E`, light `#DCC079`) for
+actions/hero/active-tab/icons, quiet warm-gray text (`#4A4540`/`#6E6862`...).
+User explicitly rejected ALL charcoal/graphite/dark fills and mixed colors —
+wants white + a little gold only, peaceful/quiet. So: `primary*` family is gold
+(NOT dark); every category accent token (`green`/`blue`/`purple`/`teal`) is
+collapsed to the same gold so nothing is multi-colored. Onboarding `welcome.tsx`
+and the launch splash `intro.tsx` were flipped from dark to white+gold via their
+LOCAL consts (BG→white, CREAM→dark text, GOLD_LIGHT→gold, btnText→dark on gold).
+STILL DARK: the route-map immersive "walk mode" sub-screen (local DARK_BG/
+DARK_PANEL/CARD_BG `#18181A`, ~69 dark refs) — deliberate night-walk view, left
+dark to avoid a risky redesign; offer to whiten if asked. Replaced prior
+"Clean White" (graphite primary), "Sacred Hill" (teal), "Sacred Minimalism".

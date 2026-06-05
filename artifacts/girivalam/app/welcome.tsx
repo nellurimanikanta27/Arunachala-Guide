@@ -22,12 +22,12 @@ import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-sto
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
-const BG = "#18181A";
-const CREAM = "#F5F5F5";
-const GOLD = "#C6A24A";
-const GOLD_LIGHT = "#E4C97A";
-const MUTED = "rgba(244,229,194,0.7)";
-const FAINT = "rgba(244,229,194,0.45)";
+const BG = "#FFFFFF";
+const CREAM = "#4A4540";
+const GOLD = "#C2A24E";
+const GOLD_LIGHT = "#C2A24E";
+const MUTED = "rgba(74,69,64,0.72)";
+const FAINT = "rgba(74,69,64,0.28)";
 
 type Slide = {
   kicker: string;
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#18181A", "#262628", "#3A3A3C"]}
+        colors={["#FFFFFF", "#FFFDF7", "#FAF3E2"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -161,7 +161,7 @@ export default function WelcomeScreen() {
           disabled={!canContinue}
         >
           <Text style={styles.btnText}>{isLast ? "Enter the path" : "Continue"}</Text>
-          <Ionicons name="arrow-forward" size={16} color={BG} />
+          <Ionicons name="arrow-forward" size={16} color={CREAM} />
         </Pressable>
       </View>
     </View>
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   btnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
-    color: BG,
+    color: CREAM,
     letterSpacing: 0.5,
   },
   btnDisabled: {

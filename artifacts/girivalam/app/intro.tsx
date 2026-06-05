@@ -12,10 +12,10 @@ import {
   View,
 } from "react-native";
 
-const GOLD = "#C6A24A";
-const GOLD_LIGHT = "#E4C97A";
-const CREAM = "#F5F5F5";
-const BG = "#18181A";
+const GOLD = "#C2A24E";
+const GOLD_LIGHT = "#C2A24E";
+const CREAM = "#4A4540";
+const BG = "#FFFFFF";
 
 export default function IntroAnimation() {
   // Animation values
@@ -157,7 +157,7 @@ export default function IntroAnimation() {
       {/* Pre-dawn sky → dawn gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: skyFade }]}>
         <LinearGradient
-          colors={["#18181A", "#262628", "#48484A", "#5A5A5E"]}
+          colors={["#FFFFFF", "#FFFDF8", "#FBF3E0", "#F3E6C8"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 260,
     borderTopWidth: 320,
     borderRightColor: "transparent",
-    borderTopColor: "#202022",
+    borderTopColor: "#E2D2A0",
   },
   mountainRight: {
     position: "absolute",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 260,
     borderTopWidth: 320,
     borderLeftColor: "transparent",
-    borderTopColor: "#202022",
+    borderTopColor: "#E2D2A0",
   },
   mountainBase: {
     position: "absolute",
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: "35%",
-    backgroundColor: "#18181A",
+    backgroundColor: "#E2D2A0",
   },
 
   // Golden rays
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   chantTranslit: {
     fontFamily: "Inter_500Medium",
     fontSize: 11,
-    color: "rgba(244,229,194,0.7)",
+    color: "rgba(166,132,62,0.9)",
     letterSpacing: 3,
   },
 
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "rgba(244,229,194,0.65)",
+    color: "rgba(166,132,62,0.85)",
     letterSpacing: 2,
     textTransform: "uppercase",
   },
