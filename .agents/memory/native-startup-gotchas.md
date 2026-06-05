@@ -26,3 +26,16 @@ on) instead of crashing. See `app/_layout.tsx` `disableFontScaling()`.
 **General rule:** any code that runs at module-load time (top-level side effects,
 component-object mutation) bypasses the ErrorBoundary. If it can throw on any platform,
 guard it — and remember the web preview will not surface native-only failures.
+
+## Bottom tab bar invisible on native (Expo Go) but fine on web
+If `tabBarStyle` sets `height`/`paddingBottom` only for `Platform.OS === "web"` and
+leaves them `undefined` on native, the bar can render under the device home indicator /
+gesture area and look "missing" on a real phone — while the hardcoded web height makes
+it look perfect in the preview.
+
+**Why:** native needs the safe-area bottom inset baked into the tab bar; web has no such
+inset so a fixed height there hides the gap.
+
+**How to apply:** in `app/(tabs)/_layout.tsx` use `useSafeAreaInsets()` and set native
+`height: 62 + insets.bottom` and `paddingBottom: Math.max(insets.bottom, 10)`. Don't
+trust the web screenshot to confirm tab-bar visibility on device.

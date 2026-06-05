@@ -310,7 +310,7 @@ export default function RouteMapScreen() {
     { key: "anna", icon: "leaf", color: "#E0B658", label: "Annaprasadam" },
     { key: "rest", icon: "restaurant", color: "#FF6B6B", label: "Restaurant" },
     { key: "ashram", icon: "home", color: "#9BD17C", label: "Ashram" },
-    { key: "ess", icon: "sparkles", color: "#FFD98A", label: "Essentials" },
+    { key: "ess", icon: "sparkles", color: "#E4C97A", label: "Essentials" },
   ];
   const [utilOn, setUtilOn] = useState<Record<UtilKey, boolean>>({
     water: true, toilet: true, anna: true, rest: true, ashram: false, ess: false,
@@ -888,7 +888,7 @@ export default function RouteMapScreen() {
     return (
       <View style={dStyles.root}>
         <LinearGradient
-          colors={["#0A0604", "#1A0F08", "#0A0604"]}
+          colors={["#07201B", "#0D2A24", "#07201B"]}
           style={dStyles.gradient}
         >
           {/* CINEMATIC-V1: ambient gold particles drifting upward */}
@@ -927,7 +927,7 @@ export default function RouteMapScreen() {
                 <Ionicons
                   name={silentMode ? "moon" : "moon-outline"}
                   size={14}
-                  color={silentMode ? "#0A0604" : GOLD}
+                  color={silentMode ? "#07201B" : GOLD}
                 />
               </Pressable>
               <Pressable
@@ -994,7 +994,7 @@ export default function RouteMapScreen() {
                           name="temple-hindu"
                           size={isCurrent ? 24 : 20}
                           color={
-                            isCurrent ? "#FFD98A" : isDone ? GOLD : "rgba(196,122,30,0.55)"
+                            isCurrent ? "#E4C97A" : isDone ? GOLD : "rgba(198,162,74,0.55)"
                           }
                         />
                       </Animated.View>
@@ -1108,7 +1108,7 @@ export default function RouteMapScreen() {
                   ]}
                 >
                   <View style={[dStyles.utilPinDot, { backgroundColor: u.color, shadowColor: u.color }]}>
-                    <Ionicons name={u.icon} size={10} color="#0A0604" />
+                    <Ionicons name={u.icon} size={10} color="#07201B" />
                   </View>
                   <Text style={dStyles.utilPinText}>
                     {u.label} · <Text style={{ color: "rgba(255,255,255,0.55)" }}>{p.dist}</Text>
@@ -1224,7 +1224,7 @@ export default function RouteMapScreen() {
               accessibilityRole="button"
               accessibilityLabel="Quick actions"
             >
-              <Ionicons name="add" size={32} color="#0A0604" />
+              <Ionicons name="add" size={32} color="#07201B" />
             </Pressable>
             <NavTabBtn
               emoji="🧭"
@@ -1736,9 +1736,9 @@ export default function RouteMapScreen() {
                     accessibilityLabel="Translate"
                   >
                     {trLoading ? (
-                      <ActivityIndicator color="#0A0604" size="small" />
+                      <ActivityIndicator color="#07201B" size="small" />
                     ) : (
-                      <Ionicons name="arrow-forward" size={20} color="#0A0604" />
+                      <Ionicons name="arrow-forward" size={20} color="#07201B" />
                     )}
                   </Pressable>
                 </View>
@@ -2404,12 +2404,12 @@ const wStyles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#C47A1E",
+    backgroundColor: "#C6A24A",
   },
   walkingBadgeText: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
-    color: "#C47A1E",
+    color: "#C6A24A",
   },
   timerText: {
     fontSize: 13,
@@ -2441,7 +2441,7 @@ const wStyles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.15)",
   },
   dotActive: {
-    backgroundColor: "#C47A1E",
+    backgroundColor: "#C6A24A",
     width: 20,
   },
   tapArea: {
@@ -2456,7 +2456,7 @@ const wStyles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
     lineHeight: 110,
-    textShadowColor: "rgba(196,122,30,0.5)",
+    textShadowColor: "rgba(198,162,74,0.5)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 30,
   },
@@ -2468,13 +2468,13 @@ const wStyles = StyleSheet.create({
     marginTop: 4,
   },
   malaBanner: {
-    backgroundColor: "rgba(196,122,30,0.2)",
+    backgroundColor: "rgba(198,162,74,0.2)",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.4)",
+    borderColor: "rgba(198,162,74,0.4)",
   },
   malaBannerText: {
     fontSize: 14,
@@ -2508,9 +2508,9 @@ const wStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.25)",
+    borderColor: "rgba(198,162,74,0.25)",
   },
   lingamBannerIcon: { fontSize: 20 },
   lingamBannerTitle: {
@@ -2554,7 +2554,7 @@ const wStyles = StyleSheet.create({
   bottomIconCount: {
     fontSize: 15,
     fontFamily: "Inter_700Bold",
-    color: "#C47A1E",
+    color: "#C6A24A",
   },
   bottomIconLabel: {
     fontSize: 10,
@@ -2573,7 +2573,7 @@ const wStyles = StyleSheet.create({
     borderBottomLeftRadius: 12,
     borderWidth: 1,
     borderRightWidth: 0,
-    borderColor: "rgba(196,122,30,0.35)",
+    borderColor: "rgba(198,162,74,0.35)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 20,
@@ -2593,7 +2593,7 @@ const wStyles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderWidth: 1,
     borderRightWidth: 0,
-    borderColor: "rgba(196,122,30,0.25)",
+    borderColor: "rgba(198,162,74,0.25)",
     paddingTop: 14,
     paddingLeft: 16,
     paddingRight: 12,
@@ -2666,15 +2666,15 @@ const wStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(196,122,30,0.10)",
+    backgroundColor: "rgba(198,162,74,0.10)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.20)",
+    borderColor: "rgba(198,162,74,0.20)",
   },
   farDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "rgba(196,122,30,0.55)",
+    backgroundColor: "rgba(198,162,74,0.55)",
   },
   farTitle: {
     fontSize: 12,
@@ -2695,9 +2695,9 @@ const wStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 18,
-    backgroundColor: "rgba(196,122,30,0.18)",
+    backgroundColor: "rgba(198,162,74,0.18)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.35)",
+    borderColor: "rgba(198,162,74,0.35)",
   },
   nearHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   nearDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#E09A2A" },
@@ -2723,7 +2723,7 @@ const wStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,200,140,0.35)",
     overflow: "hidden",
-    shadowColor: "#C47A1E",
+    shadowColor: "#C6A24A",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 24,
@@ -3075,11 +3075,11 @@ const styles = StyleSheet.create({
 });
 
 // ─── Dark/Gold walk-mode tokens & helpers ────────────────────────────────────
-const GOLD = "#C47A1E";
-const GOLD_DIM = "rgba(196,122,30,0.55)";
-const DARK_BG = "#0A0604";
+const GOLD = "#C6A24A";
+const GOLD_DIM = "rgba(198,162,74,0.55)";
+const DARK_BG = "#07201B";
 const DARK_PANEL = "rgba(20,12,6,0.95)";
-const HAIRLINE = "rgba(196,122,30,0.18)";
+const HAIRLINE = "rgba(198,162,74,0.18)";
 const TEXT_DIM = "rgba(255,255,255,0.55)";
 
 function NavTabBtn({
@@ -3186,7 +3186,7 @@ const dStyles = StyleSheet.create({
   walkNumPillText: {
     fontFamily: "Inter_500Medium",
     fontSize: 10.5,
-    color: "#FFD98A",
+    color: "#E4C97A",
     letterSpacing: 0.3,
   },
   topRight: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
@@ -3231,7 +3231,7 @@ const dStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   templeIconCurrent: {
-    backgroundColor: "rgba(196,122,30,0.18)",
+    backgroundColor: "rgba(198,162,74,0.18)",
     shadowColor: GOLD,
     shadowOpacity: 1,
     shadowRadius: 12,
@@ -3242,16 +3242,16 @@ const dStyles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "rgba(196,122,30,0.18)",
+    backgroundColor: "rgba(198,162,74,0.18)",
   },
   templeHaloCurrent: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(196,122,30,0.32)",
+    backgroundColor: "rgba(198,162,74,0.32)",
   },
   templeHaloUpcoming: {
-    backgroundColor: "rgba(196,122,30,0.06)",
+    backgroundColor: "rgba(198,162,74,0.06)",
   },
 
   // Translator overlay
@@ -3278,8 +3278,8 @@ const dStyles = StyleSheet.create({
     borderColor: HAIRLINE,
   },
   trLangPillActive: {
-    backgroundColor: "rgba(196,122,30,0.14)",
-    borderColor: "rgba(196,122,30,0.55)",
+    backgroundColor: "rgba(198,162,74,0.14)",
+    borderColor: "rgba(198,162,74,0.55)",
   },
   trLangPillText: {
     fontFamily: "Inter_600SemiBold",
@@ -3330,9 +3330,9 @@ const dStyles = StyleSheet.create({
     marginTop: 12,
     padding: 16,
     borderRadius: 14,
-    backgroundColor: "rgba(196,122,30,0.08)",
+    backgroundColor: "rgba(198,162,74,0.08)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.35)",
+    borderColor: "rgba(198,162,74,0.35)",
   },
   trOutputLabel: {
     fontFamily: "Inter_600SemiBold",
@@ -3360,8 +3360,8 @@ const dStyles = StyleSheet.create({
     borderColor: HAIRLINE,
   },
   trCatChipActive: {
-    backgroundColor: "rgba(196,122,30,0.14)",
-    borderColor: "rgba(196,122,30,0.55)",
+    backgroundColor: "rgba(198,162,74,0.14)",
+    borderColor: "rgba(198,162,74,0.55)",
   },
   trCatChipText: {
     fontFamily: "Inter_500Medium",
@@ -3399,7 +3399,7 @@ const dStyles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -3446,7 +3446,7 @@ const dStyles = StyleSheet.create({
     top: "50%",
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.08)",
+    borderColor: "rgba(198,162,74,0.08)",
   },
   mountainLabel: {
     position: "absolute",
@@ -3472,7 +3472,7 @@ const dStyles = StyleSheet.create({
     borderRadius: 18,
     marginLeft: -18,
     marginTop: -18,
-    backgroundColor: "rgba(196,122,30,0.18)",
+    backgroundColor: "rgba(198,162,74,0.18)",
     borderColor: GOLD,
     shadowColor: GOLD,
     shadowOpacity: 1,
@@ -3530,7 +3530,7 @@ const dStyles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "rgba(196,122,30,0.25)",
+    backgroundColor: "rgba(198,162,74,0.25)",
   },
   userDot: {
     width: 10,
@@ -3573,7 +3573,7 @@ const dStyles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
   },
   geofenceApproach: {
     fontFamily: "Inter_500Medium",
@@ -3606,7 +3606,7 @@ const dStyles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.04)",
   },
   navTabIconActive: {
-    backgroundColor: "rgba(196,122,30,0.15)",
+    backgroundColor: "rgba(198,162,74,0.15)",
     shadowColor: GOLD,
     shadowOpacity: 0.7,
     shadowRadius: 8,
@@ -3693,7 +3693,7 @@ const dStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(196,122,30,0.1)",
+    backgroundColor: "rgba(198,162,74,0.1)",
     borderWidth: 1,
     borderColor: HAIRLINE,
   },
@@ -3703,7 +3703,7 @@ const dStyles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: GOLD,
   },
-  japaTapText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#0A0604", letterSpacing: 0.5 },
+  japaTapText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#07201B", letterSpacing: 0.5 },
   japaReset: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 6 },
   japaResetText: { fontFamily: "Inter_500Medium", fontSize: 11, color: TEXT_DIM, letterSpacing: 0.5 },
 
@@ -3727,7 +3727,7 @@ const dStyles = StyleSheet.create({
   },
   audioTabActive: {
     color: GOLD,
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
   },
   audioRow: {
     flexDirection: "row",
@@ -3760,7 +3760,7 @@ const dStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: "rgba(196,122,30,0.1)",
+    backgroundColor: "rgba(198,162,74,0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -3835,7 +3835,7 @@ const dStyles = StyleSheet.create({
     borderColor: HAIRLINE,
   },
   templeTabWrap: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  templeTabWrapActive: { backgroundColor: "rgba(196,122,30,0.12)" },
+  templeTabWrapActive: { backgroundColor: "rgba(198,162,74,0.12)" },
   templeTab: { fontFamily: "Inter_500Medium", fontSize: 12, color: TEXT_DIM },
   templeTabActive: { color: GOLD },
   templeBody: {
@@ -3880,11 +3880,11 @@ const dStyles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: HAIRLINE,
-    backgroundColor: "rgba(196,122,30,0.06)",
+    backgroundColor: "rgba(198,162,74,0.06)",
   },
   spActionBtnActive: {
     borderColor: GOLD_DIM,
-    backgroundColor: "rgba(196,122,30,0.14)",
+    backgroundColor: "rgba(198,162,74,0.14)",
   },
   spActionBtnVisited: {
     borderColor: "rgba(155,209,124,0.5)",
@@ -4058,7 +4058,7 @@ const dStyles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: GOLD,
@@ -4070,9 +4070,9 @@ const dStyles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 22,
     borderRadius: 18,
-    backgroundColor: "rgba(196,122,30,0.06)",
+    backgroundColor: "rgba(198,162,74,0.06)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.25)",
+    borderColor: "rgba(198,162,74,0.25)",
     alignItems: "center",
     marginTop: 6,
   },
@@ -4123,7 +4123,7 @@ const dStyles = StyleSheet.create({
   ritualBtnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    color: "#0A0604",
+    color: "#07201B",
     letterSpacing: 0.5,
   },
   ritualShareBtn: {
@@ -4150,7 +4150,7 @@ const dStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#0A0604",
+    backgroundColor: "#07201B",
     zIndex: 100,
   },
   sankalpaScroll: {
@@ -4232,7 +4232,7 @@ const dStyles = StyleSheet.create({
   sankalpaBeginText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
-    color: "#0A0604",
+    color: "#07201B",
     letterSpacing: 0.5,
   },
   sankalpaSkipBtn: {
@@ -4302,10 +4302,10 @@ const dStyles = StyleSheet.create({
 });
 
 // ── End-of-walk sacred completion card (matches reference design) ──────
-const CARD_GOLD = "#C47A1E";
-const CARD_GOLD_LIGHT = "#FFD98A";
-const CARD_CREAM = "#F4E5C2";
-const CARD_BG = "#0A0604";
+const CARD_GOLD = "#C6A24A";
+const CARD_GOLD_LIGHT = "#E4C97A";
+const CARD_CREAM = "#E3F0EC";
+const CARD_BG = "#07201B";
 
 const cardStyles = StyleSheet.create({
   scrollPad: {
@@ -4336,14 +4336,14 @@ const cardStyles = StyleSheet.create({
     position: "absolute",
     top: 8, left: 8, right: 8, bottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.7)",
+    borderColor: "rgba(198,162,74,0.7)",
     borderRadius: 8,
   },
   borderInner: {
     position: "absolute",
     top: 12, left: 12, right: 12, bottom: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(196,122,30,0.45)",
+    borderColor: "rgba(198,162,74,0.45)",
     borderRadius: 6,
   },
   corner: { position: "absolute", width: 28, height: 28, alignItems: "center", justifyContent: "center" },
@@ -4415,7 +4415,7 @@ const cardStyles = StyleSheet.create({
     letterSpacing: 4,
     marginTop: 2,
     textAlign: "center",
-    ...(Platform.OS === "web" ? ({ textShadow: "0 0 22px rgba(196,122,30,0.6)" } as any) : {}),
+    ...(Platform.OS === "web" ? ({ textShadow: "0 0 22px rgba(198,162,74,0.6)" } as any) : {}),
   },
   sharanamRow: {
     flexDirection: "row",
@@ -4436,9 +4436,9 @@ const cardStyles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(196,122,30,0.5)",
+    borderColor: "rgba(198,162,74,0.5)",
   },
 
   openQuote: {
@@ -4493,7 +4493,7 @@ const cardStyles = StyleSheet.create({
     paddingHorizontal: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(196,122,30,0.4)",
+    borderColor: "rgba(198,162,74,0.4)",
     width: "100%",
   },
   statBox: {
@@ -4521,7 +4521,7 @@ const cardStyles = StyleSheet.create({
   },
   statDivider: {
     width: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(196,122,30,0.3)",
+    backgroundColor: "rgba(198,162,74,0.3)",
     marginVertical: 2,
   },
 
@@ -4536,7 +4536,7 @@ const cardStyles = StyleSheet.create({
   },
   polaroid: {
     width: 86,
-    backgroundColor: "#F4E5C2",
+    backgroundColor: "#E3F0EC",
     padding: 4,
     paddingBottom: 14,
     marginHorizontal: 2,
@@ -4567,10 +4567,10 @@ const cardStyles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "rgba(196,122,30,0.08)",
+    backgroundColor: "rgba(198,162,74,0.08)",
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(196,122,30,0.25)",
+    borderColor: "rgba(198,162,74,0.25)",
   },
   noPhotosText: {
     flex: 1,
@@ -4583,7 +4583,7 @@ const cardStyles = StyleSheet.create({
     marginTop: 14,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: "rgba(196,122,30,0.08)",
+    backgroundColor: "rgba(198,162,74,0.08)",
     borderRadius: 8,
     borderLeftWidth: 2,
     borderLeftColor: CARD_GOLD,
@@ -4643,7 +4643,7 @@ const cardStyles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(196,122,30,0.12)",
+    backgroundColor: "rgba(198,162,74,0.12)",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,217,138,0.5)",
   },
@@ -4656,7 +4656,7 @@ const cardStyles = StyleSheet.create({
   },
   hashText: {
     fontSize: 9,
-    color: "rgba(196,122,30,0.7)",
+    color: "rgba(198,162,74,0.7)",
     letterSpacing: 0.5,
   },
 
@@ -4705,7 +4705,7 @@ const cardStyles = StyleSheet.create({
     fontFamily: SERIF_DISPLAY,
     fontSize: 26,
     fontStyle: "italic",
-    color: "#F4E5C2",
+    color: "#E3F0EC",
     textAlign: "center",
     minWidth: "60%",
   },
@@ -4731,7 +4731,7 @@ const cardStyles = StyleSheet.create({
     flex: 1,
     fontFamily: SERIF_DISPLAY,
     fontSize: 12,
-    color: "#F4E5C2",
+    color: "#E3F0EC",
     textAlign: "center",
   },
   overlayPolaroids: {
@@ -4774,7 +4774,7 @@ const cardStyles = StyleSheet.create({
   overlaySankalpaText: {
     fontFamily: SERIF_DISPLAY,
     fontSize: 12,
-    color: "#F4E5C2",
+    color: "#E3F0EC",
     fontStyle: "italic",
     marginTop: 2,
   },

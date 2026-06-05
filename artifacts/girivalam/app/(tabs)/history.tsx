@@ -38,18 +38,18 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ── Temple parchment palette — sandstone walls, brass lamps, ghee light ───
+// ── Misty hill palette — sage paper, soft brass lamps, calm dawn light ────
 const W = {
-  bg: "#FBF1DC",                          // warm parchment / temple wall
-  bgSoft: "#F5E6C4",                      // deeper cream, like turmeric-stained cloth
-  card: "#FFFAEC",                        // ghee-lamp glow
-  cardBorder: "rgba(155, 92, 20, 0.22)",  // dark brass outline
-  gold: "#9B5C14",                        // burnished brass (readable on cream)
-  goldLight: "#B8761C",                   // brighter brass for accents
-  goldFaint: "rgba(196, 122, 30, 0.10)",  // soft saffron wash
-  text: "#3D1F08",                        // sandalwood-dark sacred ink
-  textMid: "#6B3A14",                     // ochre brown
-  textFaint: "#A07A50",                   // faded copper
+  bg: "#EDF4F0",                          // misty green-white paper
+  bgSoft: "#DCE9E2",                      // pale sage cloth
+  card: "#F7FBF9",                        // soft lamp glow
+  cardBorder: "rgba(30, 90, 82, 0.20)",   // muted teal outline
+  gold: "#836418",                        // deep brass (AA contrast on mist & gold chips)
+  goldLight: "#C49B3D",                   // brighter brass for accents
+  goldFaint: "rgba(169, 131, 39, 0.10)",  // soft brass wash
+  text: "#1E2A27",                        // deep charcoal-green sacred ink
+  textMid: "#46564F",                     // slate green
+  textFaint: "#616E66",                   // muted sage (AA-readable)
   accent: "#C8501C",                      // sindoor / kumkum red-orange
 };
 
@@ -1614,7 +1614,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   filterHeaderText: { flex: 1, fontSize: 16, color: W.text, fontFamily: "Inter_700Bold" },
-  clearLink: { fontSize: 13, color: W.goldLight, fontFamily: "Inter_600SemiBold" },
+  clearLink: { fontSize: 13, color: W.gold, fontFamily: "Inter_600SemiBold" },
 
   // Generic empty / sub-head
   emptyText: {

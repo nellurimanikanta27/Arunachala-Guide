@@ -12,10 +12,10 @@ import {
   View,
 } from "react-native";
 
-const GOLD = "#C47A1E";
-const GOLD_LIGHT = "#F4C26A";
-const CREAM = "#F4E5C2";
-const BG = "#0A0604";
+const GOLD = "#C6A24A";
+const GOLD_LIGHT = "#E4C97A";
+const CREAM = "#E3F0EC";
+const BG = "#07201B";
 
 export default function IntroAnimation() {
   // Animation values
@@ -157,7 +157,7 @@ export default function IntroAnimation() {
       {/* Pre-dawn sky → dawn gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: skyFade }]}>
         <LinearGradient
-          colors={["#0A0604", "#2A0F08", "#4A1E0A", "#7A3A12"]}
+          colors={["#07201B", "#0D3029", "#176054", "#2E7D72"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 260,
     borderTopWidth: 320,
     borderRightColor: "transparent",
-    borderTopColor: "#1A0A04",
+    borderTopColor: "#0D2A24",
   },
   mountainRight: {
     position: "absolute",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 260,
     borderTopWidth: 320,
     borderLeftColor: "transparent",
-    borderTopColor: "#1A0A04",
+    borderTopColor: "#0D2A24",
   },
   mountainBase: {
     position: "absolute",
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: "35%",
-    backgroundColor: "#0A0604",
+    backgroundColor: "#07201B",
   },
 
   // Golden rays

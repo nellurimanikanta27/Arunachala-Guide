@@ -1,57 +1,58 @@
-// ── Sacred Minimalism palette ───────────────────────────────────────────
-// Warm Ivory · Sandstone · Muted Gold · Soft Bronze · Deep Charcoal.
-// Every token NAME below is preserved for backward compatibility so all
-// screens pick up the calmer look without per-screen rewrites. Only the
-// VALUES were re-tuned toward soft, spacious, low-saturation "temple at
-// dawn" tones — no neon, no heavy glassmorphism.
+// ── Sacred Hill palette ─────────────────────────────────────────────────
+// Serene Teal-Green · Misty Surfaces · Soft Brass Gold · Cool Charcoal.
+// Inspired by the green hills, calm dawn air and quiet stillness around
+// Arunachala — a peaceful, low-saturation "temple in the hills" mood.
+// Every token NAME is preserved for backward compatibility so all screens
+// pick up the new look without per-screen rewrites; only the VALUES changed.
 const Colors = {
-  // Soft Bronze — primary brand / actions
-  primary: "#9A6A43",
-  primaryDark: "#6E4A2C",
-  primaryLight: "#B5885E",
-  primaryFaint: "#F4EADF",
-  primaryMid: "#835836",
+  // Serene Teal-Green — primary brand / actions
+  primary: "#2E7D72",
+  primaryDark: "#1C5A52",
+  primaryLight: "#5AA89B",
+  primaryFaint: "#E3F0EC",
+  primaryMid: "#266B61",
 
-  // Muted Gold — gentle accents / highlights
-  amber: "#B8912E",
-  amberLight: "#CDA64A",
-  amberFaint: "#FAF3E2",
+  // Soft Brass Gold — gentle accents / highlights (spiritual warmth)
+  amber: "#C6A24A",
+  amberLight: "#DBBE74",
+  amberFaint: "#F6F0DD",
 
-  // Warm Ivory + Sandstone — surfaces
-  cream: "#F7EEDF",      // warm ivory
-  creamDark: "#E8DAC2",  // sandstone
-  warmWhite: "#FCF8F1",  // lightest ivory
+  // Misty surfaces — calm, airy, faintly green-white
+  cream: "#EEF4F1",      // soft misty paper
+  creamDark: "#DBE7E1",  // pale sage
+  warmWhite: "#F7FBF9",  // lightest mist
   white: "#FFFFFF",
 
-  // Deep Charcoal — text scale
-  text: "#2B2520",
-  textMid: "#5A4D40",
-  textLight: "#8A7864",
-  textFaint: "#B6A48C",
+  // Cool Charcoal-Green — text scale
+  text: "#1E2A27",
+  textMid: "#46564F",
+  textLight: "#74837B",
+  textFaint: "#A4B1A9",
 
-  border: "#E4D6C0",
-  borderLight: "#F0E7D8",
+  border: "#D6E3DC",
+  borderLight: "#E8F0EB",
 
-  shadow: "rgba(74, 54, 30, 0.10)",
-  shadowMed: "rgba(74, 54, 30, 0.16)",
-  overlay: "rgba(43, 37, 32, 0.50)",
-  overlayLight: "rgba(154, 106, 67, 0.10)",
+  shadow: "rgba(20, 60, 52, 0.10)",
+  shadowMed: "rgba(20, 60, 52, 0.16)",
+  overlay: "rgba(20, 38, 34, 0.50)",
+  overlayLight: "rgba(46, 125, 114, 0.10)",
 
   // aliases for backward compat with other screens
-  saffron: "#9A6A43",
-  saffronDark: "#6E4A2C",
-  saffronLight: "#B5885E",
-  brown: "#2B2520",
-  brownMid: "#5A4D40",
-  brownLight: "#8A7864",
-  gold: "#B8912E",
-  goldLight: "#CDA64A",
+  saffron: "#2E7D72",
+  saffronDark: "#1C5A52",
+  saffronLight: "#5AA89B",
+  brown: "#1E2A27",
+  brownMid: "#46564F",
+  brownLight: "#74837B",
+  gold: "#C6A24A",
+  goldLight: "#DBBE74",
   // Calm, desaturated category accents (no neon) — gently distinct so the
-  // expanded Local Guide categories read apart from one another.
-  green: "#7E8B5A",
+  // expanded Local Guide categories read apart from one another and from
+  // the teal-green primary.
+  green: "#6E9A6A",
   blue: "#5C7A99",
   purple: "#8A7A9E",
-  teal: "#5F8175",
+  teal: "#4E8C9E",
 };
 
 export default Colors;

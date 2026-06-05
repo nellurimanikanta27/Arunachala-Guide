@@ -22,10 +22,10 @@ import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-sto
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
-const BG = "#0A0604";
-const CREAM = "#F4E5C2";
-const GOLD = "#C47A1E";
-const GOLD_LIGHT = "#FFD98A";
+const BG = "#07201B";
+const CREAM = "#E3F0EC";
+const GOLD = "#C6A24A";
+const GOLD_LIGHT = "#E4C97A";
 const MUTED = "rgba(244,229,194,0.7)";
 const FAINT = "rgba(244,229,194,0.45)";
 
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#0A0604", "#1A0A05", "#2A1208"]}
+        colors={["#07201B", "#0D3029", "#154E46"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 65,
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.35)",
-    backgroundColor: "rgba(196,122,30,0.08)",
+    borderColor: "rgba(198,162,74,0.35)",
+    backgroundColor: "rgba(198,162,74,0.08)",
   },
   kicker: {
     fontFamily: "Inter_600SemiBold",
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     letterSpacing: 0.5,
     ...(Platform.OS === "web"
-      ? ({ textShadow: `0 0 18px rgba(196,122,30,0.35)` } as any)
+      ? ({ textShadow: `0 0 18px rgba(198,162,74,0.35)` } as any)
       : {}),
   },
   body: {
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "rgba(244,229,194,0.08)",
     borderWidth: 1,
-    borderColor: "rgba(196,122,30,0.45)",
+    borderColor: "rgba(198,162,74,0.45)",
     color: CREAM,
     fontFamily: "Inter_500Medium",
     fontSize: 18,

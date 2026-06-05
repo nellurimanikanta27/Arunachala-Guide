@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import FloatingAssistant from "@/components/FloatingAssistant";
@@ -22,6 +23,7 @@ function MapTabIcon({ focused }: { focused: boolean }) {
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <View style={{ flex: 1 }}>
     <Tabs
@@ -36,9 +38,9 @@ export default function TabLayout() {
           backgroundColor: Colors.white,
           borderTopColor: Colors.borderLight,
           borderTopWidth: 1,
-          height: Platform.OS === "web" ? 68 : undefined,
+          height: Platform.OS === "web" ? 68 : 62 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: Platform.OS === "web" ? 10 : undefined,
+          paddingBottom: Platform.OS === "web" ? 10 : Math.max(insets.bottom, 10),
         },
         tabBarLabelStyle: {
           fontFamily: "Inter_600SemiBold",
