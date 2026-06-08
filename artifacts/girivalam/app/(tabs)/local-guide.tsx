@@ -950,6 +950,28 @@ export default function LocalGuideScreen() {
                   </Text>
                 </Pressable>
               ))}
+              <Pressable
+                style={styles.quickTile}
+                onPress={() => router.push("/bus-transport" as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Bus routes"
+              >
+                <View style={[styles.quickIcon, { backgroundColor: Colors.primaryFaint }]}>
+                  <Ionicons name="bus-outline" size={22} color={Colors.primary} />
+                </View>
+                <Text style={styles.quickLabel} numberOfLines={1}>Bus</Text>
+              </Pressable>
+              <Pressable
+                style={styles.quickTile}
+                onPress={() => router.push("/train-transport" as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Train routes"
+              >
+                <View style={[styles.quickIcon, { backgroundColor: Colors.primaryFaint }]}>
+                  <Ionicons name="train-outline" size={22} color={Colors.primary} />
+                </View>
+                <Text style={styles.quickLabel} numberOfLines={1}>Train</Text>
+              </Pressable>
             </View>
 
             <View style={styles.essentialsCard}>
