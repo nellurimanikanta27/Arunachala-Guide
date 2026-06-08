@@ -910,6 +910,30 @@ export default function LocalGuideScreen() {
               />
             </LinearGradient>
 
+            <Pressable
+              style={[styles.continueCard, styles.continueCardTop]}
+              onPress={() => router.push("/(tabs)/route-map" as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Begin your Girivalam"
+            >
+              <View style={[styles.continueIcon, { backgroundColor: Colors.saffron }]}>
+                <Ionicons name="walk" size={20} color={Colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.continueTitle}>
+                  {ongoing ? "Resume your walk" : lastWalk ? "Continue your journey" : "Begin your Girivalam"}
+                </Text>
+                <Text style={styles.continueSub} numberOfLines={1}>
+                  {ongoing
+                    ? "Your Girivalam is in progress"
+                    : lastWalk
+                      ? `Last walk · ${formatDate(lastWalk.startedAt)}`
+                      : "Open the sacred route map to start"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+            </Pressable>
+
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionHeaderTitle}>Quick Access</Text>
               <Pressable
@@ -1003,31 +1027,6 @@ export default function LocalGuideScreen() {
                 ))}
               </View>
             </View>
-
-            <Text style={styles.sectionHeaderTitle}>Continue Your Journey</Text>
-            <Pressable
-              style={[styles.continueCard, styles.continueCardTop]}
-              onPress={() => router.push("/(tabs)/route-map" as any)}
-              accessibilityRole="button"
-              accessibilityLabel="Continue your journey on the map"
-            >
-              <View style={[styles.continueIcon, { backgroundColor: Colors.saffron }]}>
-                <Ionicons name="walk" size={20} color={Colors.white} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.continueTitle}>
-                  {ongoing ? "Resume your walk" : lastWalk ? "Continue your journey" : "Begin your Girivalam"}
-                </Text>
-                <Text style={styles.continueSub} numberOfLines={1}>
-                  {ongoing
-                    ? "Your Girivalam is in progress"
-                    : lastWalk
-                      ? `Last walk · ${formatDate(lastWalk.startedAt)}`
-                      : "Open the sacred route map to start"}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
-            </Pressable>
 
             {(continueRead.length > 0 || recents.length > 0) && (
               <Pressable
