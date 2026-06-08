@@ -756,6 +756,7 @@ const TEMPLE_SECTIONS: { subType: SubType; label: string; emoji: string; desc: s
 export default function LocalGuideScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const topInset = isWeb ? 0 : insets.top;
   const bottomInset = isWeb ? 34 : insets.bottom;
   const [active, setActive] = useState<Category>("temples");
   const [query, setQuery] = useState("");
@@ -851,29 +852,11 @@ export default function LocalGuideScreen() {
 
   return (
     <View style={styles.container}>
-      <TopBar title="Arunachala Guide" subtitle="Explore · Learn · Experience" />
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color={Colors.textLight} />
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search temples, food, stay…"
-          placeholderTextColor={Colors.textFaint}
-          returnKeyType="search"
-        />
-        {searching ? (
-          <Pressable onPress={() => setQuery("")} hitSlop={8} accessibilityLabel="Clear search">
-            <Ionicons name="close-circle" size={18} color={Colors.textLight} />
-          </Pressable>
-        ) : null}
-      </View>
-
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomInset + 24 },
+          { paddingTop: topInset + 12, paddingBottom: bottomInset + 24 },
         ]}
         showsVerticalScrollIndicator={false}
       >
