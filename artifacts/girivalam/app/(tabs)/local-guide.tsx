@@ -852,11 +852,31 @@ export default function LocalGuideScreen() {
 
   return (
     <View style={styles.container}>
+      {/* ── Sticky search bar ── */}
+      <View style={[styles.searchBar, { marginTop: topInset + 8 }]}>
+        <Ionicons name="search" size={16} color={Colors.textLight} />
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search temples, food, ashram, stay…"
+          placeholderTextColor={Colors.textFaint}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+          accessibilityLabel="Search places"
+        />
+        {query.length > 0 && (
+          <Pressable onPress={() => setQuery("")} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear search">
+            <Ionicons name="close-circle" size={16} color={Colors.textLight} />
+          </Pressable>
+        )}
+      </View>
+
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: topInset + 12, paddingBottom: bottomInset + 24 },
+          { paddingTop: 8, paddingBottom: bottomInset + 24 },
         ]}
         showsVerticalScrollIndicator={false}
       >
