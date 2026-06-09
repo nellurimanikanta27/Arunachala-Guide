@@ -26,6 +26,7 @@ const K = {
   recents: `${NS}/recents`,
   downloads: `${NS}/downloads`,
   visited: `${NS}/visited`,
+  sadhana: `${NS}/sadhana`,
 };
 
 export type MomentKind = "photo" | "voice" | "note" | "feeling";
@@ -423,6 +424,73 @@ export async function unmarkVisited(key: string): Promise<void> {
     const list = await loadList<VisitedPoint>(K.visited);
     await save(K.visited, list.filter((v) => v.key !== key));
   });
+}
+
+// ── Sadhana log ─────────────────────────────────────────────────────────
+export interface SadhanaDay {
+  date: string;   // "YYYY-MM-DD"
+  malas: number;  // japa malas completed that day
+  practiced: boolean;
+}
+
+export interface SadhanaData {
+  log: Record<string, SadhanaDay>; // keyed by "YYYY-MM-DD"
+  totalMalas: number;
+}
+
+const DEFAULT_SADHANA: SadhanaData = { log: {}, totalMalas: 0 };
+
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export async function getSadhanaData(): Promise<SadhanaData> {
+  return load<SadhanaData>(K.sadhana, DEFAULT_SADHANA);
+}
+
+export async function markSadhanaPracticed(): Promise<SadhanaData> {
+  return withKeyLock(K.sadhana, async () => {
+    const data = await load<SadhanaData>(K.sadhana, DEFAULT_SADHANA);
+    const key = todayKey();
+    const day: SadhanaDay = data.log[key] ?? { date: key, malas: 0, practiced: false };
+    const next: SadhanaData = {
+      ...data,
+      log: { ...data.log, [key]: { ...day, practiced: true } },
+    };
+    await save(K.sadhana, next);
+    return next;
+  });
+}
+
+export async function addJapaMala(): Promise<SadhanaData> {
+  return withKeyLock(K.sadhana, async () => {
+    const data = await load<SadhanaData>(K.sadhana, DEFAULT_SADHANA);
+    const key = todayKey();
+    const day: SadhanaDay = data.log[key] ?? { date: key, malas: 0, practiced: false };
+    const next: SadhanaData = {
+      totalMalas: data.totalMalas + 1,
+      log: { ...data.log, [key]: { ...day, malas: day.malas + 1, practiced: true } },
+    };
+    await save(K.sadhana, next);
+    return next;
+  });
+}
+
+export function getSadhanaStreak(data: SadhanaData): number {
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 366; i++) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    if (data.log[key]?.practiced) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
 }
 
 // ── Wipe everything ─────────────────────────────────────────────────────
