@@ -82,76 +82,147 @@ const DAILY_PRACTICES = [
   "Speak less today. In every silence, listen to what is underneath.",
 ];
 
-const EMOTIONS: { key: string; label: string; teaching: string; passage: string }[] = [
+interface Situation {
+  key: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  sub: string;
+  quotes: { text: string; attr: string }[];
+  teaching: string;
+  practice: string;
+  reflectionPrompt: string;
+}
+
+const SITUATIONS: Situation[] = [
   {
     key: "anxiety",
+    icon: "pulse-outline",
     label: "Anxiety",
-    teaching: "Anxiety is the mind running ahead. The Self is always here.",
-    passage:
-      "Ramana said: 'The future is uncertain. The present is here. Stay with what is, not with what may come. Ask — to whom is this anxiety arising? Pursue that thread inward.'",
-  },
-  {
-    key: "confusion",
-    label: "Confusion",
-    teaching: "Confusion ends when the mind stops trying to know and begins to be.",
-    passage:
-      "When confusion arises, drop the question for one breath. The clarity you seek is the silence underneath the question.",
+    sub: "Racing mind, restless body",
+    quotes: [
+      { text: "Happiness is your nature. It is not wrong to desire it. What is wrong is seeking it outside.", attr: "Ramana Maharshi" },
+      { text: "The future is uncertain. The present is here. Stay with what is, not with what may come.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Anxiety is the mind projecting itself into a future that has not yet arrived. The root teaching: return to now. Ask — 'To whom is this anxiety arising?' Follow that thread inward, away from the imagined future, back to the one who is always still.",
+    practice: "Sit. Take three slow breaths. With each breath, say silently: 'I am here.' Let the next breath come on its own. Do nothing else for two minutes.",
+    reflectionPrompt: "What future am I most afraid of right now? And what is here, right now, that fear cannot touch?",
   },
   {
     key: "fear",
+    icon: "thunderstorm-outline",
     label: "Fear",
-    teaching: "Fear is the shadow of the small self. The Self has nothing to fear.",
-    passage:
-      "Ask: 'Who is afraid?' Hold that question gently. The fear will not vanish at once, but you will see it is not who you are.",
+    sub: "Dread, worst-case thinking",
+    quotes: [
+      { text: "Fear is the mind's shadow cast by forgetting what you truly are.", attr: "Ramana Maharshi" },
+      { text: "Who is afraid? Pursue that question. You will not find the one you are looking for.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Fear belongs to the small self that believes it can be destroyed. The Self — the awareness behind all thought — cannot be harmed. Ask 'Who is afraid?' with genuine curiosity, not to answer it, but to see that the one who fears is itself a thought.",
+    practice: "Place both hands on your chest. Feel the warmth. Breathe slowly. Say internally: 'This too is known by something quiet.' Rest there.",
+    reflectionPrompt: "What is the worst thing I am imagining? If it happened, what is the deepest part of me that would still remain?",
+  },
+  {
+    key: "anger",
+    icon: "flame-outline",
+    label: "Anger",
+    sub: "Frustration, resentment, irritation",
+    quotes: [
+      { text: "The degree of freedom from unwanted thoughts and the degree of concentration on a single thought are the measures to gauge spiritual progress.", attr: "Ramana Maharshi" },
+      { text: "If you are not happy for any reason whatsoever, there must be a 'you' who is unhappy. Find out who that is.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Anger burns the one who holds it, not the one it is aimed at. Behind every anger is a want — something that should have been, wasn't. Ask: 'Who is the one who feels this should be different?' That is the ego-self claiming authority over what it cannot control. See it. The anger softens.",
+    practice: "Don't speak. Don't act. Sit with the fire. Watch it the way you'd watch a forest burn on the horizon — real, but not you. Let it move through without adding fuel.",
+    reflectionPrompt: "What exactly did I want that I didn't get? Is the anger about this moment — or about something older?",
   },
   {
     key: "loneliness",
+    icon: "person-outline",
     label: "Loneliness",
-    teaching: "You are never alone. Arunachala is always here.",
-    passage:
-      "Even from a thousand miles away, simply turning the heart toward Arunachala is enough. The hill listens.",
+    sub: "Disconnection, feeling unseen",
+    quotes: [
+      { text: "Solitude is in the mind. One might be in the thick of the world and yet maintain perfect serenity of mind.", attr: "Ramana Maharshi" },
+      { text: "Even from a thousand miles, simply turning the heart toward Arunachala is enough. The hill listens.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Loneliness arises when we seek completion in another person. But the Self is already whole. There is a loneliness that is simply the soul remembering its true home — not a person, not a place, but a depth within. Arunachala is always present. Turn toward it.",
+    practice: "Go outside if you can. Sit under the sky. Feel the ground beneath you. You are held by something that has never left you. Let that land.",
+    reflectionPrompt: "What am I truly seeking from other people? Is there any part of that which only I can give myself?",
   },
   {
-    key: "overthinking",
-    label: "Overthinking",
-    teaching: "Thoughts are like clouds. The sky does not move.",
-    passage:
-      "Do not fight thoughts. Watch them. Ask: 'For whom do these thoughts arise?' Each enquiry is one step home.",
+    key: "stress",
+    icon: "timer-outline",
+    label: "Stress",
+    sub: "Overwhelm, too much to carry",
+    quotes: [
+      { text: "There is no greater mystery than this: being Reality ourselves, we seek to gain Reality.", attr: "Ramana Maharshi" },
+      { text: "Whatever is destined not to happen will not happen. Whatever is destined to happen will happen. The best thing is to remain silent.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Stress is the sign that the mind believes it is responsible for outcomes it cannot fully control. Bhagavan often reminded devotees: your duty is the action, not the result. Act with full attention. Then, let go. Arunachala carries what you were never meant to hold alone.",
+    practice: "Write down three things worrying you. Then write: 'I have done what I can today.' Close the notebook. Don't open it again until morning.",
+    reflectionPrompt: "What am I trying to control that I cannot? What would change if I trusted, just for today, that things are unfolding as they must?",
   },
   {
-    key: "pain",
-    label: "Emotional pain",
-    teaching: "Pain met with awareness becomes the doorway to the heart.",
-    passage:
-      "Do not push pain away. Sit with it as a mother sits with a crying child. In time, the child becomes quiet.",
+    key: "attachment",
+    icon: "link-outline",
+    label: "Attachment",
+    sub: "Clinging, not wanting to let go",
+    quotes: [
+      { text: "The world is illusory. Brahman alone is real. Brahman is the world.", attr: "Ramana Maharshi" },
+      { text: "Letting go is not abandonment. It is the deepest act of love — releasing what was never yours to keep.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Attachment is not love. Love says 'I want what is best for you.' Attachment says 'I need you to remain unchanged for my peace.' The path is not to stop caring — it is to love without the grip. Hold gently. What is truly yours will stay. What leaves was on loan.",
+    practice: "Think of what you are clinging to. Now hold it in your open palm, not a fist. Say: 'I love this. I release it to its own nature.' Breathe.",
+    reflectionPrompt: "What am I afraid of losing? If I lost it, what quality within me would I still have? Where does that quality come from?",
+  },
+  {
+    key: "grief",
+    icon: "heart-outline",
+    label: "Grief",
+    sub: "Loss, mourning, sorrow",
+    quotes: [
+      { text: "Where have those who have gone, gone? They have gone to the Source from which we all came.", attr: "Ramana Maharshi" },
+      { text: "Grief is love with nowhere to go. Let it go to the Self, where it becomes peace.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Grief is the price of love, and it is therefore sacred. Ramana said of death: 'Where have they gone? To the Source.' What we mourn is the form — but the love that filled that form does not die. Let your grief be a prayer. It already is.",
+    practice: "Light a lamp or candle if you can. Sit with the one you grieve in your heart. Don't talk. Don't explain. Just let them be present with you, in the silence.",
+    reflectionPrompt: "What is the most beautiful thing I received from what I lost? How can I carry that forward in how I live today?",
+  },
+  {
+    key: "confusion",
+    icon: "help-circle-outline",
+    label: "Confusion",
+    sub: "Indecision, unclear direction",
+    quotes: [
+      { text: "There is no need to clear doubts. Realise the Self and then see if the doubts remain.", attr: "Ramana Maharshi" },
+      { text: "Clarity is not a result of more thinking. It is what emerges when thinking stops.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Confusion is often the mind demanding that the path be visible before the step is taken. But the teaching of Arunachala has always been: take one step. The next step reveals itself only when this one is complete. Stop waiting for certainty. Take the step that is most true right now.",
+    practice: "Sit still. Don't think about the decision. For five minutes, just watch your breathing. When your mind goes to the decision, return to breathing. Notice what feels most settled when you are done.",
+    reflectionPrompt: "If I knew I couldn't fail, what would I do? What is the part of me that already knows?",
+  },
+  {
+    key: "relationships",
+    icon: "people-outline",
+    label: "Relationships",
+    sub: "Conflict, hurt, disconnection",
+    quotes: [
+      { text: "When you hurt another, you disturb the peace of the Self. When you love another without expectation, you see the Self in them.", attr: "Ramana Maharshi" },
+      { text: "See the Self in others. That is the highest form of wisdom and the foundation of all right action.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Most relationship suffering comes from expecting another person to fill something we must fill for ourselves. Bhagavan said: see the Self in others. When you do, you stop needing them to be different — and something remarkable often happens: they soften, because your expectation has softened.",
+    practice: "Think of the person. Take one breath. Ask: 'What do I actually want from them, at the deepest level?' Not the surface want — the real one. Sit with that.",
+    reflectionPrompt: "What am I seeing in this person that disturbs me? Is any part of that quality also present in me, unacknowledged?",
   },
   {
     key: "purpose",
-    label: "Lack of purpose",
-    teaching: "The deepest purpose is to know who you are.",
-    passage:
-      "Worldly purpose comes and goes. The purpose of life is to recognise the Self — that which is always present, always whole.",
-  },
-  {
-    key: "peace",
-    label: "Seeking peace",
-    teaching: "Peace is not found. It is uncovered.",
-    passage:
-      "Peace is your own nature. Stop adding to the mind. What remains, untouched, is peace.",
-  },
-  {
-    key: "curiosity",
-    label: "Curiosity",
-    teaching: "Curiosity turned inward becomes self-enquiry.",
-    passage:
-      "Take the same wonder you bring to the world and turn it on the one who wonders. There you will find the source.",
-  },
-  {
-    key: "discovery",
-    label: "Self-discovery",
-    teaching: "You are not becoming someone. You are unbecoming everyone you are not.",
-    passage:
-      "Drop one identity at a time. What cannot be dropped — that is you.",
+    icon: "compass-outline",
+    label: "Purpose",
+    sub: "Feeling directionless, unfulfilled",
+    quotes: [
+      { text: "Your own Self-realization is the greatest service you can render the world.", attr: "Ramana Maharshi" },
+      { text: "The purpose of life is to discover that you are life itself — not a wave looking for the ocean, but the ocean appearing as a wave.", attr: "Ramana Maharshi" },
+    ],
+    teaching: "Worldly purpose comes and goes — careers end, projects complete, identities shift. The search for permanent purpose in impermanent forms always disappoints. The deeper question: What am I, beneath all my roles? That discovery — of the Self — is the one purpose that never empties.",
+    practice: "Ask yourself: 'What would I do if no one was watching and I needed nothing from it?' Whatever that is — that contains a thread back to your real nature. Follow it.",
+    reflectionPrompt: "When in my life have I felt most alive and most myself? What was I doing — and what quality was I expressing in that moment?",
   },
 ];
 
@@ -282,12 +353,12 @@ const TEACHING_ITEMS: LibItem[] = [
     body: m.body,
     downloadable: true,
   })),
-  ...EMOTIONS.map((e) => ({
-    id: `teaching_emotion_${e.key}`,
+  ...SITUATIONS.map((e) => ({
+    id: `teaching_situation_${e.key}`,
     title: e.label,
     category: "teaching" as const,
     mode: "read" as const,
-    body: `${e.teaching}\n\n${e.passage}`,
+    body: `${e.teaching}\n\n${e.practice}`,
     downloadable: true,
   })),
 ];
@@ -446,9 +517,9 @@ function DailyWisdomCard() {
   );
 }
 
-function EmotionFinder() {
+function LifeGuidanceSection({ onWriteReflection }: { onWriteReflection?: (prompt: string) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const teaching = useMemo(() => EMOTIONS.find((e) => e.key === selected) ?? null, [selected]);
+  const situation = useMemo(() => SITUATIONS.find((s) => s.key === selected) ?? null, [selected]);
 
   const choose = (key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -456,30 +527,90 @@ function EmotionFinder() {
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>What are you feeling today?</Text>
-      <Text style={styles.cardSub}>Tap one. A teaching will arise.</Text>
-
-      <View style={styles.chipWrap}>
-        {EMOTIONS.map((e) => {
-          const active = e.key === selected;
+    <View style={{ gap: 12 }}>
+      {/* Situation tiles grid */}
+      <View style={styles.situationGrid}>
+        {SITUATIONS.map((s) => {
+          const active = s.key === selected;
           return (
             <Pressable
-              key={e.key}
-              onPress={() => choose(e.key)}
-              style={[styles.chip, active && styles.chipActive]}
+              key={s.key}
+              onPress={() => choose(s.key)}
+              style={[styles.situationTile, active && styles.situationTileActive]}
               accessibilityRole="button"
+              accessibilityLabel={s.label}
             >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{e.label}</Text>
+              <Ionicons
+                name={s.icon}
+                size={22}
+                color={active ? W.gold : W.textMid}
+              />
+              <Text style={[styles.situationTileLabel, active && styles.situationTileLabelActive]}>
+                {s.label}
+              </Text>
+              <Text style={styles.situationTileSub} numberOfLines={1}>{s.sub}</Text>
             </Pressable>
           );
         })}
       </View>
 
-      {teaching ? (
-        <View style={styles.teachingBox}>
-          <Text style={styles.teachingHead}>{teaching.teaching}</Text>
-          <Text style={styles.teachingBody}>{teaching.passage}</Text>
+      {/* Expanded teaching panel */}
+      {situation ? (
+        <View style={styles.situationPanel}>
+          {/* Header */}
+          <View style={styles.situationPanelHeader}>
+            <View style={styles.situationPanelIcon}>
+              <Ionicons name={situation.icon} size={20} color={W.gold} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.situationPanelTitle}>{situation.label}</Text>
+              <Text style={styles.situationPanelSub}>{situation.sub}</Text>
+            </View>
+          </View>
+
+          {/* Quotes */}
+          <View style={styles.situationQuotes}>
+            {situation.quotes.map((q, i) => (
+              <View key={i} style={styles.situationQuoteBlock}>
+                <Text style={styles.situationQuoteText}>"{q.text}"</Text>
+                <Text style={styles.situationQuoteAttr}>— {q.attr}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Teaching */}
+          <View style={styles.situationTeachingBlock}>
+            <View style={styles.situationTeachingBar} />
+            <Text style={styles.situationTeachingText}>{situation.teaching}</Text>
+          </View>
+
+          {/* Practice */}
+          <View style={styles.situationPracticeBlock}>
+            <View style={styles.situationPracticeHeader}>
+              <Ionicons name="leaf-outline" size={14} color={W.goldLight} />
+              <Text style={styles.situationPracticeLabel}>A PRACTICE FOR NOW</Text>
+            </View>
+            <Text style={styles.situationPracticeText}>{situation.practice}</Text>
+          </View>
+
+          {/* Reflection prompt */}
+          <View style={styles.situationReflectBlock}>
+            <View style={styles.situationReflectHeader}>
+              <Ionicons name="pencil-outline" size={14} color={W.goldLight} />
+              <Text style={styles.situationReflectLabel}>REFLECTION QUESTION</Text>
+            </View>
+            <Text style={styles.situationReflectText}>{situation.reflectionPrompt}</Text>
+            {onWriteReflection ? (
+              <Pressable
+                style={styles.situationWriteBtn}
+                onPress={() => onWriteReflection(situation.reflectionPrompt)}
+                accessibilityRole="button"
+              >
+                <Ionicons name="create-outline" size={14} color={W.gold} />
+                <Text style={styles.situationWriteBtnText}>Write my reflection</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       ) : null}
     </View>
@@ -1211,11 +1342,11 @@ export default function WisdomScreen() {
 
       {/* 2. Emotion finder */}
       <SectionHeader
-        overline="A WISE COMPANION"
-        title="The teaching for today's heart"
-        sub="The app meets you where you are."
+        overline="LIFE GUIDANCE"
+        title="What are you going through?"
+        sub="Tap your situation. A teaching, a practice, and a reflection await."
       />
-      <EmotionFinder />
+      <LifeGuidanceSection />
 
       {/* 3. Ramana Knowledge Space */}
       <SectionHeader
@@ -1417,26 +1548,108 @@ const styles = StyleSheet.create({
     lineHeight: 21, marginTop: 6,
   },
 
-  // Emotion chips
-  chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
-  chip: {
-    paddingHorizontal: 13, paddingVertical: 8, borderRadius: 100,
-    borderWidth: 1, borderColor: W.cardBorder, backgroundColor: W.goldFaint,
+  // Life Guidance — situation tiles grid
+  situationGrid: {
+    flexDirection: "row", flexWrap: "wrap", gap: 10,
   },
-  chipActive: { backgroundColor: W.gold, borderColor: W.gold },
-  chipText: { fontSize: 12, color: W.textMid, fontFamily: "Inter_500Medium" },
-  chipTextActive: { color: "#FFFAEC", fontFamily: "Inter_600SemiBold" },
-  teachingBox: {
-    marginTop: 16, padding: 14, borderRadius: 12,
-    backgroundColor: W.goldFaint, borderLeftWidth: 2, borderLeftColor: W.gold,
+  situationTile: {
+    width: "30%", flexGrow: 1,
+    backgroundColor: W.card, borderWidth: 1, borderColor: W.cardBorder,
+    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 10,
+    alignItems: "center", gap: 5,
   },
-  teachingHead: {
-    fontSize: 14, color: W.goldLight, fontFamily: "Inter_600SemiBold",
+  situationTileActive: {
+    borderColor: W.gold, backgroundColor: W.goldFaint,
+  },
+  situationTileLabel: {
+    fontSize: 12, color: W.text, fontFamily: "Inter_600SemiBold", textAlign: "center",
+  },
+  situationTileLabelActive: { color: W.gold },
+  situationTileSub: {
+    fontSize: 10, color: W.textFaint, fontFamily: "Inter_400Regular",
+    textAlign: "center", lineHeight: 13,
+  },
+
+  // Life Guidance — expanded panel
+  situationPanel: {
+    backgroundColor: W.card, borderRadius: 16, borderWidth: 1,
+    borderColor: W.cardBorder, overflow: "hidden",
+  },
+  situationPanelHeader: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: W.cardBorder,
+  },
+  situationPanelIcon: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: W.goldFaint, alignItems: "center", justifyContent: "center",
+  },
+  situationPanelTitle: {
+    fontSize: 16, color: W.text, fontFamily: "Inter_700Bold",
+  },
+  situationPanelSub: {
+    fontSize: 12, color: W.textFaint, fontFamily: "Inter_400Regular", marginTop: 1,
+  },
+  situationQuotes: {
+    paddingHorizontal: 16, paddingVertical: 14, gap: 14,
+    borderBottomWidth: 1, borderBottomColor: W.cardBorder,
+  },
+  situationQuoteBlock: { gap: 4 },
+  situationQuoteText: {
+    fontSize: 14, color: W.text, fontFamily: "Inter_400Regular",
+    fontStyle: "italic", lineHeight: 21,
+  },
+  situationQuoteAttr: {
+    fontSize: 11, color: W.goldLight, fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.3,
+  },
+  situationTeachingBlock: {
+    flexDirection: "row", gap: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: W.cardBorder,
+  },
+  situationTeachingBar: {
+    width: 3, borderRadius: 2, backgroundColor: W.gold, alignSelf: "stretch",
+  },
+  situationTeachingText: {
+    flex: 1, fontSize: 13, color: W.textMid, fontFamily: "Inter_400Regular",
     lineHeight: 21,
   },
-  teachingBody: {
-    fontSize: 13, color: W.textMid, fontFamily: "Inter_400Regular",
-    lineHeight: 20, marginTop: 8,
+  situationPracticeBlock: {
+    paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: "#FDFBF5",
+    borderBottomWidth: 1, borderBottomColor: W.cardBorder,
+    gap: 8,
+  },
+  situationPracticeHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  situationPracticeLabel: {
+    fontSize: 10, color: W.goldLight, fontFamily: "Inter_700Bold",
+    letterSpacing: 1,
+  },
+  situationPracticeText: {
+    fontSize: 13, color: W.text, fontFamily: "Inter_400Regular", lineHeight: 20,
+  },
+  situationReflectBlock: {
+    paddingHorizontal: 16, paddingVertical: 14, gap: 10,
+  },
+  situationReflectHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  situationReflectLabel: {
+    fontSize: 10, color: W.goldLight, fontFamily: "Inter_700Bold",
+    letterSpacing: 1,
+  },
+  situationReflectText: {
+    fontSize: 14, color: W.text, fontFamily: "Inter_600SemiBold",
+    lineHeight: 22, fontStyle: "italic",
+  },
+  situationWriteBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    alignSelf: "flex-start",
+    paddingHorizontal: 14, paddingVertical: 9,
+    borderRadius: 20, borderWidth: 1, borderColor: W.gold,
+    backgroundColor: W.goldFaint,
+  },
+  situationWriteBtnText: {
+    fontSize: 12, color: W.gold, fontFamily: "Inter_600SemiBold",
   },
 
   // Timeline
