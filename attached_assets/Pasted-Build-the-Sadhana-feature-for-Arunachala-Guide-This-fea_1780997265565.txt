@@ -1,0 +1,235 @@
+Build the Sadhana feature for Arunachala Guide.
+
+This feature is not a content section. It is a daily spiritual practice system that helps users build discipline, peace, clarity, and inner strength.
+
+Core purpose:
+Help pilgrims carry Arunachala into everyday life through daily spiritual practice.
+
+The Sadhana section should feel:
+Sacred, calm, simple, non-commercial, respectful, personal, and easy for all users including elderly users and first-time spiritual practitioners.
+
+Do not make it look like a fitness tracker.
+Do not make it feel like a productivity app.
+Do not use aggressive streak pressure or social media style gamification.
+The experience should feel like a gentle spiritual companion.
+
+Main screen:
+The screen should open with a peaceful white or warm ash background with gold accents.
+At the top, show:
+- Greeting: “Begin where you are.”
+- Short supporting line: “Even five minutes of practice can change the quality of your day.”
+- Current daily streak
+- Total practice minutes
+- This week’s practice count
+- A soft reminder: “No pressure. Return gently.”
+
+Primary CTA:
+“Start Today’s Sadhana”
+
+Practice categories:
+1. Silent Meditation
+2. Self-Enquiry
+3. Japa
+4. Pranayama
+5. Silence Practice
+6. Walking Meditation
+7. Chanting
+8. Arunachala Remembrance
+
+Each practice should include:
+- Name
+- Short meaning
+- Recommended duration
+- Beginner friendly guidance
+- Start button
+- Optional audio guidance
+- Save completion action
+
+Practice duration options:
+- 5 minutes
+- 10 minutes
+- 20 minutes
+- 30 minutes
+- 60 minutes
+
+Practice detail screen:
+When a user selects a practice, show a clean practice screen with:
+- Practice name
+- Short explanation
+- “How to do this” steps
+- Duration selector
+- Start button
+- Optional guidance toggle
+- Calm visual breathing or stillness animation
+
+Example for Self-Enquiry:
+Title: “Self-Enquiry”
+Subtitle: “Turn attention back to the one who is aware.”
+Steps:
+1. Sit comfortably.
+2. Let the breath settle.
+3. When a thought appears, ask: “To whom has this thought come?”
+4. Notice the feeling of “I”.
+5. Rest there without trying to answer intellectually.
+
+Timer screen:
+When practice starts, open a focused full-screen experience.
+The timer screen should be minimal:
+- Large calm timer
+- Practice name
+- Soft breathing circle or gentle golden light animation
+- Pause button
+- End session button
+- No clutter
+- No notifications
+- No unnecessary stats during practice
+
+For meditation:
+Show a slowly breathing golden circle.
+
+For japa:
+Show the mantra gently:
+“Arunachala Shiva”
+or
+“Om Namah Shivaya”
+
+For self-enquiry:
+Show gentle prompts:
+“Who am I?”
+“To whom does this thought arise?”
+“Rest as awareness.”
+
+For pranayama:
+Show breathing phases:
+“Inhale”
+“Hold”
+“Exhale”
+Use a slow expanding and contracting circle.
+
+After practice completion:
+Show a peaceful completion screen:
+- “Practice Complete”
+- Duration completed
+- Practice name
+- Gentle message: “You returned to yourself today.”
+- Optional reflection prompt
+- Save to My Arunachala
+- Continue button
+
+Reflection after Sadhana:
+Optional prompts:
+- What changed after practice?
+- What disturbed your peace today?
+- What did you notice within?
+- What are you grateful for?
+- What will you carry into the rest of the day?
+
+Daily routine builder:
+Allow users to create simple routines:
+- Morning Sadhana
+- Evening Sadhana
+- Before sleep
+- During stress
+- Before Girivalam
+- After Girivalam
+
+Routine examples:
+5 minute routine:
+- 1 minute silence
+- 3 minutes japa
+- 1 minute gratitude
+
+10 minute routine:
+- 2 minutes breathing
+- 5 minutes meditation
+- 3 minutes self-enquiry
+
+20 minute routine:
+- 5 minutes pranayama
+- 10 minutes meditation
+- 5 minutes reflection
+
+60 minute routine:
+- 10 minutes pranayama
+- 20 minutes meditation
+- 20 minutes self-enquiry
+- 10 minutes silence
+
+Progress tracking:
+Track gently:
+- Current streak
+- Total practice days
+- Total minutes practiced
+- Favorite practice
+- Weekly consistency
+- Monthly practice history
+
+Do not overemphasize failure.
+If a user misses a day, show:
+“Begin again gently.”
+Not:
+“You lost your streak.”
+
+My Sadhana archive:
+Save:
+- Completed practices
+- Reflections
+- Favorite mantras
+- Practice notes
+- Personal insights
+- Monthly progress
+- Spiritual milestones
+
+Design style:
+Use:
+- Warm white background
+- Sacred ash tones
+- Gold accents
+- Soft saffron highlights
+- Large readable text
+- Rounded corners
+- Calm spacing
+- Minimal icons
+- Gentle animations
+- Serif headings for sacred feeling
+- Clean sans-serif body text
+
+Avoid:
+- Dark gym-style timer UI
+- Loud colors
+- Too many cards
+- Complicated charts
+- Competitive badges
+- Social sharing pressure
+- Addictive gamification
+
+Navigation:
+The Sadhana feature should include:
+1. Sadhana Home
+2. Practice Library
+3. Practice Detail
+4. Timer Screen
+5. Completion Screen
+6. Reflection Screen
+7. Routine Builder
+8. Sadhana History
+
+Sample copy:
+Home title:
+“Sadhana”
+
+Subtitle:
+“Daily practice to carry Arunachala within.”
+
+CTA:
+“Start Today’s Sadhana”
+
+Completion message:
+“You practiced today. Let the stillness stay with you.”
+
+Missed day message:
+“Begin again. Arunachala does not count your failures.”
+
+Final feeling:
+The user should feel:
+“This app is helping me build a real spiritual life, not just consume spiritual content.”

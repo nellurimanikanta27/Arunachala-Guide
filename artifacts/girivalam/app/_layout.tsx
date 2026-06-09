@@ -111,6 +111,8 @@ export default function RootLayout() {
               <Stack.Screen name="intro" options={{ headerShown: false, animation: "fade" }} />
               <Stack.Screen name="welcome" options={{ headerShown: false, animation: "fade" }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "fade" }} />
+              <Stack.Screen name="sadhana-practice" options={{ headerShown: false, animation: "slide_from_right" }} />
+              <Stack.Screen name="sadhana-complete" options={{ headerShown: false, animation: "slide_from_right" }} />
             </Stack>
           </GestureHandlerRootView>
         </QueryClientProvider>

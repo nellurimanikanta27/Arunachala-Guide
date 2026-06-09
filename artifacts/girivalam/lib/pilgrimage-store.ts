@@ -427,18 +427,32 @@ export async function unmarkVisited(key: string): Promise<void> {
 }
 
 // ── Sadhana log ─────────────────────────────────────────────────────────
+export interface SadhanaSession {
+  id: string;
+  date: string;
+  practiceId: string;
+  practiceName: string;
+  durationMins: number;
+  reflection?: string;
+  completedAt: number;
+}
+
 export interface SadhanaDay {
-  date: string;   // "YYYY-MM-DD"
-  malas: number;  // japa malas completed that day
+  date: string;       // "YYYY-MM-DD"
+  malas: number;      // japa malas completed that day
   practiced: boolean;
+  minutes: number;    // total minutes practiced
+  practices: string[]; // practice IDs completed
 }
 
 export interface SadhanaData {
   log: Record<string, SadhanaDay>; // keyed by "YYYY-MM-DD"
   totalMalas: number;
+  totalMinutes: number;
+  sessions: SadhanaSession[];
 }
 
-const DEFAULT_SADHANA: SadhanaData = { log: {}, totalMalas: 0 };
+const DEFAULT_SADHANA: SadhanaData = { log: {}, totalMalas: 0, totalMinutes: 0, sessions: [] };
 
 function todayKey(): string {
   const d = new Date();
@@ -463,13 +477,53 @@ export async function markSadhanaPracticed(): Promise<SadhanaData> {
   });
 }
 
+export async function saveSadhanaSession(
+  practiceId: string,
+  practiceName: string,
+  durationMins: number,
+  reflection?: string
+): Promise<SadhanaData> {
+  return withKeyLock(K.sadhana, async () => {
+    const data = await load<SadhanaData>(K.sadhana, DEFAULT_SADHANA);
+    const key = todayKey();
+    const day: SadhanaDay = data.log[key] ?? { date: key, malas: 0, practiced: false, minutes: 0, practices: [] };
+    const session: SadhanaSession = {
+      id: `${key}-${practiceId}-${Date.now()}`,
+      date: key,
+      practiceId,
+      practiceName,
+      durationMins,
+      reflection,
+      completedAt: Date.now(),
+    };
+    const next: SadhanaData = {
+      totalMalas: data.totalMalas,
+      totalMinutes: (data.totalMinutes ?? 0) + durationMins,
+      sessions: [session, ...(data.sessions ?? [])].slice(0, 200),
+      log: {
+        ...data.log,
+        [key]: {
+          ...day,
+          practiced: true,
+          minutes: (day.minutes ?? 0) + durationMins,
+          practices: Array.from(new Set([...(day.practices ?? []), practiceId])),
+        },
+      },
+    };
+    await save(K.sadhana, next);
+    return next;
+  });
+}
+
 export async function addJapaMala(): Promise<SadhanaData> {
   return withKeyLock(K.sadhana, async () => {
     const data = await load<SadhanaData>(K.sadhana, DEFAULT_SADHANA);
     const key = todayKey();
-    const day: SadhanaDay = data.log[key] ?? { date: key, malas: 0, practiced: false };
+    const day: SadhanaDay = data.log[key] ?? { date: key, malas: 0, practiced: false, minutes: 0, practices: [] };
     const next: SadhanaData = {
       totalMalas: data.totalMalas + 1,
+      totalMinutes: data.totalMinutes ?? 0,
+      sessions: data.sessions ?? [],
       log: { ...data.log, [key]: { ...day, malas: day.malas + 1, practiced: true } },
     };
     await save(K.sadhana, next);
