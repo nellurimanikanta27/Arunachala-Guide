@@ -53,3 +53,9 @@ id = "047VZtJreCLhN-ym7Dvxp"
 uri = "file://attached_assets/generated_images/girivalam-completion-card.png"
 type = "image"
 title = "Sacred Girivalam Completion Card"
+
+[[outputs]]
+id = "GgaIGVJf79TeyMKeCXHGs"
+uri = "file://exports/wisdom-tab-history.txt"
+type = "text"
+title = "Wisdom tab source (history.tsx)"
