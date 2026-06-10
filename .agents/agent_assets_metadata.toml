@@ -59,3 +59,9 @@ id = "GgaIGVJf79TeyMKeCXHGs"
 uri = "file://exports/wisdom-tab-history.txt"
 type = "text"
 title = "Wisdom tab source (history.tsx)"
+
+[[outputs]]
+id = "Aqxx610n6ESci4Yn4OWjO"
+uri = "file://exports/translator-tab.txt"
+type = "text"
+title = "Translator tab source (translator.tsx)"
