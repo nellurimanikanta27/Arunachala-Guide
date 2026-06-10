@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   },
   noDirectText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.text, lineHeight: 20 },
   hubCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,

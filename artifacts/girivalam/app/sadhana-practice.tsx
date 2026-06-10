@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DURATION_OPTIONS, PRACTICES, getPracticeById } from "@/lib/sadhana-practices";
 
-const G = "#C2A24E";
-const GF = "rgba(194,162,78,0.10)";
+const G = "#D46A1E";
+const GF = "rgba(212,106,30,0.14)";
 
 type Phase = "detail" | "timer";
 
@@ -206,7 +206,7 @@ export default function SadhanaPracticeScreen() {
 
   if (phase === "timer") {
     return (
-      <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingTop: topInset, paddingBottom: bottomInset }}>
+      <View style={{ flex: 1, backgroundColor: "#151515", paddingTop: topInset, paddingBottom: bottomInset }}>
         <TimerScreen
           practiceId={practice.id}
           practiceName={practice.name}
@@ -220,7 +220,7 @@ export default function SadhanaPracticeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#151515" }}>
       {/* Back button */}
       <View style={[styles.navBar, { paddingTop: topInset + 8 }]}>
         <Pressable
@@ -228,7 +228,7 @@ export default function SadhanaPracticeScreen() {
           onPress={() => router.back()}
           accessibilityRole="button"
         >
-          <Ionicons name="chevron-back" size={22} color="#1A1A1A" />
+          <Ionicons name="chevron-back" size={22} color="#F7F4ED" />
           <Text style={styles.backLabel}>Sadhana</Text>
         </Pressable>
       </View>
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
+    borderBottomColor: "rgba(247,244,237,0.08)",
   },
   backBtn: {
     flexDirection: "row",
@@ -308,49 +308,49 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingVertical: 6,
   },
-  backLabel: { fontSize: 15, fontFamily: "Inter_500Medium", color: "#1A1A1A" },
+  backLabel: { fontSize: 15, fontFamily: "Inter_500Medium", color: "#F7F4ED" },
 
   detailContent: { padding: 16, gap: 16 },
 
   hero: { alignItems: "center", paddingVertical: 24, gap: 10 },
   heroEmoji: { fontSize: 56 },
-  heroName: { fontSize: 26, fontFamily: "Inter_700Bold", color: "#1A1A1A" },
+  heroName: { fontSize: 26, fontFamily: "Inter_700Bold", color: "#F7F4ED" },
   heroMeaning: {
     fontSize: 14, fontFamily: "Inter_400Regular",
-    color: "#666", textAlign: "center", lineHeight: 22,
+    color: "#968D7E", textAlign: "center", lineHeight: 22,
     fontStyle: "italic", paddingHorizontal: 16,
   },
 
   stepsCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 16,
-    borderWidth: 1, borderColor: "rgba(0,0,0,0.07)",
+    backgroundColor: "#1E1A15", borderRadius: 16,
+    borderWidth: 1, borderColor: "rgba(247,244,237,0.10)",
     padding: 16, gap: 14,
   },
-  stepsTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#1A1A1A", letterSpacing: 0.3 },
+  stepsTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#F7F4ED", letterSpacing: 0.3 },
   stepRow: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
   stepNum: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: GF, borderWidth: 1, borderColor: "rgba(194,162,78,0.25)",
+    backgroundColor: GF, borderWidth: 1, borderColor: "rgba(212,106,30,0.30)",
     alignItems: "center", justifyContent: "center", marginTop: 1,
   },
   stepNumText: { fontSize: 11, fontFamily: "Inter_700Bold", color: G },
-  stepText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: "#444", lineHeight: 21 },
+  stepText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: "#C7BFAF", lineHeight: 21 },
 
   durationCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 16,
-    borderWidth: 1, borderColor: "rgba(0,0,0,0.07)",
+    backgroundColor: "#1E1A15", borderRadius: 16,
+    borderWidth: 1, borderColor: "rgba(247,244,237,0.10)",
     padding: 16, gap: 12,
   },
-  durationTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#1A1A1A" },
+  durationTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#F7F4ED" },
   durationRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   durationChip: {
     paddingHorizontal: 14, paddingVertical: 9,
-    borderRadius: 20, borderWidth: 1, borderColor: "rgba(0,0,0,0.1)",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 20, borderWidth: 1, borderColor: "rgba(247,244,237,0.12)",
+    backgroundColor: "#262019",
   },
   durationChipActive: { backgroundColor: GF, borderColor: G },
-  durationChipText: { fontSize: 13, fontFamily: "Inter_500Medium", color: "#666" },
-  durationChipTextActive: { color: "#8B6914", fontFamily: "Inter_700Bold" },
+  durationChipText: { fontSize: 13, fontFamily: "Inter_500Medium", color: "#968D7E" },
+  durationChipTextActive: { color: "#F7D98B", fontFamily: "Inter_700Bold" },
 
   beginBtn: {
     backgroundColor: G, borderRadius: 16,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   beginBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
   beginHint: {
     fontSize: 11, fontFamily: "Inter_400Regular",
-    color: "#BBB", textAlign: "center", fontStyle: "italic",
+    color: "#6E665B", textAlign: "center", fontStyle: "italic",
   },
 
   // Timer screen
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   timerTop: { alignItems: "center", gap: 6 },
   timerEmoji: { fontSize: 32 },
-  timerPracticeName: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#1A1A1A" },
+  timerPracticeName: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: "#F7F4ED" },
 
   timerCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 32 },
 
@@ -397,17 +397,17 @@ const styles = StyleSheet.create({
   timerTimeWrap: { alignItems: "center", gap: 10 },
   timerTime: {
     fontSize: 68, fontFamily: "Inter_700Bold",
-    color: "#1A1A1A", letterSpacing: -3, lineHeight: 74,
+    color: "#F7F4ED", letterSpacing: -3, lineHeight: 74,
   },
   progressBar: {
-    width: 200, height: 3, backgroundColor: "rgba(0,0,0,0.08)",
+    width: 200, height: 3, backgroundColor: "rgba(247,244,237,0.12)",
     borderRadius: 2, overflow: "hidden",
   },
   progressFill: { height: "100%", backgroundColor: G, borderRadius: 2 },
 
   timerPrompt: {
     fontSize: 18, fontFamily: "Inter_400Regular",
-    color: "#888", textAlign: "center",
+    color: "#968D7E", textAlign: "center",
     lineHeight: 26, fontStyle: "italic",
     paddingHorizontal: 20,
   },
@@ -424,15 +424,15 @@ const styles = StyleSheet.create({
   timerEndBtn: {
     paddingVertical: 12, alignItems: "center",
   },
-  timerEndBtnText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#BBB" },
+  timerEndBtnText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#6E665B" },
 
   pausedOverlay: {
     position: "absolute",
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    backgroundColor: "rgba(10,8,6,0.82)",
     alignItems: "center", justifyContent: "center",
     gap: 8,
   },
-  pausedText: { fontSize: 32, fontFamily: "Inter_700Bold", color: "#1A1A1A" },
-  pausedHint: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#888", fontStyle: "italic" },
+  pausedText: { fontSize: 32, fontFamily: "Inter_700Bold", color: "#F7F4ED" },
+  pausedHint: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#968D7E", fontStyle: "italic" },
 });

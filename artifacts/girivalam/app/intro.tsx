@@ -12,10 +12,10 @@ import {
   View,
 } from "react-native";
 
-const GOLD = "#C2A24E";
-const GOLD_LIGHT = "#C2A24E";
-const CREAM = "#4A4540";
-const BG = "#FFFFFF";
+const GOLD = "#D46A1E";
+const GOLD_LIGHT = "#F7D98B";
+const CREAM = "#F7F4ED";
+const BG = "#151515";
 
 export default function IntroAnimation() {
   // Animation values
@@ -157,7 +157,7 @@ export default function IntroAnimation() {
       {/* Pre-dawn sky → dawn gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: skyFade }]}>
         <LinearGradient
-          colors={["#FFFFFF", "#FFFDF8", "#FBF3E0", "#F3E6C8"]}
+          colors={["#151515", "#241509", "#5A2A0E", "#D46A1E"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={StyleSheet.absoluteFill}

@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     padding: 3,
   },
   tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: "center" },
-  tabBtnActive: { backgroundColor: Colors.white, shadowColor: Colors.shadow, shadowRadius: 4, shadowOpacity: 0.3 },
+  tabBtnActive: { backgroundColor: Colors.cream, shadowColor: Colors.shadow, shadowRadius: 4, shadowOpacity: 0.3 },
   tabBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.textMid },
   tabBtnTextActive: { color: Colors.primary, fontFamily: "Inter_600SemiBold" },
   noGovtNote: {
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   noGovtNoteText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.text, flex: 1 },
   serviceCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   timingText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.text },
   notes: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 20 },
   section: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,

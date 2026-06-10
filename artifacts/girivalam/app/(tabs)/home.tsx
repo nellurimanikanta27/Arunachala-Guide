@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
 
   sacredCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     marginBottom: 4,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   heroCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     gap: 12,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 13,
     paddingHorizontal: 14,
     paddingVertical: 13,

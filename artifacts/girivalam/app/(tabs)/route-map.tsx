@@ -2309,7 +2309,7 @@ const nStyles = StyleSheet.create({
   lingamNav: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
     paddingHorizontal: 12,
@@ -2360,7 +2360,7 @@ const nStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
@@ -2856,7 +2856,7 @@ const styles = StyleSheet.create({
   },
 
   mapCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 20,
     overflow: "hidden",
     marginBottom: 16,
@@ -2883,7 +2883,7 @@ const styles = StyleSheet.create({
   legendDash: { width: 14, height: 3, backgroundColor: Colors.saffron, borderRadius: 2 },
   legendText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight },
   stopsToggleRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingTop: 12 },
-  stopsChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.saffron, backgroundColor: Colors.white },
+  stopsChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.saffron, backgroundColor: Colors.cream },
   stopsChipActive: { backgroundColor: Colors.saffron },
   stopsChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.saffron },
   stopsChipTextActive: { color: Colors.white },
@@ -2896,7 +2896,7 @@ const styles = StyleSheet.create({
   mapBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 14, borderRadius: 12, gap: 8 },
   mapBtnPrimary: { backgroundColor: Colors.saffron },
   mapBtnTracking: { backgroundColor: "#1E88E5" },
-  mapBtnSecondary: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.saffron },
+  mapBtnSecondary: { backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.saffron },
   mapBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.white },
   mapBtnTextSecondary: { color: Colors.saffron },
   trackingBanner: { flexDirection: "row", alignItems: "center", gap: 8, margin: 16, marginTop: 0, backgroundColor: "rgba(30,136,229,0.08)", padding: 10, borderRadius: 10 },
@@ -2904,7 +2904,7 @@ const styles = StyleSheet.create({
   trackingText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#1E88E5", flex: 1 },
 
   japaCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -2938,7 +2938,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 4, marginTop: 8 },
   sectionDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textLight, marginBottom: 10 },
 
-  lingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
+  lingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.cream, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
   lingamNumber: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.primaryFaint, alignItems: "center", justifyContent: "center", marginTop: 2 },
   lingamNumberText: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.primary },
   lingamContent: { flex: 1 },
@@ -2949,7 +2949,7 @@ const styles = StyleSheet.create({
   lingamChevron: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center", marginLeft: 8 },
   lingamExpanded: { marginTop: 8 },
   lingamDesc: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 17 },
-  hillCard: { backgroundColor: Colors.white, borderRadius: 16, overflow: "hidden", marginBottom: 14, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.9, shadowRadius: 8, elevation: 3 },
+  hillCard: { backgroundColor: Colors.cream, borderRadius: 16, overflow: "hidden", marginBottom: 14, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.9, shadowRadius: 8, elevation: 3 },
   hillImage: { width: "100%", height: 260, backgroundColor: Colors.overlayLight },
   hillCaption: { padding: 16 },
   hillCaptionTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.brown, marginBottom: 6 },
@@ -2964,16 +2964,16 @@ const styles = StyleSheet.create({
   lingamMeaningStripe: { marginTop: 14, padding: 12, borderRadius: 10, backgroundColor: Colors.overlayLight, borderLeftWidth: 3, borderLeftColor: Colors.saffron },
   lingamMeaningText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMid, lineHeight: 19, fontStyle: "italic" },
 
-  tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8 },
+  tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, backgroundColor: Colors.cream, borderRadius: 12, padding: 14, marginBottom: 8 },
   tipIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center" },
   tipText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.text, lineHeight: 20, paddingTop: 7 },
 
-  specialLingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
+  specialLingamRow: { flexDirection: "row", gap: 12, backgroundColor: Colors.cream, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 2 },
   specialLingamEmoji: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.overlayLight, alignItems: "center", justifyContent: "center", marginTop: 2 },
   specialLingamEmojiText: { fontSize: 20 },
 
   whereCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -3013,7 +3013,7 @@ const styles = StyleSheet.create({
   whereToggleText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textLight },
 
   quickCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 14,
     marginBottom: 16,
@@ -3039,7 +3039,7 @@ const styles = StyleSheet.create({
   quickLabelEmergency: { color: Colors.white },
 
   audioCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,

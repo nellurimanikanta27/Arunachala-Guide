@@ -1,55 +1,55 @@
-// ── Pure White + Gold palette ───────────────────────────────────────────
-// Everything white and quiet, with a single soft-gold accent — no charcoal,
-// no dark fills, no mixed colors. Every token NAME is preserved for backward
-// compatibility so all screens pick up the new look without per-screen
-// rewrites; only the VALUES changed.
+// ── "Sacred Fire in Stillness" — Arunachala night-temple palette ─────────
+// Deep charcoal stillness lit by the eternal Agni (fire) Lingam: sacred ember
+// orange, temple bronze, and the soft glow of oil-lamp gold. Warm ash-light
+// text on stone-dark surfaces. Every token NAME is preserved so all screens
+// pick up the look without per-screen rewrites; only the VALUES changed.
 const Colors = {
-  // Soft Gold — the single accent (actions / hero / active states)
-  primary: "#C2A24E",
-  primaryDark: "#A6843E",
-  primaryLight: "#DCC079",
-  primaryFaint: "#FBF5E6",
-  primaryMid: "#B89240",
+  // Sacred Ember Orange — the living flame (actions / hero / active states)
+  primary: "#D46A1E",
+  primaryDark: "#A6531A",
+  primaryLight: "#F7D98B", // Lamp Glow Gold
+  primaryFaint: "#2A2016", // faint warm fill on dark
+  primaryMid: "#C2702A",
 
-  // Gold highlights (same family)
-  amber: "#C2A24E",
-  amberLight: "#DCC079",
-  amberFaint: "#FBF5E6",
+  // Lamp-glow highlights
+  amber: "#D46A1E",
+  amberLight: "#F7D98B",
+  amberFaint: "#2A2016",
 
-  // White surfaces
-  cream: "#FFFFFF",
-  creamDark: "#F7F4ED",
-  warmWhite: "#FFFFFF",
-  white: "#FFFFFF",
+  // Stone-dark surfaces (charcoal / warm temple stone)
+  cream: "#1E1A15",
+  creamDark: "#262019",
+  warmWhite: "#151515", // Deep Charcoal — page background
+  white: "#FFFFFF", // true white — foreground icons/text on ember & gold accents
 
-  // Soft, quiet text — readable but never harsh/charcoal
-  text: "#4A4540",
-  textMid: "#6E6862",
-  textLight: "#9A938B",
-  textFaint: "#BCB6AE",
+  // Warm ash light text on dark stone
+  text: "#F7F4ED",
+  textMid: "#C7BFAF",
+  textLight: "#968D7E",
+  textFaint: "#6E665B",
 
-  border: "#EFE9DC",
-  borderLight: "#F6F2EA",
+  border: "#342A1F",
+  borderLight: "#2A2219",
 
-  shadow: "rgba(120, 100, 50, 0.08)",
-  shadowMed: "rgba(120, 100, 50, 0.14)",
-  overlay: "rgba(60, 50, 30, 0.35)",
-  overlayLight: "rgba(194, 162, 78, 0.10)",
+  shadow: "rgba(0, 0, 0, 0.45)",
+  shadowMed: "rgba(0, 0, 0, 0.60)",
+  overlay: "rgba(0, 0, 0, 0.62)",
+  overlayLight: "rgba(212, 106, 30, 0.12)",
 
   // aliases for backward compat with other screens
-  saffron: "#C2A24E",
-  saffronDark: "#A6843E",
-  saffronLight: "#DCC079",
-  brown: "#4A4540",
-  brownMid: "#6E6862",
-  brownLight: "#9A938B",
-  gold: "#C2A24E",
-  goldLight: "#DCC079",
-  // category accents — all unified to the single soft gold (no mixed colors)
-  green: "#C2A24E",
-  blue: "#C2A24E",
-  purple: "#C2A24E",
-  teal: "#C2A24E",
+  saffron: "#D46A1E",
+  saffronDark: "#8B6A3F", // Temple Bronze
+  saffronLight: "#F7D98B",
+  brown: "#F7F4ED",
+  brownMid: "#C7BFAF",
+  brownLight: "#968D7E",
+  gold: "#F7D98B",
+  goldLight: "#F7D98B",
+  // category accents — unified to the sacred ember flame
+  green: "#D46A1E",
+  blue: "#D46A1E",
+  purple: "#D46A1E",
+  teal: "#D46A1E",
 };
 
 export default Colors;

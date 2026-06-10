@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   translatorCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 20,
     padding: 16,
     marginBottom: 24,
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.saffron,
   },
   langPicker: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.creamDark,
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   },
   modeCard: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 14,
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   cameraCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -8,
     right: -8,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 12,
   },
   cameraBtnRow: {
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   phraseCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,

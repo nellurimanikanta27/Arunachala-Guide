@@ -15,9 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { REFLECTION_PROMPTS } from "@/lib/sadhana-practices";
 import { saveSadhanaSession } from "@/lib/pilgrimage-store";
 
-const G = "#C2A24E";
-const GF = "rgba(194,162,78,0.10)";
-const GB = "rgba(194,162,78,0.22)";
+const G = "#D46A1E";
+const GF = "rgba(212,106,30,0.14)";
+const GB = "rgba(212,106,30,0.30)";
 
 const COMPLETION_MESSAGES = [
   "You returned to yourself today.",
@@ -65,7 +65,7 @@ export default function SadhanaCompleteScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+      style={{ flex: 1, backgroundColor: "#151515" }}
       contentContainerStyle={[
         styles.container,
         { paddingTop: topInset + 24, paddingBottom: bottomInset + 40 },
@@ -133,7 +133,7 @@ export default function SadhanaCompleteScreen() {
                 multiline
                 numberOfLines={4}
                 placeholder="Write freely. This is for you alone."
-                placeholderTextColor="#CCC"
+                placeholderTextColor="#6E665B"
                 textAlignVertical="top"
                 autoFocus
               />
@@ -205,48 +205,48 @@ const styles = StyleSheet.create({
     backgroundColor: GF, borderWidth: 2, borderColor: GB,
     alignItems: "center", justifyContent: "center",
   },
-  heroTitle: { fontSize: 28, fontFamily: "Inter_700Bold", color: "#1A1A1A" },
+  heroTitle: { fontSize: 28, fontFamily: "Inter_700Bold", color: "#F7F4ED" },
   practiceTag: {
     flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#F9F9F7",
+    backgroundColor: "#1E1A15",
     borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8,
-    borderWidth: 1, borderColor: "rgba(0,0,0,0.07)",
+    borderWidth: 1, borderColor: "rgba(247,244,237,0.10)",
   },
   practiceEmoji: { fontSize: 18 },
-  practiceName: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#1A1A1A" },
+  practiceName: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#F7F4ED" },
   practiceDur: {
-    fontSize: 12, fontFamily: "Inter_400Regular", color: "#999",
-    backgroundColor: "#F0F0EE", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2,
+    fontSize: 12, fontFamily: "Inter_400Regular", color: "#968D7E",
+    backgroundColor: "#262019", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2,
   },
   completionMsg: {
     fontSize: 15, fontFamily: "Inter_400Regular",
-    color: "#666", textAlign: "center",
+    color: "#968D7E", textAlign: "center",
     lineHeight: 24, fontStyle: "italic",
     paddingHorizontal: 10,
   },
 
   reflectionSection: { gap: 14 },
-  reflectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#1A1A1A" },
-  reflectionSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#999", marginTop: -8 },
+  reflectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#F7F4ED" },
+  reflectionSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#968D7E", marginTop: -8 },
 
   promptsGrid: { gap: 8 },
   promptChip: {
     paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 12, borderWidth: 1, borderColor: "rgba(247,244,237,0.12)",
+    backgroundColor: "#262019",
   },
   promptChipActive: { backgroundColor: GF, borderColor: G },
-  promptChipText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#555", lineHeight: 19 },
-  promptChipTextActive: { color: "#8B6914", fontFamily: "Inter_500Medium" },
+  promptChipText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#C7BFAF", lineHeight: 19 },
+  promptChipTextActive: { color: "#F7D98B", fontFamily: "Inter_500Medium" },
 
   inputWrap: { gap: 8 },
   inputPromptLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: G },
   input: {
-    backgroundColor: "#FAFAF7",
-    borderWidth: 1, borderColor: "rgba(0,0,0,0.09)",
+    backgroundColor: "#1E1A15",
+    borderWidth: 1, borderColor: "rgba(247,244,237,0.12)",
     borderRadius: 14, padding: 14,
     fontSize: 14, fontFamily: "Inter_400Regular",
-    color: "#1A1A1A", lineHeight: 22,
+    color: "#F7F4ED", lineHeight: 22,
     minHeight: 110,
   },
 
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
   skipBtn: { paddingVertical: 10, alignItems: "center" },
-  skipBtnText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#BBB" },
+  skipBtnText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#6E665B" },
 
   savedSection: { gap: 16 },
   savedCard: {
@@ -267,15 +267,15 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: GB,
     paddingHorizontal: 16, paddingVertical: 14,
   },
-  savedText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8B6914" },
+  savedText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#F7D98B" },
 
   reflectionPreview: {
-    backgroundColor: "#FAFAF7", borderRadius: 14,
-    borderWidth: 1, borderColor: "rgba(0,0,0,0.07)",
+    backgroundColor: "#1E1A15", borderRadius: 14,
+    borderWidth: 1, borderColor: "rgba(247,244,237,0.10)",
     padding: 14, gap: 6,
   },
   reflectionPreviewLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: G },
-  reflectionPreviewText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#444", lineHeight: 21 },
+  reflectionPreviewText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#C7BFAF", lineHeight: 21 },
 
   continueBtn: {
     backgroundColor: G, borderRadius: 14,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
 
   footer: {
     fontSize: 11, fontFamily: "Inter_400Regular",
-    color: "#CCC", textAlign: "center",
+    color: "#6E665B", textAlign: "center",
     lineHeight: 17, fontStyle: "italic",
     paddingHorizontal: 10,
   },

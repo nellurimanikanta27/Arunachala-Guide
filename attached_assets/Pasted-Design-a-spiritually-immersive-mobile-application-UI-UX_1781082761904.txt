@@ -1,0 +1,122 @@
+Design a spiritually immersive mobile application UI/UX for an Arunachala Girivalam companion app. The app should not feel like a travel app, fitness tracker, or temple information directory. Instead, it should evoke the feeling of entering a sacred space and walking alongside Arunachala as a silent spiritual companion.
+
+The overall design philosophy should be: "Sacred Fire in Stillness."
+
+The visual experience must draw inspiration from Lord Shiva as Arunachala, representing the eternal Agni (Fire) Lingam. This is not a fierce or destructive fire, but a calm, transformative inner flame symbolizing awareness, surrender, and spiritual awakening.
+
+The ambience should communicate:
+
+* Stillness and peace.
+* Sacred warmth and devotion.
+* Timelessness rooted in ancient tradition.
+* Emotional intimacy and reflection.
+* Quiet guidance rather than instruction.
+
+The emotional journey of the user should unfold as:
+Arrival → Presence → Reflection → Transformation → Calling Back.
+
+Design the interface using a refined, minimal aesthetic inspired by:
+
+* Arunachala Hill at sunrise and sunset.
+* Traditional South Indian temple architecture.
+* The soft glow of oil lamps.
+* Stone textures found in ancient temples.
+* Sacred ash (vibhuti), bronze, sandalwood, and firelight.
+
+Color palette:
+
+* Deep Charcoal: #151515
+* Warm Stone: #F4EFE6
+* Sacred Ember Orange: #D46A1E
+* Temple Bronze: #8B6A3F
+* Lamp Glow Gold: #F7D98B
+* Primary Text (Dark Mode): #F7F4ED
+* Secondary Text: #C7BFAF
+
+Typography:
+
+* Elegant timeless serif fonts for headings, conveying wisdom and reverence.
+* Clean modern sans-serif fonts for body text, ensuring readability and accessibility.
+* The design should balance ancient spirituality with modern usability.
+
+The home screen should immediately create a sacred emotional connection. It should feature a subtle silhouette of Arunachala Hill, soft ambient lighting effects, and the greeting:
+
+"Om Arunachaleswaraya Namah"
+"The Hill that calls."
+
+The primary action should invite the user into the experience with a button such as:
+"Begin Today's Journey."
+
+The Girivalam map experience must not resemble conventional navigation systems. Avoid harsh blue routes and standard GPS aesthetics. Instead:
+
+* The walking path should appear as a gently glowing sacred thread encircling Arunachala.
+* Visited Lingams should emit a warm illuminated presence.
+* Upcoming Lingams should feel inviting rather than task-oriented.
+* Arunachala Hill should remain visually dominant and spiritually central.
+
+At each Lingam, the interface should encourage contemplation rather than documentation. Replace generic prompts such as "Upload Photo" with emotionally resonant interactions such as:
+
+"Pause for a moment."
+"How would you like to remember this blessing?"
+
+Options may include:
+
+* Capture a photo.
+* Record a voice reflection.
+* Save a prayer.
+* Express a feeling.
+* Write a journal note.
+
+The memory experience should transform pilgrimage moments into a beautiful spiritual timeline rather than a social media feed.
+
+The completion experience should feel profound and ceremonial. Upon completing Girivalam:
+
+* The screen should gradually brighten.
+* Subtle temple bells should accompany the transition.
+* Arunachala Hill should emerge through warm light.
+* The interface should communicate a sense of gratitude, accomplishment, and inner peace.
+
+Display a message such as:
+
+"You walked."
+"You reflected."
+"You surrendered."
+"Arunachala walked with you."
+
+Follow this with a sacred summary including:
+
+* Distance walked.
+* Lingams visited.
+* Personal reflections collected.
+* Spiritual memories preserved.
+
+End with:
+
+"Until the Hill calls again."
+
+The interface should feel inclusive across generations:
+
+* Supportive and simple for elderly devotees.
+* Meaningful and reflective for adults.
+* Visually authentic and emotionally engaging for younger users.
+* Respectful of tradition for lifelong devotees.
+
+Avoid:
+
+* Gamification elements.
+* Excessive notifications.
+* Social media aesthetics.
+* Bright modern gradients.
+* Neon colors.
+* Overly commercial design language.
+* Cluttered dashboards.
+
+The final experience should feel like a harmonious fusion of:
+
+* A temple's serenity.
+* A trusted pilgrimage companion's practicality.
+* A private journal's intimacy.
+* The quiet presence of Shiva guiding the journey.
+
+The user should leave the app feeling:
+"I did not merely use an application. I experienced Arunachala."

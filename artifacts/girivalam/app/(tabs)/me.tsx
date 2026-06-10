@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 14, paddingTop: 14, gap: 8 },
 
   statsCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
 
   emptyCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 22,
     marginTop: 8,
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
   },
 
   walkHistoryCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
   },
 
   walkCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.borderLight,
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   },
 
   storyCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
   writeBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.primary },
 
   settingsGroup: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.borderLight,
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
   },
 
   subEmptyCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 12,
     paddingVertical: 18,
     paddingHorizontal: 16,
@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,

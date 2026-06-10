@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bubbleBot: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: Colors.borderLight,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === "ios" ? 12 : 8,

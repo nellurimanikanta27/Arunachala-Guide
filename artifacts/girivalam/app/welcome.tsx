@@ -22,12 +22,12 @@ import { getSettings, markOnboarded, updateSettings } from "@/lib/pilgrimage-sto
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
-const BG = "#FFFFFF";
-const CREAM = "#4A4540";
-const GOLD = "#C2A24E";
-const GOLD_LIGHT = "#C2A24E";
-const MUTED = "rgba(74,69,64,0.72)";
-const FAINT = "rgba(74,69,64,0.28)";
+const BG = "#151515";
+const CREAM = "#F7F4ED";
+const GOLD = "#D46A1E";
+const GOLD_LIGHT = "#F7D98B";
+const MUTED = "rgba(199,191,175,0.82)";
+const FAINT = "rgba(199,191,175,0.32)";
 
 type Slide = {
   kicker: string;
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#FFFFFF", "#FFFDF7", "#FAF3E2"]}
+        colors={["#151515", "#1C140C", "#2E1C0E"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
