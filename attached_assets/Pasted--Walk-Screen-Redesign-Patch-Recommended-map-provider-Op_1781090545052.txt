@@ -1,0 +1,630 @@
+# Walk Screen Redesign Patch
+
+Recommended map provider: **OpenStreetMap + Leaflet inside `react-native-webview`**.
+
+Why: free, no API key, works in Expo/React Native with minimal native setup, supports real tiles, route polyline, markers, live GPS, and OSM/Overpass POIs.
+
+Install:
+
+```bash
+npx expo install react-native-webview
+```
+
+## 1) Add import
+
+```ts
+import { WebView } from "react-native-webview";
+```
+
+## 2) Add these types/data/helpers after `POIS`
+
+```ts
+type MapPoiKind =
+  | "temple"
+  | "ashram"
+  | "restaurant"
+  | "food"
+  | "water"
+  | "toilet"
+  | "medical"
+  | "pharmacy"
+  | "atm"
+  | "parking"
+  | "transport";
+
+interface MapPoi {
+  id: string;
+  kind: MapPoiKind;
+  name: string;
+  lat: number;
+  lng: number;
+  subtitle?: string;
+  source?: "manual" | "osm";
+}
+
+const GIRIVALAM_ROUTE: { lat: number; lng: number }[] = [
+  { lat: 12.2330, lng: 79.0750 },
+  { lat: 12.2264, lng: 79.0747 },
+  { lat: 12.2195, lng: 79.0700 },
+  { lat: 12.2237, lng: 79.0584 },
+  { lat: 12.2322, lng: 79.0530 },
+  { lat: 12.2456, lng: 79.0571 },
+  { lat: 12.2516, lng: 79.0670 },
+  { lat: 12.2474, lng: 79.0764 },
+  { lat: 12.2330, lng: 79.0750 },
+];
+
+const MANUAL_MAP_POIS: MapPoi[] = [
+  ...LINGAMS.map((l) => ({
+    id: `lingam-${l.number}`,
+    kind: "temple" as const,
+    name: l.name,
+    lat: l.lat,
+    lng: l.lng,
+    subtitle: `${l.direction} · ${l.distance}`,
+    source: "manual" as const,
+  })),
+  { id: "ramana-ashram", kind: "ashram", name: "Sri Ramana Ashram", lat: 12.2238, lng: 79.0682, subtitle: "Ashram · Annadanam", source: "manual" },
+  { id: "seshadri-ashram", kind: "ashram", name: "Seshadri Swamigal Ashram", lat: 12.2247, lng: 79.0689, subtitle: "Ashram", source: "manual" },
+  { id: "main-annadanam", kind: "food", name: "Annadanam – Main Temple", lat: 12.2348, lng: 79.0668, subtitle: "Free food", source: "manual" },
+  { id: "siva-ganga", kind: "water", name: "Siva Ganga Theertham", lat: 12.2340, lng: 79.0688, subtitle: "Water tank", source: "manual" },
+  { id: "brahma-theertham", kind: "water", name: "Brahma Theertham", lat: 12.2358, lng: 79.0651, subtitle: "Water tank", source: "manual" },
+  { id: "agastya-theertham", kind: "water", name: "Agastya Theertham", lat: 12.2255, lng: 79.0660, subtitle: "Water tank", source: "manual" },
+];
+
+const MAP_FILTERS: { key: MapPoiKind; label: string; icon: string; color: string }[] = [
+  { key: "temple", label: "Temples", icon: "🛕", color: "#9B3D12" },
+  { key: "ashram", label: "Ashrams", icon: "🏛️", color: "#6F7F42" },
+  { key: "food", label: "Food", icon: "🍛", color: "#B47B18" },
+  { key: "restaurant", label: "Restaurants", icon: "🍴", color: "#C85A3A" },
+  { key: "water", label: "Water", icon: "💧", color: "#2F8ACB" },
+  { key: "toilet", label: "Toilets", icon: "🚻", color: "#7F64C8" },
+  { key: "medical", label: "Medical", icon: "✚", color: "#D34444" },
+  { key: "pharmacy", label: "Pharmacy", icon: "⚕", color: "#3F9F68" },
+  { key: "atm", label: "ATM", icon: "🏧", color: "#2C7EA8" },
+  { key: "parking", label: "Parking", icon: "Ⓟ", color: "#596B9D" },
+  { key: "transport", label: "Transport", icon: "🚌", color: "#8B6E3F" },
+];
+
+function osmKind(tags: any): MapPoiKind | null {
+  if (tags?.amenity === "restaurant" || tags?.amenity === "cafe") return "restaurant";
+  if (tags?.amenity === "fast_food" || tags?.amenity === "food_court") return "food";
+  if (tags?.amenity === "drinking_water") return "water";
+  if (tags?.amenity === "toilets") return "toilet";
+  if (tags?.amenity === "hospital" || tags?.amenity === "clinic" || tags?.amenity === "doctors") return "medical";
+  if (tags?.amenity === "pharmacy" || tags?.shop === "chemist") return "pharmacy";
+  if (tags?.amenity === "atm" || tags?.amenity === "bank") return "atm";
+  if (tags?.amenity === "parking") return "parking";
+  if (tags?.amenity === "bus_station" || tags?.highway === "bus_stop" || tags?.amenity === "taxi") return "transport";
+  if (tags?.amenity === "place_of_worship") return "temple";
+  return null;
+}
+
+async function fetchOsmUtilityPois(): Promise<MapPoi[]> {
+  const query = `
+    [out:json][timeout:20];
+    (
+      node["amenity"~"restaurant|cafe|fast_food|food_court|drinking_water|toilets|hospital|clinic|doctors|pharmacy|atm|bank|parking|bus_station|taxi|place_of_worship"](12.215,79.045,12.258,79.085);
+      node["shop"="chemist"](12.215,79.045,12.258,79.085);
+      node["highway"="bus_stop"](12.215,79.045,12.258,79.085);
+    );
+    out center tags 160;
+  `;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: `data=${encodeURIComponent(query)}`,
+  });
+  const json = await res.json();
+  const elements = Array.isArray(json?.elements) ? json.elements : [];
+  return elements
+    .map((e: any): MapPoi | null => {
+      const kind = osmKind(e.tags || {});
+      const lat = e.lat ?? e.center?.lat;
+      const lng = e.lon ?? e.center?.lon;
+      if (!kind || typeof lat !== "number" || typeof lng !== "number") return null;
+      return {
+        id: `osm-${e.id}`,
+        kind,
+        name: e.tags?.name || MAP_FILTERS.find((f) => f.key === kind)?.label || "POI",
+        lat,
+        lng,
+        subtitle: "OpenStreetMap",
+        source: "osm",
+      };
+    })
+    .filter(Boolean) as MapPoi[];
+}
+```
+
+## 3) Add this real map component before `RouteMapScreen`
+
+```tsx
+function RealGirivalamMap({
+  userLocation,
+  pois,
+  route = GIRIVALAM_ROUTE,
+  progressKm = 0,
+  height,
+  onMarkerPress,
+}: {
+  userLocation: UserLoc | null;
+  pois: MapPoi[];
+  route?: { lat: number; lng: number }[];
+  progressKm?: number;
+  height?: number | string;
+  onMarkerPress?: (poi: MapPoi) => void;
+}) {
+  const html = React.useMemo(() => {
+    const safePois = JSON.stringify(pois).replace(/</g, "\\u003c");
+    const safeRoute = JSON.stringify(route).replace(/</g, "\\u003c");
+    const safeUser = JSON.stringify(userLocation).replace(/</g, "\\u003c");
+    const safeFilters = JSON.stringify(MAP_FILTERS).replace(/</g, "\\u003c");
+    const safeProgressKm = Number.isFinite(progressKm) ? progressKm : 0;
+
+    return `<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body, #map { height:100%; width:100%; margin:0; padding:0; background:#F7EFE2; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .leaflet-control-attribution { font-size:9px; }
+  .marker { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; box-shadow:0 2px 8px rgba(85,45,12,.25); font-size:13px; }
+  .user { width:20px; height:20px; background:#1E88E5; border:3px solid white; border-radius:50%; box-shadow:0 0 0 8px rgba(30,136,229,.18),0 2px 10px rgba(0,0,0,.25); }
+  .popup-title { font-weight:700; color:#3E2411; font-size:13px; margin-bottom:2px; }
+  .popup-sub { color:#7A6551; font-size:11px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  const route = ${safeRoute};
+  const pois = ${safePois};
+  const user = ${safeUser};
+  const filters = ${safeFilters};
+  const progressKm = ${safeProgressKm};
+  const map = L.map('map', { zoomControl: false }).setView([12.235, 79.066], 14);
+  L.control.zoom({ position:'topright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const routeLatLng = route.map(p => [p.lat, p.lng]);
+  const fullRoute = L.polyline(routeLatLng, { color:'#C97A1E', weight:5, opacity:.85, lineJoin:'round' }).addTo(map);
+  L.polyline(routeLatLng, { color:'#FFFFFF', weight:2, opacity:.55, dashArray:'4 10' }).addTo(map);
+
+  const progressRatio = Math.max(0, Math.min(1, progressKm / 14));
+  const progressCount = Math.max(2, Math.ceil(routeLatLng.length * progressRatio));
+  if (progressKm > 0) {
+    L.polyline(routeLatLng.slice(0, progressCount), { color:'#9B3D12', weight:7, opacity:.95 }).addTo(map);
+  }
+
+  const filterByKind = Object.fromEntries(filters.map(f => [f.key, f]));
+  pois.forEach(p => {
+    const f = filterByKind[p.kind] || { icon:'•', color:'#9B3D12' };
+    const icon = L.divIcon({
+      className:'',
+      html:'<div class="marker" style="background:'+f.color+'">'+f.icon+'</div>',
+      iconSize:[30,30],
+      iconAnchor:[15,15]
+    });
+    const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+    marker.bindPopup('<div class="popup-title">'+(p.name || 'Location')+'</div><div class="popup-sub">'+(p.subtitle || f.label || '')+'</div>');
+    marker.on('click', () => {
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type:'poi', id:p.id }));
+    });
+  });
+
+  if (user && typeof user.lat === 'number' && typeof user.lng === 'number') {
+    L.marker([user.lat, user.lng], {
+      icon: L.divIcon({ className:'', html:'<div class="user"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+    }).addTo(map);
+  }
+
+  const bounds = L.latLngBounds(routeLatLng);
+  if (user && typeof user.lat === 'number') bounds.extend([user.lat, user.lng]);
+  map.fitBounds(bounds.pad(.18));
+</script>
+</body>
+</html>`;
+  }, [pois, route, userLocation?.lat, userLocation?.lng, userLocation?.recenter, progressKm]);
+
+  return (
+    <View style={[realMapStyles.mapWrap, height ? { height } : null]}>
+      <WebView
+        originWhitelist={["*"]}
+        source={{ html }}
+        javaScriptEnabled
+        domStorageEnabled
+        geolocationEnabled
+        scrollEnabled={false}
+        onMessage={(event) => {
+          try {
+            const msg = JSON.parse(event.nativeEvent.data);
+            if (msg?.type === "poi") {
+              const poi = pois.find((p) => p.id === msg.id);
+              if (poi) onMarkerPress?.(poi);
+            }
+          } catch {}
+        }}
+        style={realMapStyles.webview}
+      />
+    </View>
+  );
+}
+
+const realMapStyles = StyleSheet.create({
+  mapWrap: {
+    width: "100%",
+    minHeight: 320,
+    overflow: "hidden",
+    borderRadius: 18,
+    backgroundColor: Colors.cream,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: Colors.cream,
+  },
+});
+```
+
+## 4) Add map POI state inside `RouteMapScreen`
+
+```ts
+const [mapPois, setMapPois] = useState<MapPoi[]>(MANUAL_MAP_POIS);
+const [selectedMapFilters, setSelectedMapFilters] = useState<Set<MapPoiKind>>(
+  new Set(["temple", "ashram", "food", "water", "toilet", "medical", "pharmacy", "atm", "parking", "transport", "restaurant"])
+);
+const [poiLoading, setPoiLoading] = useState(false);
+
+useEffect(() => {
+  let alive = true;
+  setPoiLoading(true);
+  fetchOsmUtilityPois()
+    .then((osm) => {
+      if (!alive) return;
+      const existing = new Set(MANUAL_MAP_POIS.map((p) => p.id));
+      setMapPois([...MANUAL_MAP_POIS, ...osm.filter((p) => !existing.has(p.id))]);
+    })
+    .catch(() => setMapPois(MANUAL_MAP_POIS))
+    .finally(() => alive && setPoiLoading(false));
+  return () => { alive = false; };
+}, []);
+
+const visibleMapPois = React.useMemo(
+  () => mapPois.filter((p) => selectedMapFilters.has(p.kind)),
+  [mapPois, selectedMapFilters]
+);
+
+function toggleMapFilter(k: MapPoiKind) {
+  setSelectedMapFilters((prev) => {
+    const next = new Set(prev);
+    if (next.has(k)) next.delete(k);
+    else next.add(k);
+    return next;
+  });
+}
+```
+
+## 5) Replace `beginWalk` with immediate start
+
+```ts
+function beginWalk() {
+  startWalkImmediately();
+}
+
+async function startWalkImmediately() {
+  if (startingWalkRef.current) return;
+  startingWalkRef.current = true;
+
+  setSankalpa("");
+  setSilentMode(false);
+  setSankalpaPromptOpen(false);
+  setShowFirstWalkPrep(false);
+  AsyncStorage.setItem(PREP_SEEN_KEY, "1").catch(() => {});
+
+  setWalkSeconds(0);
+  setSavedMoments({});
+  setDismissedFor(null);
+  setWalkOverlay(null);
+  setTempleInfoIdx(null);
+  savedKindsRef.current = new Set();
+  setWalkNumber(null);
+
+  try {
+    const p = await getWalkProgress();
+    setWalkNumber(p.completedWalks + 1);
+  } catch {}
+
+  setWalkMode(true);
+  if (!tracking) startTracking();
+
+  try {
+    await ensureWalkId();
+  } catch (e) {
+    console.warn("Failed to record walk start", e);
+  } finally {
+    startingWalkRef.current = false;
+  }
+}
+```
+
+## 6) Replace the decorative tracking map block
+
+Replace the whole `/* ── Faux dark map area ── */ <View style={dStyles.mapArea}>...</View>` with:
+
+```tsx
+<View style={dStyles.trackingMapArea}>
+  <RealGirivalamMap
+    userLocation={userLocation}
+    pois={visibleMapPois}
+    progressKm={distKm}
+    height="100%"
+    onMarkerPress={(poi) => {
+      Alert.alert(poi.name, poi.subtitle || MAP_FILTERS.find((f) => f.key === poi.kind)?.label || "Location");
+    }}
+  />
+
+  <ScrollView
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    style={dStyles.mapFilterBar}
+    contentContainerStyle={dStyles.mapFilterBarContent}
+  >
+    {MAP_FILTERS.map((f) => {
+      const on = selectedMapFilters.has(f.key);
+      return (
+        <Pressable
+          key={f.key}
+          onPress={() => toggleMapFilter(f.key)}
+          style={[styles.mapFilterChip, on && { borderColor: f.color, backgroundColor: Colors.cream }]}
+        >
+          <Text style={styles.mapFilterEmoji}>{f.icon}</Text>
+          <Text style={[styles.mapFilterText, on && { color: Colors.primaryDark }]}>{f.label}</Text>
+        </Pressable>
+      );
+    })}
+  </ScrollView>
+
+  <Pressable
+    style={dStyles.recenterFabLight}
+    accessibilityRole="button"
+    accessibilityLabel="Re-center map on my location"
+    onPress={() => {
+      if (!tracking) startTracking();
+      else {
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+          .then((p) => setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude, recenter: true }))
+          .catch(() => Alert.alert("Re-center", "Couldn't get a fresh fix right now. Keep walking — it will retry."));
+      }
+    }}
+  >
+    <Ionicons name="locate" size={18} color={Colors.primary} />
+  </Pressable>
+</View>
+```
+
+Add styles:
+
+```ts
+trackingMapArea: {
+  flex: 1,
+  marginHorizontal: 12,
+  marginBottom: 8,
+  position: "relative",
+  minHeight: 360,
+},
+mapFilterBar: {
+  position: "absolute",
+  left: 10,
+  right: 10,
+  top: 10,
+},
+mapFilterBarContent: {
+  gap: 8,
+  paddingRight: 16,
+},
+recenterFabLight: {
+  position: "absolute",
+  right: 14,
+  bottom: 14,
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: Colors.cream,
+  borderWidth: 1,
+  borderColor: Colors.borderLight,
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: Colors.shadow,
+  shadowOpacity: 1,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 4,
+},
+```
+
+Add to `styles`:
+
+```ts
+mapFilterChip: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  borderRadius: 999,
+  backgroundColor: "rgba(255,255,255,0.88)",
+  borderWidth: 1,
+  borderColor: Colors.borderLight,
+},
+mapFilterEmoji: { fontSize: 13 },
+mapFilterText: {
+  fontSize: 11,
+  fontFamily: "Inter_600SemiBold",
+  color: Colors.textLight,
+},
+```
+
+## 7) Replace top of normal map screen
+
+Replace the image-first block with a real map-first card:
+
+```tsx
+<View style={styles.realMapHero}>
+  <View style={styles.mapTopRow}>
+    <Text style={styles.mapHeroTitle}>Arunachala Map</Text>
+    <Pressable onPress={startTracking} style={styles.mapLocateBtn}>
+      <Ionicons name={tracking ? "locate" : "locate-outline"} size={18} color={Colors.primary} />
+      <Text style={styles.mapLocateText}>{tracking ? "Live" : "Locate"}</Text>
+    </Pressable>
+  </View>
+
+  <Pressable style={styles.startSacredWalkBtn} onPress={beginWalk}>
+    <Text style={styles.startSacredWalkText}>START SACRED WALK</Text>
+  </Pressable>
+
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mapFilterRow}>
+    {MAP_FILTERS.map((f) => {
+      const on = selectedMapFilters.has(f.key);
+      return (
+        <Pressable key={f.key} onPress={() => toggleMapFilter(f.key)} style={[styles.mapFilterChip, on && { borderColor: f.color }]}>
+          <Text style={styles.mapFilterEmoji}>{f.icon}</Text>
+          <Text style={styles.mapFilterText}>{f.label}</Text>
+        </Pressable>
+      );
+    })}
+  </ScrollView>
+
+  <RealGirivalamMap
+    userLocation={userLocation}
+    pois={visibleMapPois}
+    height={430}
+    onMarkerPress={(poi) => Alert.alert(poi.name, poi.subtitle || "Location")}
+  />
+
+  <View style={styles.girivalamOverviewCard}>
+    <Text style={styles.girivalamOverviewTitle}>Girivalam Overview</Text>
+    <View style={styles.girivalamStatsRow}>
+      <Text style={styles.girivalamStat}>🛕 14 KM</Text>
+      <Text style={styles.girivalamStat}>⏱ 3–5 Hrs</Text>
+      <Text style={styles.girivalamStat}>📍 {mapPois.length} Places</Text>
+    </View>
+    {poiLoading && <Text style={styles.poiLoadingText}>Loading utility locations from OpenStreetMap…</Text>}
+  </View>
+</View>
+```
+
+Styles:
+
+```ts
+realMapHero: {
+  backgroundColor: Colors.cream,
+  borderRadius: 20,
+  padding: 12,
+  marginBottom: 16,
+  shadowColor: Colors.shadow,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 1,
+  shadowRadius: 12,
+  elevation: 4,
+},
+mapTopRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 10,
+},
+mapHeroTitle: {
+  fontSize: 17,
+  fontFamily: "Inter_700Bold",
+  color: Colors.primaryDark,
+},
+mapLocateBtn: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 5,
+  paddingHorizontal: 10,
+  paddingVertical: 7,
+  borderRadius: 999,
+  backgroundColor: Colors.primaryFaint,
+},
+mapLocateText: {
+  fontSize: 12,
+  fontFamily: "Inter_600SemiBold",
+  color: Colors.primary,
+},
+startSacredWalkBtn: {
+  backgroundColor: Colors.primary,
+  borderRadius: 10,
+  paddingVertical: 12,
+  alignItems: "center",
+  marginBottom: 10,
+},
+startSacredWalkText: {
+  fontSize: 12,
+  fontFamily: "Inter_700Bold",
+  color: Colors.white,
+  letterSpacing: 0.8,
+},
+mapFilterRow: {
+  gap: 8,
+  paddingBottom: 10,
+},
+girivalamOverviewCard: {
+  marginTop: 10,
+  padding: 14,
+  borderRadius: 14,
+  backgroundColor: Colors.warmWhite,
+  borderWidth: 1,
+  borderColor: Colors.borderLight,
+},
+girivalamOverviewTitle: {
+  fontSize: 14,
+  fontFamily: "Inter_700Bold",
+  color: Colors.text,
+  marginBottom: 8,
+},
+girivalamStatsRow: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: 14,
+},
+girivalamStat: {
+  fontSize: 12,
+  fontFamily: "Inter_600SemiBold",
+  color: Colors.textMid,
+},
+poiLoadingText: {
+  marginTop: 8,
+  fontSize: 11,
+  fontFamily: "Inter_400Regular",
+  color: Colors.textLight,
+},
+```
+
+## 8) Completion flow state
+
+Add:
+
+```ts
+type CompletionStep = "summary" | "reflection" | "certificate";
+const [completionStep, setCompletionStep] = useState<CompletionStep>("summary");
+const [journeyReflection, setJourneyReflection] = useState("");
+const [journeyLesson, setJourneyLesson] = useState("");
+```
+
+In `requestEndWalk`, add:
+
+```ts
+setCompletionStep("summary");
+```
+
+Then replace the template-based `endRitualOpen` card content with a three-step summary/reflection/certificate view. Keep `Share.share` and `endWalk`.
+
+Use a clean certificate card instead of image template to prevent overlap/debug labels.
