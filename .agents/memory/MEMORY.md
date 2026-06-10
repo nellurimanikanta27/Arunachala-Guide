@@ -4,3 +4,4 @@
 - [Girivalam persisted-data crashes](girivalam-persisted-data-crashes.md) — "reload→crash→reload" loop = bad saved data; harden store loads + ErrorFallback reset + per-item field guards.
 - [Native startup gotchas](native-startup-gotchas.md) — module-load mutations (e.g. Text.defaultProps) pass on web but crash native; guard them, web preview hides it.
 - [ErrorBoundary vs preview wrapper](error-boundary-vs-wrapper.md) — "...artifact encountered an error" = transient preview load timeout (reload), not a code bug; app's own crash says "Something went wrong".
+- [Girivalam WebView OSM map](girivalam-webview-map.md) — route-map uses Leaflet/OSM in react-native-webview (web-preview unsupported); HTML-escape untrusted POI fields in popup/marker HTML.

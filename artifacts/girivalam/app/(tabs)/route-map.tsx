@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 
 import { GirivalamMap } from "@/components/girivalam-map";
+import { WebView } from "react-native-webview";
 import Colors from "@/constants/colors";
 // CINEMATIC-V1
 import { AmbientParticles, CINEMATIC_V1, HaloPulse, SERIF_DISPLAY } from "@/lib/cinematic-v1";
@@ -140,6 +141,123 @@ const POIS: POI[] = [
   { kind: "water", lat: 12.2255, lng: 79.0660, name: "Agastya Theertham", subtitle: "South side water tank" },
 ];
 
+type MapPoiKind =
+  | "temple"
+  | "ashram"
+  | "restaurant"
+  | "food"
+  | "water"
+  | "toilet"
+  | "medical"
+  | "pharmacy"
+  | "atm"
+  | "parking"
+  | "transport";
+
+interface MapPoi {
+  id: string;
+  kind: MapPoiKind;
+  name: string;
+  lat: number;
+  lng: number;
+  subtitle?: string;
+  source?: "manual" | "osm";
+}
+
+const GIRIVALAM_ROUTE: { lat: number; lng: number }[] = [
+  { lat: 12.2330, lng: 79.0750 },
+  { lat: 12.2264, lng: 79.0747 },
+  { lat: 12.2195, lng: 79.0700 },
+  { lat: 12.2237, lng: 79.0584 },
+  { lat: 12.2322, lng: 79.0530 },
+  { lat: 12.2456, lng: 79.0571 },
+  { lat: 12.2516, lng: 79.0670 },
+  { lat: 12.2474, lng: 79.0764 },
+  { lat: 12.2330, lng: 79.0750 },
+];
+
+const MANUAL_MAP_POIS: MapPoi[] = [
+  ...LINGAMS.map((l) => ({
+    id: `lingam-${l.number}`,
+    kind: "temple" as const,
+    name: l.name,
+    lat: l.lat,
+    lng: l.lng,
+    subtitle: `${l.direction} · ${l.distance}`,
+    source: "manual" as const,
+  })),
+  { id: "ramana-ashram", kind: "ashram", name: "Sri Ramana Ashram", lat: 12.2238, lng: 79.0682, subtitle: "Ashram · Annadanam", source: "manual" },
+  { id: "seshadri-ashram", kind: "ashram", name: "Seshadri Swamigal Ashram", lat: 12.2247, lng: 79.0689, subtitle: "Ashram", source: "manual" },
+  { id: "main-annadanam", kind: "food", name: "Annadanam – Main Temple", lat: 12.2348, lng: 79.0668, subtitle: "Free food", source: "manual" },
+  { id: "siva-ganga", kind: "water", name: "Siva Ganga Theertham", lat: 12.2340, lng: 79.0688, subtitle: "Water tank", source: "manual" },
+  { id: "brahma-theertham", kind: "water", name: "Brahma Theertham", lat: 12.2358, lng: 79.0651, subtitle: "Water tank", source: "manual" },
+  { id: "agastya-theertham", kind: "water", name: "Agastya Theertham", lat: 12.2255, lng: 79.0660, subtitle: "Water tank", source: "manual" },
+];
+
+const MAP_FILTERS: { key: MapPoiKind; label: string; icon: string; color: string }[] = [
+  { key: "temple", label: "Temples", icon: "🛕", color: "#9B3D12" },
+  { key: "ashram", label: "Ashrams", icon: "🏛️", color: "#6F7F42" },
+  { key: "food", label: "Food", icon: "🍛", color: "#B47B18" },
+  { key: "restaurant", label: "Restaurants", icon: "🍴", color: "#C85A3A" },
+  { key: "water", label: "Water", icon: "💧", color: "#2F8ACB" },
+  { key: "toilet", label: "Toilets", icon: "🚻", color: "#7F64C8" },
+  { key: "medical", label: "Medical", icon: "✚", color: "#D34444" },
+  { key: "pharmacy", label: "Pharmacy", icon: "⚕", color: "#3F9F68" },
+  { key: "atm", label: "ATM", icon: "🏧", color: "#2C7EA8" },
+  { key: "parking", label: "Parking", icon: "Ⓟ", color: "#596B9D" },
+  { key: "transport", label: "Transport", icon: "🚌", color: "#8B6E3F" },
+];
+
+function osmKind(tags: any): MapPoiKind | null {
+  if (tags?.amenity === "restaurant" || tags?.amenity === "cafe") return "restaurant";
+  if (tags?.amenity === "fast_food" || tags?.amenity === "food_court") return "food";
+  if (tags?.amenity === "drinking_water") return "water";
+  if (tags?.amenity === "toilets") return "toilet";
+  if (tags?.amenity === "hospital" || tags?.amenity === "clinic" || tags?.amenity === "doctors") return "medical";
+  if (tags?.amenity === "pharmacy" || tags?.shop === "chemist") return "pharmacy";
+  if (tags?.amenity === "atm" || tags?.amenity === "bank") return "atm";
+  if (tags?.amenity === "parking") return "parking";
+  if (tags?.amenity === "bus_station" || tags?.highway === "bus_stop" || tags?.amenity === "taxi") return "transport";
+  if (tags?.amenity === "place_of_worship") return "temple";
+  return null;
+}
+
+async function fetchOsmUtilityPois(): Promise<MapPoi[]> {
+  const query = `
+    [out:json][timeout:20];
+    (
+      node["amenity"~"restaurant|cafe|fast_food|food_court|drinking_water|toilets|hospital|clinic|doctors|pharmacy|atm|bank|parking|bus_station|taxi|place_of_worship"](12.215,79.045,12.258,79.085);
+      node["shop"="chemist"](12.215,79.045,12.258,79.085);
+      node["highway"="bus_stop"](12.215,79.045,12.258,79.085);
+    );
+    out center tags 160;
+  `;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: `data=${encodeURIComponent(query)}`,
+  });
+  const json = await res.json();
+  const elements = Array.isArray(json?.elements) ? json.elements : [];
+  return elements
+    .map((e: any): MapPoi | null => {
+      const kind = osmKind(e.tags || {});
+      const lat = e.lat ?? e.center?.lat;
+      const lng = e.lon ?? e.center?.lon;
+      if (!kind || typeof lat !== "number" || typeof lng !== "number") return null;
+      return {
+        id: `osm-${e.id}`,
+        kind,
+        name: e.tags?.name || MAP_FILTERS.find((f) => f.key === kind)?.label || "POI",
+        lat,
+        lng,
+        subtitle: "OpenStreetMap",
+        source: "osm",
+      };
+    })
+    .filter(Boolean) as MapPoi[];
+}
+
 interface SpecialLingam {
   emoji: string;
   name: string;
@@ -173,6 +291,141 @@ function formatTime(seconds: number): string {
   if (h > 0) return `${h}h ${m}m`;
   return `${m} min`;
 }
+
+function RealGirivalamMap({
+  userLocation,
+  pois,
+  route = GIRIVALAM_ROUTE,
+  progressKm = 0,
+  height,
+  onMarkerPress,
+}: {
+  userLocation: UserLoc | null;
+  pois: MapPoi[];
+  route?: { lat: number; lng: number }[];
+  progressKm?: number;
+  height?: number | string;
+  onMarkerPress?: (poi: MapPoi) => void;
+}) {
+  const html = React.useMemo(() => {
+    const safePois = JSON.stringify(pois).replace(/</g, "\\u003c");
+    const safeRoute = JSON.stringify(route).replace(/</g, "\\u003c");
+    const safeUser = JSON.stringify(userLocation).replace(/</g, "\\u003c");
+    const safeFilters = JSON.stringify(MAP_FILTERS).replace(/</g, "\\u003c");
+    const safeProgressKm = Number.isFinite(progressKm) ? progressKm : 0;
+
+    return `<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body, #map { height:100%; width:100%; margin:0; padding:0; background:#F7EFE2; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .leaflet-control-attribution { font-size:9px; }
+  .marker { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; box-shadow:0 2px 8px rgba(85,45,12,.25); font-size:13px; }
+  .user { width:20px; height:20px; background:#1E88E5; border:3px solid white; border-radius:50%; box-shadow:0 0 0 8px rgba(30,136,229,.18),0 2px 10px rgba(0,0,0,.25); }
+  .popup-title { font-weight:700; color:#3E2411; font-size:13px; margin-bottom:2px; }
+  .popup-sub { color:#7A6551; font-size:11px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  const route = ${safeRoute};
+  const pois = ${safePois};
+  const user = ${safeUser};
+  const filters = ${safeFilters};
+  const progressKm = ${safeProgressKm};
+  const map = L.map('map', { zoomControl: false }).setView([12.235, 79.066], 14);
+  L.control.zoom({ position:'topright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const routeLatLng = route.map(p => [p.lat, p.lng]);
+  const fullRoute = L.polyline(routeLatLng, { color:'#C97A1E', weight:5, opacity:.85, lineJoin:'round' }).addTo(map);
+  L.polyline(routeLatLng, { color:'#FFFFFF', weight:2, opacity:.55, dashArray:'4 10' }).addTo(map);
+
+  const progressRatio = Math.max(0, Math.min(1, progressKm / 14));
+  const progressCount = Math.max(2, Math.ceil(routeLatLng.length * progressRatio));
+  if (progressKm > 0) {
+    L.polyline(routeLatLng.slice(0, progressCount), { color:'#9B3D12', weight:7, opacity:.95 }).addTo(map);
+  }
+
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const filterByKind = Object.fromEntries(filters.map(f => [f.key, f]));
+  pois.forEach(p => {
+    const f = filterByKind[p.kind] || { icon:'•', color:'#9B3D12' };
+    const icon = L.divIcon({
+      className:'',
+      html:'<div class="marker" style="background:'+esc(f.color)+'">'+esc(f.icon)+'</div>',
+      iconSize:[30,30],
+      iconAnchor:[15,15]
+    });
+    const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+    marker.bindPopup('<div class="popup-title">'+esc(p.name || 'Location')+'</div><div class="popup-sub">'+esc(p.subtitle || f.label || '')+'</div>');
+    marker.on('click', () => {
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type:'poi', id:p.id }));
+    });
+  });
+
+  if (user && typeof user.lat === 'number' && typeof user.lng === 'number') {
+    L.marker([user.lat, user.lng], {
+      icon: L.divIcon({ className:'', html:'<div class="user"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+    }).addTo(map);
+  }
+
+  const bounds = L.latLngBounds(routeLatLng);
+  if (user && typeof user.lat === 'number') bounds.extend([user.lat, user.lng]);
+  map.fitBounds(bounds.pad(.18));
+</script>
+</body>
+</html>`;
+  }, [pois, route, userLocation?.lat, userLocation?.lng, userLocation?.recenter, progressKm]);
+
+  return (
+    <View style={[realMapStyles.mapWrap, height ? { height: height as any } : null]}>
+      <WebView
+        originWhitelist={["*"]}
+        source={{ html }}
+        javaScriptEnabled
+        domStorageEnabled
+        geolocationEnabled
+        scrollEnabled={false}
+        onMessage={(event) => {
+          try {
+            const msg = JSON.parse(event.nativeEvent.data);
+            if (msg?.type === "poi") {
+              const poi = pois.find((p) => p.id === msg.id);
+              if (poi) onMarkerPress?.(poi);
+            }
+          } catch {}
+        }}
+        style={realMapStyles.webview}
+      />
+    </View>
+  );
+}
+
+const realMapStyles = StyleSheet.create({
+  mapWrap: {
+    width: "100%",
+    minHeight: 320,
+    overflow: "hidden",
+    borderRadius: 18,
+    backgroundColor: Colors.cream,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: Colors.cream,
+  },
+});
 
 export default function RouteMapScreen() {
   const insets = useSafeAreaInsets();
@@ -215,6 +468,47 @@ export default function RouteMapScreen() {
 
   // Walk mode
   const [walkMode, setWalkMode] = useState(false);
+
+  // ── Real OpenStreetMap POIs (manual + live OSM/Overpass) ──
+  const [mapPois, setMapPois] = useState<MapPoi[]>(MANUAL_MAP_POIS);
+  const [selectedMapFilters, setSelectedMapFilters] = useState<Set<MapPoiKind>>(
+    new Set(["temple", "ashram", "food", "water", "toilet", "medical", "pharmacy", "atm", "parking", "transport", "restaurant"])
+  );
+  const [poiLoading, setPoiLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setPoiLoading(true);
+    fetchOsmUtilityPois()
+      .then((osm) => {
+        if (!alive) return;
+        const existing = new Set(MANUAL_MAP_POIS.map((p) => p.id));
+        setMapPois([...MANUAL_MAP_POIS, ...osm.filter((p) => !existing.has(p.id))]);
+      })
+      .catch(() => setMapPois(MANUAL_MAP_POIS))
+      .finally(() => alive && setPoiLoading(false));
+    return () => { alive = false; };
+  }, []);
+
+  const visibleMapPois = React.useMemo(
+    () => mapPois.filter((p) => selectedMapFilters.has(p.kind)),
+    [mapPois, selectedMapFilters]
+  );
+
+  function toggleMapFilter(k: MapPoiKind) {
+    setSelectedMapFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  }
+
+  // ── Completion flow (three-step summary / reflection / certificate) ──
+  type CompletionStep = "summary" | "reflection" | "certificate";
+  const [completionStep, setCompletionStep] = useState<CompletionStep>("summary");
+  const [journeyReflection, setJourneyReflection] = useState("");
+  const [journeyLesson, setJourneyLesson] = useState("");
   const [walkSeconds, setWalkSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const omPulse = useRef(new Animated.Value(0.4)).current;
@@ -534,9 +828,42 @@ export default function RouteMapScreen() {
   // Opening the walk now opens the Sankalpa prompt first — the pilgrim
   // sets an intention (the "why") and chooses silent vs normal walk.
   function beginWalk() {
+    startWalkImmediately();
+  }
+
+  async function startWalkImmediately() {
+    if (startingWalkRef.current) return;
+    startingWalkRef.current = true;
+
     setSankalpa("");
     setSilentMode(false);
-    setSankalpaPromptOpen(true);
+    setSankalpaPromptOpen(false);
+    setShowFirstWalkPrep(false);
+    AsyncStorage.setItem(PREP_SEEN_KEY, "1").catch(() => {});
+
+    setWalkSeconds(0);
+    setSavedMoments({});
+    setDismissedFor(null);
+    setWalkOverlay(null);
+    setTempleInfoIdx(null);
+    savedKindsRef.current = new Set();
+    setWalkNumber(null);
+
+    try {
+      const p = await getWalkProgress();
+      setWalkNumber(p.completedWalks + 1);
+    } catch {}
+
+    setWalkMode(true);
+    if (!tracking) startTracking();
+
+    try {
+      await ensureWalkId();
+    } catch (e) {
+      console.warn("Failed to record walk start", e);
+    } finally {
+      startingWalkRef.current = false;
+    }
   }
 
   const startingWalkRef = useRef(false);
@@ -588,6 +915,7 @@ export default function RouteMapScreen() {
   // The walk timer freezes here — the ritual screen shows the final distance.
   function requestEndWalk() {
     setWalkOverlay(null);
+    setCompletionStep("summary");
     setEndRitualOpen(true);
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -1015,167 +1343,53 @@ export default function RouteMapScreen() {
             <Text style={dStyles.progressCounter}>{Math.min(8, lingamIdx + 1)}/8</Text>
           </View>
 
-          {/* ── Faux dark map area ── */}
-          <View style={dStyles.mapArea}>
-            {[200, 160, 120, 80].map((r, i) => (
-              <View
-                key={i}
-                style={[
-                  dStyles.contour,
-                  { width: r * 2, height: r * 2, marginLeft: -r, marginTop: -r },
-                ]}
-              />
-            ))}
-            <Text style={dStyles.mountainLabel}>ARUNACHALA</Text>
+          {/* ── Live OpenStreetMap tracking area ── */}
+          <View style={dStyles.trackingMapArea}>
+            <RealGirivalamMap
+              userLocation={userLocation}
+              pois={visibleMapPois}
+              progressKm={distKm}
+              height="100%"
+              onMarkerPress={(poi) => {
+                Alert.alert(poi.name, poi.subtitle || MAP_FILTERS.find((f) => f.key === poi.kind)?.label || "Location");
+              }}
+            />
 
-            {/* Glowing route — dots forming an oval ring */}
-            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-              {Array.from({ length: 40 }).map((_, i) => {
-                const a = (i / 40) * Math.PI * 2;
-                const rx = 130;
-                const ry = 170;
-                return (
-                  <View
-                    key={i}
-                    style={{
-                      position: "absolute",
-                      left: "50%",
-                      top: "50%",
-                      marginLeft: Math.cos(a) * rx - 2,
-                      marginTop: Math.sin(a) * ry - 2,
-                      width: 4,
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: GOLD,
-                      opacity: 0.6,
-                      shadowColor: GOLD,
-                      shadowOpacity: 1,
-                      shadowRadius: 4,
-                      shadowOffset: { width: 0, height: 0 },
-                    }}
-                  />
-                );
-              })}
-            </View>
-
-            {/* Temple pins on the route */}
-            {LINGAMS.map((l, i) => {
-              const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
-              const rx = 130;
-              const ry = 170;
-              const isDone = i < lingamIdx;
-              const isCurrent = i === lingamIdx;
-              return (
-                <Pressable
-                  key={l.number}
-                  onPress={() => {
-                    setTempleInfoIdx(i);
-                    setWalkOverlay("temple");
-                  }}
-                  style={[
-                    dStyles.templePin,
-                    isCurrent && dStyles.templePinCurrent,
-                    {
-                      left: "50%",
-                      top: "50%",
-                      marginLeft: Math.cos(a) * rx - 14,
-                      marginTop: Math.sin(a) * ry - 14,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={l.name}
-                >
-                  <MaterialCommunityIcons
-                    name="temple-hindu"
-                    size={isCurrent ? 18 : 14}
-                    color={isDone || isCurrent ? GOLD : "rgba(255,255,255,0.4)"}
-                  />
-                </Pressable>
-              );
-            })}
-
-            {/* Filter-driven utility pins — colored dot + label */}
-            {UTIL_PINS.filter((p) => utilOn[p.key]).map((p, i) => {
-              const u = UTILS.find((x) => x.key === p.key)!;
-              return (
-                <View
-                  key={`${p.key}-${i}`}
-                  style={[
-                    dStyles.utilPin,
-                    p.left ? { left: p.left as any } : null,
-                    p.right ? { right: p.right as any } : null,
-                    { top: p.top as any },
-                  ]}
-                >
-                  <View style={[dStyles.utilPinDot, { backgroundColor: u.color, shadowColor: u.color }]}>
-                    <Ionicons name={u.icon} size={10} color="#18181A" />
-                  </View>
-                  <Text style={dStyles.utilPinText}>
-                    {u.label} · <Text style={{ color: "rgba(255,255,255,0.55)" }}>{p.dist}</Text>
-                  </Text>
-                </View>
-              );
-            })}
-
-            {/* Vertical utility filter column — sits on the LEFT edge of the map.
-                Positioned high enough to never overlap the W temple pin (which sits at
-                vertical centre). Rendered BEFORE the user dot so pin/dot taps win on
-                any narrow-device collision. */}
-            <View style={dStyles.utilColumn} pointerEvents="box-none">
-              {UTILS.map((u) => {
-                const on = utilOn[u.key];
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={dStyles.mapFilterBar}
+              contentContainerStyle={dStyles.mapFilterBarContent}
+            >
+              {MAP_FILTERS.map((f) => {
+                const on = selectedMapFilters.has(f.key);
                 return (
                   <Pressable
-                    key={u.key}
-                    onPress={() => toggleUtil(u.key)}
-                    style={[
-                      dStyles.utilColumnBtn,
-                      on && { borderColor: u.color, backgroundColor: "rgba(0,0,0,0.55)" },
-                    ]}
-                    accessibilityRole="switch"
-                    accessibilityState={{ checked: on }}
-                    accessibilityLabel={`${u.label} pins`}
+                    key={f.key}
+                    onPress={() => toggleMapFilter(f.key)}
+                    style={[styles.mapFilterChip, on && { borderColor: f.color, backgroundColor: Colors.cream }]}
                   >
-                    <Ionicons
-                      name={u.icon}
-                      size={14}
-                      color={on ? u.color : "rgba(255,255,255,0.35)"}
-                    />
+                    <Text style={styles.mapFilterEmoji}>{f.icon}</Text>
+                    <Text style={[styles.mapFilterText, on && { color: Colors.primaryDark }]}>{f.label}</Text>
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
 
-            {/* User location */}
-            <View style={[dStyles.userDotWrap, { left: "50%", top: "78%", marginLeft: -10 }]}>
-              <View style={dStyles.userDotPulse} />
-              <View style={dStyles.userDot} />
-            </View>
-
-            {/* Re-center FAB — requests a fresh GPS fix and triggers re-center */}
             <Pressable
-              style={dStyles.recenterFab}
+              style={dStyles.recenterFabLight}
               accessibilityRole="button"
               accessibilityLabel="Re-center map on my location"
               onPress={() => {
-                if (!tracking) {
-                  startTracking();
-                } else {
+                if (!tracking) startTracking();
+                else {
                   Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
-                    .then((p) =>
-                      setUserLocation({
-                        lat: p.coords.latitude,
-                        lng: p.coords.longitude,
-                        recenter: true,
-                      })
-                    )
-                    .catch(() => {
-                      Alert.alert("Re-center", "Couldn't get a fresh fix right now. Keep walking — it will retry.");
-                    });
+                    .then((p) => setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude, recenter: true }))
+                    .catch(() => Alert.alert("Re-center", "Couldn't get a fresh fix right now. Keep walking — it will retry."));
                 }
               }}
             >
-              <Ionicons name="locate" size={18} color={GOLD} />
+              <Ionicons name="locate" size={18} color={Colors.primary} />
             </Pressable>
           </View>
 
@@ -1527,117 +1741,191 @@ export default function RouteMapScreen() {
 
             return (
               <View style={dStyles.ritualRoot}>
-                <ScrollView contentContainerStyle={cardStyles.scrollPad} showsVerticalScrollIndicator={false}>
-                  {/* The card itself — uses the reference design as the background image */}
-                  <View style={cardStyles.card}>
-                    <ImageBackground
-                      source={require("../../assets/images/girivalam-card-template.png")}
-                      style={cardStyles.cardTemplate}
-                      resizeMode="cover"
-                    >
-                      {/* ── Dynamic overlays positioned over the template ── */}
-                      {/* Name (covers "Arun Kumar") */}
-                      <View style={cardStyles.overlayName}>
-                        <View style={cardStyles.overlayNameBg} />
+                <ScrollView
+                  contentContainerStyle={compStyles.scrollPad}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {/* Step progress dots */}
+                  <View style={compStyles.stepDots}>
+                    {(["summary", "reflection", "certificate"] as const).map((s) => (
+                      <View key={s} style={[compStyles.stepDot, completionStep === s && compStyles.stepDotActive]} />
+                    ))}
+                  </View>
+
+                  {/* ── Step 1 · Summary ── */}
+                  {completionStep === "summary" && (
+                    <View style={compStyles.card}>
+                      <Text style={compStyles.kicker}>WALK COMPLETE</Text>
+                      <Text style={compStyles.bigTitle}>Your {which}</Text>
+                      <Text style={compStyles.sub}>{dateStr}</Text>
+
+                      <View style={compStyles.statGrid}>
+                        <View style={compStyles.statBox}>
+                          <Text style={compStyles.statValue}>{distKm}</Text>
+                          <Text style={compStyles.statLabel}>KM WALKED</Text>
+                        </View>
+                        <View style={compStyles.statBox}>
+                          <Text style={compStyles.statValue}>{timeStr}</Text>
+                          <Text style={compStyles.statLabel}>TIME</Text>
+                        </View>
+                        <View style={compStyles.statBox}>
+                          <Text style={compStyles.statValue}>{walkNumber ?? "—"}</Text>
+                          <Text style={compStyles.statLabel}>WALK #</Text>
+                        </View>
+                        <View style={compStyles.statBox}>
+                          <Text style={compStyles.statValue}>{momentCount}</Text>
+                          <Text style={compStyles.statLabel}>MOMENTS</Text>
+                        </View>
+                      </View>
+
+                      {sk.length > 0 && (
+                        <View style={compStyles.recallBox}>
+                          <Text style={compStyles.recallLabel}>YOUR SANKALPA</Text>
+                          <Text style={compStyles.recallText}>“{sk}”</Text>
+                        </View>
+                      )}
+
+                      <Pressable style={compStyles.primaryBtn} onPress={() => setCompletionStep("reflection")}>
+                        <Text style={compStyles.primaryBtnText}>Reflect on your walk</Text>
+                      </Pressable>
+                      <Pressable style={compStyles.linkBtn} onPress={endWalk}>
+                        <Text style={compStyles.linkBtnText}>Finish & close</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/* ── Step 2 · Reflection ── */}
+                  {completionStep === "reflection" && (
+                    <View style={compStyles.card}>
+                      <Text style={compStyles.kicker}>REFLECTION</Text>
+                      <Text style={compStyles.bigTitle}>Sit with it for a moment</Text>
+
+                      <Text style={compStyles.fieldLabel}>What did you feel on the path?</Text>
+                      <TextInput
+                        value={journeyReflection}
+                        onChangeText={setJourneyReflection}
+                        placeholder="A few words…"
+                        placeholderTextColor={Colors.textLight}
+                        multiline
+                        maxLength={240}
+                        style={compStyles.input}
+                      />
+
+                      <Text style={compStyles.fieldLabel}>What will you carry back?</Text>
+                      <TextInput
+                        value={journeyLesson}
+                        onChangeText={setJourneyLesson}
+                        placeholder="One intention…"
+                        placeholderTextColor={Colors.textLight}
+                        multiline
+                        maxLength={240}
+                        style={compStyles.input}
+                      />
+
+                      <Pressable style={compStyles.primaryBtn} onPress={() => setCompletionStep("certificate")}>
+                        <Text style={compStyles.primaryBtnText}>Create my certificate</Text>
+                      </Pressable>
+                      <Pressable style={compStyles.linkBtn} onPress={() => setCompletionStep("summary")}>
+                        <Text style={compStyles.linkBtnText}>Back</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/* ── Step 3 · Certificate ── */}
+                  {completionStep === "certificate" && (
+                    <>
+                      <View style={compStyles.certCard}>
+                        <Text style={compStyles.certOm}>🕉️</Text>
+                        <Text style={compStyles.certKicker}>CERTIFICATE OF GIRIVALAM</Text>
                         <TextInput
                           value={pilgrimName}
                           onChangeText={savePilgrimName}
                           placeholder="Your name"
-                          placeholderTextColor="rgba(244,229,194,0.4)"
-                          style={cardStyles.overlayNameText}
+                          placeholderTextColor={Colors.textLight}
+                          style={compStyles.certName}
                           maxLength={28}
                           autoCapitalize="words"
                           accessibilityLabel="Your name"
                         />
-                      </View>
+                        <Text style={compStyles.certSub}>completed the sacred {which}</Text>
+                        <Text style={compStyles.certSub}>around Arunachala · {dateStr}</Text>
 
-                      {/* Stats row (covers DATE / TIME / DISTANCE / MOON PHASE values) */}
-                      <View style={cardStyles.overlayStats}>
-                        <View style={cardStyles.overlayStatsBg} />
-                        <View style={cardStyles.overlayStatsInner}>
-                          <Text style={cardStyles.overlayStatVal}>{dateStr}</Text>
-                          <Text style={cardStyles.overlayStatVal}>{timeStr}</Text>
-                          <Text style={cardStyles.overlayStatVal}>{distKm} km</Text>
-                          <Text style={cardStyles.overlayStatVal}>Walk #{walkNumber ?? "—"}</Text>
+                        <View style={compStyles.certDivider} />
+                        <View style={compStyles.certMeta}>
+                          <View style={compStyles.certMetaItem}>
+                            <Text style={compStyles.certMetaVal}>{distKm} km</Text>
+                            <Text style={compStyles.certMetaLabel}>Distance</Text>
+                          </View>
+                          <View style={compStyles.certMetaItem}>
+                            <Text style={compStyles.certMetaVal}>{timeStr}</Text>
+                            <Text style={compStyles.certMetaLabel}>Duration</Text>
+                          </View>
+                          <View style={compStyles.certMetaItem}>
+                            <Text style={compStyles.certMetaVal}>{momentCount}</Text>
+                            <Text style={compStyles.certMetaLabel}>Moments</Text>
+                          </View>
                         </View>
-                      </View>
 
-                      {/* Polaroid strip overlay (covers baked-in polaroids) */}
-                      <View style={cardStyles.overlayPolaroids}>
-                        <View style={cardStyles.overlayPolaroidsBg} />
-                        {walkPhotos.length > 0 ? (
+                        {sk.length > 0 && (
+                          <>
+                            <View style={compStyles.certDivider} />
+                            <Text style={compStyles.certQuoteLabel}>SANKALPA</Text>
+                            <Text style={compStyles.certQuote}>“{sk}”</Text>
+                          </>
+                        )}
+                        {journeyReflection.trim().length > 0 && (
+                          <Text style={compStyles.certReflection}>{journeyReflection.trim()}</Text>
+                        )}
+                        {journeyLesson.trim().length > 0 && (
+                          <Text style={compStyles.certLesson}>I carry back: {journeyLesson.trim()}</Text>
+                        )}
+
+                        {walkPhotos.length > 0 && (
                           <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={cardStyles.polaroidStripPad}
+                            contentContainerStyle={compStyles.photoStrip}
                           >
                             {walkPhotos.map((p, i) => (
                               <View
                                 key={`${p.uri}-${i}`}
-                                style={[
-                                  cardStyles.polaroid,
-                                  { transform: [{ rotate: `${tilts[i % tilts.length]}deg` }] },
-                                ]}
+                                style={[compStyles.photo, { transform: [{ rotate: `${tilts[i % tilts.length]}deg` }] }]}
                               >
-                                <Image source={{ uri: p.uri }} style={cardStyles.polaroidImage} resizeMode="cover" />
+                                <Image source={{ uri: p.uri }} style={compStyles.photoImg} resizeMode="cover" />
                               </View>
                             ))}
                           </ScrollView>
-                        ) : (
-                          <Text style={cardStyles.overlayNoPhotos}>
-                            Tap the camera at each lingam to add your photos here.
-                          </Text>
                         )}
+
+                        <Text style={compStyles.certFooter}>Om Namah Shivaya 🔥</Text>
                       </View>
 
-                      {/* Sankalpa (subtle overlay near the quote area if set) */}
-                      {sk.length > 0 && (
-                        <View style={cardStyles.overlaySankalpa}>
-                          <Text style={cardStyles.overlaySankalpaLabel}>YOUR SANKALPA</Text>
-                          <Text style={cardStyles.overlaySankalpaText} numberOfLines={2}>“{sk}”</Text>
-                        </View>
-                      )}
+                      <Pressable style={compStyles.primaryBtn} onPress={onShare}>
+                        <Ionicons name="share-outline" size={16} color={Colors.white} />
+                        <Text style={compStyles.primaryBtnText}>  Share</Text>
+                      </Pressable>
 
-                      {/* Invisible tappable overlays for the baked-in share buttons */}
-                      <Pressable
-                        onPress={() => openSocial("whatsapp")}
-                        style={[cardStyles.shareHit, { left: "30%" }]}
-                        accessibilityRole="button"
-                        accessibilityLabel="Share on WhatsApp"
-                      />
-                      <Pressable
-                        onPress={() => openSocial("instagram")}
-                        style={[cardStyles.shareHit, { left: "42%" }]}
-                        accessibilityRole="button"
-                        accessibilityLabel="Share on Instagram"
-                      />
-                      <Pressable
-                        onPress={() => openSocial("facebook")}
-                        style={[cardStyles.shareHit, { left: "54%" }]}
-                        accessibilityRole="button"
-                        accessibilityLabel="Share on Facebook"
-                      />
-                      <Pressable
-                        onPress={() => openSocial("share")}
-                        style={[cardStyles.shareHit, { left: "66%" }]}
-                        accessibilityRole="button"
-                        accessibilityLabel="More share options"
-                      />
-                    </ImageBackground>
-                  </View>
+                      <View style={compStyles.socialRow}>
+                        <Pressable style={compStyles.socialBtn} onPress={() => openSocial("whatsapp")} accessibilityLabel="Share on WhatsApp">
+                          <Ionicons name="logo-whatsapp" size={20} color={Colors.primary} />
+                        </Pressable>
+                        <Pressable style={compStyles.socialBtn} onPress={() => openSocial("instagram")} accessibilityLabel="Share on Instagram">
+                          <Ionicons name="logo-instagram" size={20} color={Colors.primary} />
+                        </Pressable>
+                        <Pressable style={compStyles.socialBtn} onPress={() => openSocial("facebook")} accessibilityLabel="Share on Facebook">
+                          <Ionicons name="logo-facebook" size={20} color={Colors.primary} />
+                        </Pressable>
+                      </View>
 
-                  {/* Close button below the card */}
-                  <Pressable
-                    onPress={endWalk}
-                    style={cardStyles.closeBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close walk"
-                  >
-                    <Text style={cardStyles.closeBtnText}>Close</Text>
-                  </Pressable>
-                  <Text style={cardStyles.helperText}>
-                    Take a screenshot of this card to share on WhatsApp Status or Instagram Story.
-                  </Text>
+                      <Pressable style={compStyles.linkBtn} onPress={endWalk} accessibilityLabel="Close walk">
+                        <Text style={compStyles.linkBtnText}>Close</Text>
+                      </Pressable>
+                      <Text style={compStyles.helper}>
+                        Screenshot this certificate to share on WhatsApp Status or Instagram Story.
+                      </Text>
+                    </>
+                  )}
                 </ScrollView>
               </View>
             );
@@ -2109,39 +2397,49 @@ export default function RouteMapScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24, justifyContent: "flex-start" }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Eight Lingams overview image — placed exactly as provided */}
-      <Image
-        source={require("../../assets/images/girivalam-eight-lingams.png")}
-        style={styles.eightLingamsImage}
-        resizeMode="contain"
-        accessibilityLabel="Aerial view of Arunachala with the 8 Lingams"
-      />
+      {/* Real map-first hero card */}
+      <View style={styles.realMapHero}>
+        <View style={styles.mapTopRow}>
+          <Text style={styles.mapHeroTitle}>Arunachala Map</Text>
+          <Pressable onPress={startTracking} style={styles.mapLocateBtn}>
+            <Ionicons name={tracking ? "locate" : "locate-outline"} size={18} color={Colors.primary} />
+            <Text style={styles.mapLocateText}>{tracking ? "Live" : "Locate"}</Text>
+          </Pressable>
+        </View>
 
-      {/* Begin Walk CTA */}
-      <Pressable
-        style={styles.beginWalkBtn}
-        onPress={beginWalk}
-        accessibilityRole="button"
-        accessibilityLabel="Begin my Girivalam"
-      >
-        <LinearGradient
-          colors={[Colors.primaryDark, Colors.primary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.beginWalkGradient}
-        >
-          <View style={styles.beginWalkLeft}>
-            <Text style={styles.beginWalkIcon}>🚶</Text>
-            <View>
-              <Text style={styles.beginWalkTitle}>Begin my Girivalam</Text>
-              <Text style={styles.beginWalkSub}>
-                Tap to enter walk mode · map · emergency
-              </Text>
-            </View>
+        <Pressable style={styles.startSacredWalkBtn} onPress={beginWalk}>
+          <Text style={styles.startSacredWalkText}>START SACRED WALK</Text>
+        </Pressable>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mapFilterRow}>
+          {MAP_FILTERS.map((f) => {
+            const on = selectedMapFilters.has(f.key);
+            return (
+              <Pressable key={f.key} onPress={() => toggleMapFilter(f.key)} style={[styles.mapFilterChip, on && { borderColor: f.color }]}>
+                <Text style={styles.mapFilterEmoji}>{f.icon}</Text>
+                <Text style={styles.mapFilterText}>{f.label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        <RealGirivalamMap
+          userLocation={userLocation}
+          pois={visibleMapPois}
+          height={430}
+          onMarkerPress={(poi) => Alert.alert(poi.name, poi.subtitle || "Location")}
+        />
+
+        <View style={styles.girivalamOverviewCard}>
+          <Text style={styles.girivalamOverviewTitle}>Girivalam Overview</Text>
+          <View style={styles.girivalamStatsRow}>
+            <Text style={styles.girivalamStat}>🛕 14 KM</Text>
+            <Text style={styles.girivalamStat}>⏱ 3–5 Hrs</Text>
+            <Text style={styles.girivalamStat}>📍 {mapPois.length} Places</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
-        </LinearGradient>
-      </Pressable>
+          {poiLoading && <Text style={styles.poiLoadingText}>Loading utility locations from OpenStreetMap…</Text>}
+        </View>
+      </View>
 
       <Text style={styles.sectionTitle}>8 Sacred Lingams</Text>
       <Text style={styles.sectionDesc}>
@@ -2809,6 +3107,106 @@ const wStyles = StyleSheet.create({
 
 // ─── Normal screen styles ──────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  mapFilterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  mapFilterEmoji: { fontSize: 13 },
+  mapFilterText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textLight,
+  },
+  realMapHero: {
+    backgroundColor: Colors.cream,
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  mapTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  mapHeroTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primaryDark,
+  },
+  mapLocateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: Colors.primaryFaint,
+  },
+  mapLocateText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+  },
+  startSacredWalkBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  startSacredWalkText: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+    letterSpacing: 0.8,
+  },
+  mapFilterRow: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+  girivalamOverviewCard: {
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.warmWhite,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  girivalamOverviewTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  girivalamStatsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+  girivalamStat: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textMid,
+  },
+  poiLoadingText: {
+    marginTop: 8,
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+  },
   container: { flex: 1, backgroundColor: Colors.warmWhite },
   content: { padding: 16 },
 
@@ -3152,6 +3550,41 @@ function WalkSheet({
 }
 
 const dStyles = StyleSheet.create({
+  trackingMapArea: {
+    flex: 1,
+    marginHorizontal: 12,
+    marginBottom: 8,
+    position: "relative",
+    minHeight: 360,
+  },
+  mapFilterBar: {
+    position: "absolute",
+    left: 10,
+    right: 10,
+    top: 10,
+  },
+  mapFilterBarContent: {
+    gap: 8,
+    paddingRight: 16,
+  },
+  recenterFabLight: {
+    position: "absolute",
+    right: 14,
+    bottom: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.cream,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.shadow,
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
   root: { flex: 1, backgroundColor: DARK_BG },
   gradient: { flex: 1 },
 
@@ -4306,6 +4739,291 @@ const CARD_GOLD = "#C6A24A";
 const CARD_GOLD_LIGHT = "#E4C97A";
 const CARD_CREAM = "#F5F5F5";
 const CARD_BG = "#18181A";
+
+const compStyles = StyleSheet.create({
+  scrollPad: {
+    padding: 20,
+    paddingBottom: 48,
+  },
+  stepDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 18,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.borderLight,
+  },
+  stepDotActive: {
+    backgroundColor: Colors.primary,
+    width: 22,
+  },
+  card: {
+    backgroundColor: Colors.cream,
+    borderRadius: 22,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  kicker: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.6,
+    color: Colors.primary,
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  bigTitle: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    textAlign: "center",
+  },
+  sub: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 18,
+  },
+  statGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 16,
+  },
+  statBox: {
+    flexGrow: 1,
+    flexBasis: "45%",
+    backgroundColor: Colors.warmWhite,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  statValue: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1,
+    color: Colors.textLight,
+    marginTop: 4,
+  },
+  recallBox: {
+    backgroundColor: Colors.warmWhite,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  recallLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+    color: Colors.primary,
+    marginBottom: 6,
+  },
+  recallText: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    fontStyle: "italic",
+    color: Colors.text,
+    lineHeight: 22,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textMid,
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: Colors.warmWhite,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    padding: 14,
+    minHeight: 72,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    textAlignVertical: "top",
+  },
+  primaryBtn: {
+    flexDirection: "row",
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  primaryBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: Colors.white,
+  },
+  linkBtn: {
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  linkBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textLight,
+  },
+  certCard: {
+    backgroundColor: Colors.cream,
+    borderRadius: 22,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  certOm: {
+    fontSize: 34,
+    marginBottom: 8,
+  },
+  certKicker: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 2,
+    color: Colors.primary,
+    marginBottom: 14,
+  },
+  certName: {
+    fontSize: 26,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    textAlign: "center",
+    minWidth: 200,
+  },
+  certSub: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    textAlign: "center",
+    marginTop: 2,
+  },
+  certDivider: {
+    height: 1,
+    alignSelf: "stretch",
+    backgroundColor: Colors.borderLight,
+    marginVertical: 18,
+  },
+  certMeta: {
+    flexDirection: "row",
+    alignSelf: "stretch",
+    justifyContent: "space-around",
+  },
+  certMetaItem: {
+    alignItems: "center",
+  },
+  certMetaVal: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
+  },
+  certMetaLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.8,
+    color: Colors.textLight,
+    marginTop: 3,
+  },
+  certQuoteLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+    color: Colors.primary,
+    marginBottom: 6,
+  },
+  certQuote: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    fontStyle: "italic",
+    color: Colors.text,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  certReflection: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textMid,
+    textAlign: "center",
+    marginTop: 14,
+    lineHeight: 21,
+  },
+  certLesson: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+    textAlign: "center",
+    marginTop: 10,
+    lineHeight: 21,
+  },
+  photoStrip: {
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  photo: {
+    width: 92,
+    height: 110,
+    backgroundColor: Colors.white,
+    padding: 5,
+    borderRadius: 4,
+    shadowColor: Colors.shadow,
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  photoImg: {
+    flex: 1,
+    borderRadius: 2,
+  },
+  certFooter: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+    marginTop: 18,
+  },
+  socialRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
+    marginTop: 14,
+  },
+  socialBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.primaryFaint,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  helper: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 18,
+  },
+});
 
 const cardStyles = StyleSheet.create({
   scrollPad: {
