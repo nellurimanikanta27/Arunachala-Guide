@@ -65,3 +65,9 @@ id = "Aqxx610n6ESci4Yn4OWjO"
 uri = "file://exports/translator-tab.txt"
 type = "text"
 title = "Translator tab source (translator.tsx)"
+
+[[outputs]]
+id = "Ab9v54PhYqnuVxb8Prc0Y"
+uri = "file://exports/walk-route-map.txt"
+type = "text"
+title = "Walk screen source (route-map.tsx)"
