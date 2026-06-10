@@ -28,7 +28,7 @@ import {
   type Walk,
 } from "@/lib/pilgrimage-store";
 
-type Category = "temples" | "food" | "stay" | "ashrams" | "meditation" | "utilities";
+type Category = "temples" | "annaprasadam" | "food" | "stay" | "ashrams" | "meditation" | "utilities";
 type SubType =
   | "temple"
   | "lingam"
@@ -218,35 +218,46 @@ const PLACES: Place[] = [
   {
     id: "free1",
     name: "Arunachaleswarar Temple — Annadanam",
-    category: "food",
+    category: "annaprasadam",
     subType: "food",
-    description: "The main temple provides free sacred meals (Annadanam) to all pilgrims throughout the day. No registration needed — simply join the queue. A blessed way to nourish yourself during Girivalam.",
+    description: "The main temple provides free sacred meals (Anna Prasadam) to all pilgrims throughout the day. No registration needed — simply join the queue. A blessed way to nourish yourself during Girivalam.",
     distance: "Main temple complex",
     mapsUrl: "https://maps.google.com/?q=Arunachaleswarar+Temple+Tiruvannamalai",
-    tags: ["🙏 Free", "Annadanam", "All Day"],
+    tags: ["🙏 Free", "Anna Prasadam", "All Day"],
     openHours: "Full Day",
   },
   {
     id: "free2",
     name: "Sri Ramana Ashram — Free Meals",
-    category: "food",
+    category: "annaprasadam",
     subType: "food",
-    description: "Sri Ramanasramam offers free vegetarian meals to all visitors as part of their seva. Simple, pure, and served with devotion. Open to pilgrims of all backgrounds.",
+    description: "Sri Ramanasramam offers free vegetarian meals (Anna Prasadam) to all visitors as part of their seva. Simple, pure, and served with devotion. Open to pilgrims of all backgrounds.",
     distance: "2 km from main temple",
     mapsUrl: "https://maps.google.com/?q=Sri+Ramanasramam+Tiruvannamalai",
-    tags: ["🙏 Free", "Annadanam", "Ashram"],
+    tags: ["🙏 Free", "Anna Prasadam", "Ashram"],
     openHours: "9:00 AM – 10:00 AM",
   },
   {
     id: "free3",
     name: "Seshadri Swamigal Ashram — Free Meals",
-    category: "food",
+    category: "annaprasadam",
     subType: "food",
-    description: "The Seshadri Swamigal Ashram offers free meals to pilgrims from noon onwards as a sacred offering. A peaceful place to rest, eat, and be blessed.",
+    description: "The Seshadri Swamigal Ashram offers free meals (Anna Prasadam) to pilgrims from noon onwards as a sacred offering. A peaceful place to rest, eat, and be blessed.",
     distance: "Near main temple",
     mapsUrl: "https://maps.google.com/?q=Seshadri+Swamigal+Ashram+Tiruvannamalai",
-    tags: ["🙏 Free", "Annadanam", "Ashram"],
+    tags: ["🙏 Free", "Anna Prasadam", "Ashram"],
     openHours: "12:00 PM onwards",
+  },
+  {
+    id: "free4",
+    name: "Yogi Ramsuratkumar Ashram — Annadanam",
+    category: "annaprasadam",
+    subType: "food",
+    description: "The Yogi Ramsuratkumar Ashram on Chengam Road serves free meals (Anna Prasadam) to devotees and pilgrims daily as part of its seva. A serene ashram with a deep devotional atmosphere.",
+    distance: "Chengam Road",
+    mapsUrl: "https://maps.google.com/?q=Yogi+Ramsuratkumar+Ashram+Tiruvannamalai",
+    tags: ["🙏 Free", "Anna Prasadam", "Ashram"],
+    openHours: "Midday meal",
   },
   {
     id: "f1",
@@ -557,6 +568,7 @@ const LOCAL_CONTACT_CATEGORIES: { label: string; icon: string }[] = [
 
 const CATEGORIES: { id: Category; label: string; icon: string; color: string }[] = [
   { id: "temples", label: "Temples", icon: "business", color: Colors.saffron },
+  { id: "annaprasadam", label: "Anna Prasadam", icon: "heart-circle-outline", color: Colors.primary },
   { id: "ashrams", label: "Ashrams", icon: "flower-outline", color: Colors.green },
   { id: "meditation", label: "Meditation", icon: "body", color: Colors.blue },
   { id: "food", label: "Food", icon: "restaurant", color: Colors.teal },
@@ -566,6 +578,7 @@ const CATEGORIES: { id: Category; label: string; icon: string; color: string }[]
 
 const CATEGORY_COLORS: Record<Category, string> = {
   temples: Colors.saffron,
+  annaprasadam: Colors.primary,
   ashrams: Colors.green,
   meditation: Colors.blue,
   food: Colors.teal,
@@ -575,6 +588,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
 
 const MORE_SEARCH: Record<Category, { q: string; label: string }> = {
   temples: { q: "temples", label: "temples" },
+  annaprasadam: { q: "free+annadanam+meals+Tiruvannamalai", label: "free meal spots" },
   ashrams: { q: "ashrams", label: "ashrams" },
   meditation: { q: "meditation+centres", label: "meditation centres" },
   food: { q: "vegetarian+restaurants", label: "restaurants" },
@@ -618,6 +632,7 @@ const PLACE_COORDS: Record<string, LatLng> = {
   free1: { lat: 12.2348, lng: 79.0668 }, // Annadanam – Main Temple
   free2: { lat: 12.2238, lng: 79.0682 }, // Sri Ramana Ashram – Free Meals
   free3: { lat: 12.2247, lng: 79.0689 }, // Seshadri Ashram – Free Meals
+  free4: { lat: 12.2106, lng: 79.061 }, // Yogi Ramsuratkumar Ashram – Annadanam (Chengam Rd)
 };
 
 function haversineKm(a: LatLng, b: LatLng): number {
@@ -1118,18 +1133,39 @@ export default function LocalGuideScreen() {
               </View>
             );
           })
-        ) : active === "food" ? (
+        ) : active === "annaprasadam" ? (
           <>
             <View style={styles.annadanamBanner}>
               <Text style={styles.annadanamBannerEmoji}>🙏</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.annadanamBannerTitle}>Free Annadanam (Food Donation)</Text>
-                <Text style={styles.annadanamBannerDesc}>Sacred free meals offered to all pilgrims — no charge, no registration needed</Text>
+                <Text style={styles.annadanamBannerTitle}>Anna Prasadam (Free Sacred Meals)</Text>
+                <Text style={styles.annadanamBannerDesc}>Annadanam offered free to all pilgrims — no charge, no registration. Distances shown are from your current location.</Text>
               </View>
             </View>
-            {filtered.filter(p => p.tags.includes("🙏 Free")).map((place) => (
+            {filtered.map((place) => (
               <PlaceCard key={place.id} place={place} userLoc={userLoc} />
             ))}
+            {!userLoc && (
+              <Text style={styles.sectionInfo}>
+                Enable location to see how far each Anna Prasadam spot is from you.
+              </Text>
+            )}
+          </>
+        ) : active === "food" ? (
+          <>
+            <Pressable
+              style={styles.annadanamBanner}
+              onPress={() => handleCategory("annaprasadam")}
+              accessibilityRole="button"
+              accessibilityLabel="View free Anna Prasadam meal spots"
+            >
+              <Text style={styles.annadanamBannerEmoji}>🙏</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.annadanamBannerTitle}>Looking for free meals?</Text>
+                <Text style={styles.annadanamBannerDesc}>Tap to see Anna Prasadam — sacred free meals offered to all pilgrims</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+            </Pressable>
 
             <View style={styles.subSectionHeader}>
               <Text style={styles.subSectionEmoji}>🍛</Text>
