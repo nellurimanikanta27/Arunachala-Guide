@@ -307,106 +307,250 @@ function RealGirivalamMap({
   height?: number | string;
   onMarkerPress?: (poi: MapPoi) => void;
 }) {
+  const mapIdRef = React.useRef(`girivalam-map-${Math.random().toString(36).slice(2)}`);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "web") return;
+
+    const handler = (event: any) => {
+      try {
+        const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (!msg || msg.mapId !== mapIdRef.current || msg.type !== "poi") return;
+
+        const poi = pois.find((p) => p.id === msg.id);
+        if (poi) onMarkerPress?.(poi);
+      } catch {
+        // ignore non-map messages
+      }
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [pois, onMarkerPress]);
+
   const html = React.useMemo(() => {
     const safePois = JSON.stringify(pois).replace(/</g, "\\u003c");
     const safeRoute = JSON.stringify(route).replace(/</g, "\\u003c");
     const safeUser = JSON.stringify(userLocation).replace(/</g, "\\u003c");
     const safeFilters = JSON.stringify(MAP_FILTERS).replace(/</g, "\\u003c");
+    const safeMapId = mapIdRef.current;
     const safeProgressKm = Number.isFinite(progressKm) ? progressKm : 0;
 
-    return `<!doctype html>
+    return `
+<!doctype html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-  html, body, #map { height:100%; width:100%; margin:0; padding:0; background:#F7EFE2; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  .leaflet-control-attribution { font-size:9px; }
-  .marker { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; box-shadow:0 2px 8px rgba(85,45,12,.25); font-size:13px; }
-  .user { width:20px; height:20px; background:#1E88E5; border:3px solid white; border-radius:50%; box-shadow:0 0 0 8px rgba(30,136,229,.18),0 2px 10px rgba(0,0,0,.25); }
-  .popup-title { font-weight:700; color:#3E2411; font-size:13px; margin-bottom:2px; }
-  .popup-sub { color:#7A6551; font-size:11px; }
-</style>
+  <meta charset="utf-8" />
+  <meta 
+    name="viewport" 
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" 
+  />
+
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+  />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background: #F7EFE2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .leaflet-control-attribution {
+      font-size: 9px;
+    }
+
+    .marker {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+      box-shadow: 0 3px 10px rgba(70, 36, 10, 0.28);
+      font-size: 13px;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    .user-marker {
+      width: 20px;
+      height: 20px;
+      background: #1E88E5;
+      border: 3px solid white;
+      border-radius: 999px;
+      box-shadow:
+        0 0 0 9px rgba(30,136,229,0.18),
+        0 3px 10px rgba(0,0,0,0.25);
+      box-sizing: border-box;
+    }
+
+    .popup-title {
+      font-weight: 700;
+      color: #3E2411;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .popup-sub {
+      color: #7A6551;
+      font-size: 11px;
+    }
+  </style>
 </head>
+
 <body>
-<div id="map"></div>
-<script>
-  const route = ${safeRoute};
-  const pois = ${safePois};
-  const user = ${safeUser};
-  const filters = ${safeFilters};
-  const progressKm = ${safeProgressKm};
-  const map = L.map('map', { zoomControl: false }).setView([12.235, 79.066], 14);
-  L.control.zoom({ position:'topright' }).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
+  <div id="map"></div>
 
-  const routeLatLng = route.map(p => [p.lat, p.lng]);
-  const fullRoute = L.polyline(routeLatLng, { color:'#C97A1E', weight:5, opacity:.85, lineJoin:'round' }).addTo(map);
-  L.polyline(routeLatLng, { color:'#FFFFFF', weight:2, opacity:.55, dashArray:'4 10' }).addTo(map);
+  <script>
+    const MAP_ID = "${safeMapId}";
+    const route = ${safeRoute};
+    const pois = ${safePois};
+    const user = ${safeUser};
+    const filters = ${safeFilters};
+    const progressKm = ${safeProgressKm};
 
-  const progressRatio = Math.max(0, Math.min(1, progressKm / 14));
-  const progressCount = Math.max(2, Math.ceil(routeLatLng.length * progressRatio));
-  if (progressKm > 0) {
-    L.polyline(routeLatLng.slice(0, progressCount), { color:'#9B3D12', weight:7, opacity:.95 }).addTo(map);
-  }
+    const esc = (s) => String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-  const esc = (s) => String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const filterByKind = Object.fromEntries(filters.map(f => [f.key, f]));
-  pois.forEach(p => {
-    const f = filterByKind[p.kind] || { icon:'•', color:'#9B3D12' };
-    const icon = L.divIcon({
-      className:'',
-      html:'<div class="marker" style="background:'+esc(f.color)+'">'+esc(f.icon)+'</div>',
-      iconSize:[30,30],
-      iconAnchor:[15,15]
-    });
-    const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
-    marker.bindPopup('<div class="popup-title">'+esc(p.name || 'Location')+'</div><div class="popup-sub">'+esc(p.subtitle || f.label || '')+'</div>');
-    marker.on('click', () => {
-      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type:'poi', id:p.id }));
-    });
-  });
+    const map = L.map("map", {
+      zoomControl: false,
+      scrollWheelZoom: true,
+      dragging: true,
+      tap: true
+    }).setView([12.235, 79.066], 14);
 
-  if (user && typeof user.lat === 'number' && typeof user.lng === 'number') {
-    L.marker([user.lat, user.lng], {
-      icon: L.divIcon({ className:'', html:'<div class="user"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+    L.control.zoom({ position: "topright" }).addTo(map);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap"
     }).addTo(map);
-  }
 
-  const bounds = L.latLngBounds(routeLatLng);
-  if (user && typeof user.lat === 'number') bounds.extend([user.lat, user.lng]);
-  map.fitBounds(bounds.pad(.18));
-</script>
+    const routeLatLng = route.map(p => [p.lat, p.lng]);
+
+    const fullRoute = L.polyline(routeLatLng, {
+      color: "#C97A1E",
+      weight: 5,
+      opacity: 0.85,
+      lineJoin: "round"
+    }).addTo(map);
+
+    L.polyline(routeLatLng, {
+      color: "#FFFFFF",
+      weight: 2,
+      opacity: 0.65,
+      dashArray: "4 10"
+    }).addTo(map);
+
+    const progressRatio = Math.max(0, Math.min(1, progressKm / 14));
+    const progressCount = Math.max(2, Math.ceil(routeLatLng.length * progressRatio));
+
+    if (progressKm > 0) {
+      L.polyline(routeLatLng.slice(0, progressCount), {
+        color: "#9B3D12",
+        weight: 7,
+        opacity: 0.95,
+        lineJoin: "round"
+      }).addTo(map);
+    }
+
+    const filterByKind = Object.fromEntries(filters.map(f => [f.key, f]));
+
+    pois.forEach(p => {
+      const f = filterByKind[p.kind] || {
+        icon: "•",
+        color: "#9B3D12",
+        label: "Location"
+      };
+
+      const icon = L.divIcon({
+        className: "",
+        html: '<div class="marker" style="background:' + esc(f.color) + '">' + esc(f.icon) + '</div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+
+      marker.bindPopup(
+        '<div class="popup-title">' + esc(p.name || "Location") + '</div>' +
+        '<div class="popup-sub">' + esc(p.subtitle || f.label || "") + '</div>'
+      );
+
+      marker.on("click", function () {
+        window.parent.postMessage(JSON.stringify({
+          mapId: MAP_ID,
+          type: "poi",
+          id: p.id
+        }), "*");
+      });
+    });
+
+    if (user && typeof user.lat === "number" && typeof user.lng === "number") {
+      L.marker([user.lat, user.lng], {
+        icon: L.divIcon({
+          className: "",
+          html: '<div class="user-marker"></div>',
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        })
+      }).addTo(map);
+    }
+
+    const bounds = L.latLngBounds(routeLatLng);
+
+    if (user && typeof user.lat === "number" && typeof user.lng === "number") {
+      bounds.extend([user.lat, user.lng]);
+    }
+
+    map.fitBounds(bounds.pad(0.18));
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+  </script>
 </body>
-</html>`;
+</html>
+`;
   }, [pois, route, userLocation?.lat, userLocation?.lng, userLocation?.recenter, progressKm]);
 
-  return (
-    <View style={[realMapStyles.mapWrap, height ? { height: height as any } : null]}>
-      <WebView
-        originWhitelist={["*"]}
-        source={{ html }}
-        javaScriptEnabled
-        domStorageEnabled
-        geolocationEnabled
-        scrollEnabled={false}
-        onMessage={(event) => {
-          try {
-            const msg = JSON.parse(event.nativeEvent.data);
-            if (msg?.type === "poi") {
-              const poi = pois.find((p) => p.id === msg.id);
-              if (poi) onMarkerPress?.(poi);
-            }
-          } catch {}
-        }}
-        style={realMapStyles.webview}
+  if (Platform.OS !== "web") {
+    return (
+      <GirivalamMap
+        userLocation={userLocation}
+        showStops={true}
+        height={typeof height === "number" ? height : 430}
+        zoom={14}
       />
+    );
+  }
+
+  return (
+    <View style={[realMapStyles.mapWrap, { height: (height ?? 430) as any }]}>
+      {React.createElement("iframe" as any, {
+        srcDoc: html,
+        style: {
+          width: "100%",
+          height: "100%",
+          border: "0",
+          display: "block",
+          borderRadius: 18,
+          backgroundColor: "#F7EFE2",
+        },
+        title: "Girivalam Map",
+        allow: "geolocation",
+      })}
     </View>
   );
 }
@@ -420,10 +564,6 @@ const realMapStyles = StyleSheet.create({
     backgroundColor: Colors.cream,
     borderWidth: 1,
     borderColor: Colors.borderLight,
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: Colors.cream,
   },
 });
 
