@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import TopBar from "@/components/TopBar";
 import * as Linking from "expo-linking";
@@ -566,15 +566,34 @@ const LOCAL_CONTACT_CATEGORIES: { label: string; icon: string }[] = [
   { label: "Emergency Services", icon: "alert-circle-outline" },
 ];
 
-const CATEGORIES: { id: Category; label: string; icon: string; color: string }[] = [
-  { id: "temples", label: "Temples", icon: "business", color: Colors.saffron },
-  { id: "annaprasadam", label: "Anna Prasadam", icon: "heart-circle-outline", color: Colors.primary },
+type IconFamily = "ionicons" | "mci";
+
+const CATEGORIES: { id: Category; label: string; icon: string; iconFamily?: IconFamily; color: string }[] = [
+  { id: "temples", label: "Temples", icon: "temple-hindu", iconFamily: "mci", color: Colors.saffron },
+  { id: "annaprasadam", label: "Anna Prasadam", icon: "rice", iconFamily: "mci", color: Colors.primary },
   { id: "ashrams", label: "Ashrams", icon: "flower-outline", color: Colors.green },
-  { id: "meditation", label: "Meditation", icon: "body", color: Colors.blue },
+  { id: "meditation", label: "Meditation", icon: "meditation", iconFamily: "mci", color: Colors.blue },
   { id: "food", label: "Food", icon: "restaurant", color: Colors.teal },
   { id: "stay", label: "Stay", icon: "bed", color: Colors.purple },
   { id: "utilities", label: "Utilities", icon: "medkit", color: Colors.gold },
 ];
+
+function CategoryIcon({
+  icon,
+  iconFamily,
+  size,
+  color,
+}: {
+  icon: string;
+  iconFamily?: IconFamily;
+  size: number;
+  color: string;
+}) {
+  if (iconFamily === "mci") {
+    return <MaterialCommunityIcons name={icon as any} size={size} color={color} />;
+  }
+  return <Ionicons name={icon as any} size={size} color={color} />;
+}
 
 const CATEGORY_COLORS: Record<Category, string> = {
   temples: Colors.saffron,
@@ -995,8 +1014,9 @@ export default function LocalGuideScreen() {
                       { backgroundColor: active === cat.id ? cat.color : Colors.primaryFaint },
                     ]}
                   >
-                    <Ionicons
-                      name={cat.icon as any}
+                    <CategoryIcon
+                      icon={cat.icon}
+                      iconFamily={cat.iconFamily}
                       size={22}
                       color={active === cat.id ? Colors.white : cat.color}
                     />
@@ -1093,8 +1113,9 @@ export default function LocalGuideScreen() {
 
         {!searching && (
           <View style={styles.listTitleRow}>
-            <Ionicons
-              name={(CATEGORIES.find((c) => c.id === active)?.icon ?? "list") as any}
+            <CategoryIcon
+              icon={CATEGORIES.find((c) => c.id === active)?.icon ?? "list"}
+              iconFamily={CATEGORIES.find((c) => c.id === active)?.iconFamily}
               size={18}
               color={CATEGORY_COLORS[active] ?? Colors.saffron}
             />
