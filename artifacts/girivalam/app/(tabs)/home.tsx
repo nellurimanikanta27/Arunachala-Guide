@@ -72,6 +72,30 @@ function SacredMomentCard() {
   );
 }
 
+function WalkingIcon() {
+  const step = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(step, { toValue: 1, duration: 320, useNativeDriver: true }),
+        Animated.timing(step, { toValue: 0, duration: 320, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [step]);
+
+  const translateY = step.interpolate({ inputRange: [0, 1], outputRange: [1.5, -1.5] });
+  const rotate = step.interpolate({ inputRange: [0, 1], outputRange: ["-6deg", "6deg"] });
+
+  return (
+    <Animated.View style={{ transform: [{ translateY }, { rotate }] }}>
+      <MaterialCommunityIcons name="walk" size={28} color={Colors.primary} />
+    </Animated.View>
+  );
+}
+
 function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
   const scale = useRef(new Animated.Value(1)).current;
   const handlePressIn = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, tension: 300, friction: 20 }).start();
@@ -91,7 +115,7 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
           <View style={styles.heroCard}>
             <View style={styles.heroRow}>
               <View style={styles.heroIconWrap}>
-                <Ionicons name="map" size={28} color={Colors.primary} />
+                <WalkingIcon />
               </View>
               <View style={styles.heroText}>
                 <Text style={styles.heroTitle}>{feature.title}</Text>
